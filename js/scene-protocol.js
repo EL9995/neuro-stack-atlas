@@ -51,7 +51,8 @@ function pcSceneHtml() {
   const dose = Array.from({ length: 12 }, (_, j) => `<circle id="pc-d${j}" r="5.5" fill="#ffb340" opacity="0"/>`).join("");
   const ves = PC_VES.map(([x, y], k) => `<circle cx="${x}" cy="${y}" r="22" fill="#ffb340" fill-opacity=".08" stroke="#ffb340" stroke-opacity=".7" stroke-width="1.6"/><circle id="pc-v${k}" cx="${x}" cy="${y}" r="17" fill="#ffb340" fill-opacity=".75"/>`).join("");
   const days = Array.from({ length: 14 }, (_, d) => `<g id="pc-day${d}"><rect x="${282 + d * 34}" y="398" width="28" height="28" rx="6" class="${PC_ON(d) ? "pc-on" : "pc-off"}"/>${PC_ON(d) ? "" : `<text x="${296 + d * 34}" y="416" text-anchor="middle" class="pc-offt">${esc(L.off)}</text>`}</g>`).join("");
-  const waste = Array.from({ length: 10 }, (_, i) => `<circle id="pc-w${i}" r="${3 + (i % 3)}" fill="#8794b0" opacity="0"/>`).join("");
+  // Sleep step: green "repair and restock" particles settle into both cells
+  const waste = Array.from({ length: 10 }, (_, i) => `<circle id="pc-w${i}" r="${3 + (i % 3)}" fill="#6fe0c8" opacity="0"/>`).join("");
   const stars = [[420, 30], [470, 70], [530, 22], [575, 64], [445, 110], [520, 96]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.6" fill="#c9d4ea"/>`).join("");
   const loop = [["Foundation", -90], ["Cycles", 30], ["Recovery", 150]].map(([t, a], i) => {
     const x = 500 + 128 * Math.cos(a * Math.PI / 180), y = 205 + 128 * Math.sin(a * Math.PI / 180);
@@ -212,11 +213,13 @@ function pcFrame(p) {
 
   // 3. Recovery: night, leftovers cleared, calm
   set(R.night, "opacity", f(into3));
-  const clear = nsG(p, .80, .865);
+  // Sleep: repair-and-restock particles drift down into the sending cell's vesicles and the receiving cell's docks
+  const rest = nsG(p, .80, .865);
   R.w.forEach((c, i) => {
-    const u = nsC(clear * 1.5 - i * .05), x = 430 + (i * 47) % 130, y = nsL(330 - (i * 29) % 160, -30, nsS(u));
-    set(c, "cx", x.toFixed(1)); set(c, "cy", y.toFixed(1));
-    set(c, "opacity", f(nsS(nsG(p, .76, .80)) * (1 - nsS(u)) * .9));
+    const u = nsS(nsC(rest * 1.5 - i * .05)), tgt = i % 2 ? [PC_DOCK_X(PC_DOCK_Y[(i >> 1) % 6]) + 14, PC_DOCK_Y[(i >> 1) % 6]] : PC_VES[(i >> 1) % 5];
+    const sx = 380 + (i * 47) % 240;
+    set(c, "cx", nsL(sx, tgt[0], u).toFixed(1)); set(c, "cy", nsL(-30, tgt[1], u).toFixed(1));
+    set(c, "opacity", f(nsS(nsG(p, .79, .81)) * nsC(u * 6) * (1 - nsS(nsG(u, .85, 1))) * (1 - loopIn)));
   });
   set(R.calm, "opacity", f(nsS(nsG(p, .86, .9)) * (1 - loopIn) * .55));
 
