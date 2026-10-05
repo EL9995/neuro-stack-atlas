@@ -21,7 +21,7 @@ function viewScanner() {
     <div class="page-head">
       <span class="eyebrow">Scanner</span>
       <h1>Scan a supplement label.</h1>
-      <p class="lede">Take a photo of the Supplement Facts panel on the bottle, or paste the ingredient list. You'll see what each ingredient does, whether the dose is normal, and whether it clashes with your stack.</p>
+      <p class="lede">${Scan.sample === null ? "Paste the ingredient list from the Supplement Facts panel on the bottle." : "Take a photo of the Supplement Facts panel on the bottle, or paste the ingredient list."} You'll see what each ingredient does, whether the dose is normal, and whether it clashes with your stack.</p>
     </div>
     <div id="scan-input"></div>
     <div id="scan-result"></div>
@@ -42,7 +42,7 @@ function renderScanInput() {
       ${Scan.preview ? `<button class="linkish" data-act="scan-clear-photo">Remove photo</button>` : ""}
     </div>` : ""}
     <div class="panel">
-      <div class="panel-head"><h3>${photo ? "Or paste the label" : "Paste the label"}</h3><span class="hint">Ingredients and amounts</span></div>
+      <div class="panel-head"><h3>${photo ? "Or paste the label text" : "Paste the label text"}</h3><span class="hint">Ingredients and amounts</span></div>
       <textarea id="scan-text" rows="${photo ? 7 : 6}" placeholder="Vitamin D3 (as cholecalciferol) 50 mcg&#10;Magnesium (as magnesium oxide) 250 mg&#10;Zinc (as zinc citrate) 15 mg">${esc(Scan.text)}</textarea>
     </div>
   </div>
