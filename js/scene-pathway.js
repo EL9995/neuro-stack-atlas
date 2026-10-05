@@ -65,7 +65,7 @@ function psSetup(nt) {
     [0, psFill(T.start[0], nt), psFill(T.start[1], nt)],
     ...(PS_SUP.length ? [[.13, ...T.precursors]] : []),
     ...PS_SUP.map(s => [s.on, s.name, s.note]),
-    late ? [.43, T.slowestStep[0], T.slowestStep[1].replace("{enzyme}", rl.name).replace("{lateSupplement}", late.name)] : [.43, ...STORY_SCENE.captions[7]],
+    late ? [.43, T.slowestStep[0], T.slowestStep[1].replace("{enzyme}", rl.name).replace("{lateSupplement}", late.name)] : [.43, ...T.enzymes],
     ...(groups.length ? [[.60, ...T.cofactors]] : []),
     ...groups.map(g => [g.t, g.co.join(" and "), cofNote(g)]).filter(b => b[2]),
     ...(PS_MODS.length ? [[.78, psFill(T.modulators[0], nt), psFill(T.modulators[1], nt)]] : []),

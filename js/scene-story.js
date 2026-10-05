@@ -1,5 +1,8 @@
 // Caption wording lives in content/scene-captions.js; these are the scroll points where each appears.
-const NSB = [0, .10, .40, .50, .56, .67, .79, .87, .91, .96].map((p, i) => [p, ...STORY_SCENE.captions[i]]);
+const NSB = [0, .10, .40, .50, .56, .67].map((p, i) => [p, ...STORY_SCENE.captions[i]]);
+// The scene now ends once "The next cell fires" has played out (the precursor/enzyme/cofactor
+// part moved to "Start smart" and the neurotransmitter pages). Scroll progress 0-1 maps to 0-NS_END.
+const NS_END = .785;
 const NSK = [[0, 250, 400, 560, 380], [.14, 380, 400, 640, 300], [.40, 1500, 400, 640, 300], [.50, 1610, 400, 420, 340], [.58, 1715, 400, 330, 300], [.70, 1780, 400, 360, 320], [.78, 2050, 400, 900, 520], [.84, 1560, 400, 260, 240], [1, 1560, 400, 260, 240]];
 const NS_REC = [-110, -66, -22, 22, 66, 110].map(dy => [2000 - 245 * Math.sqrt(1 - (dy / 235) ** 2) - 7, 400 + dy]);
 const NSD = Array.from({ length: 14 }, (_, j) => {
@@ -129,7 +132,8 @@ function nsBeat(i) {
   const R = NS.refs; R.cap.classList.add("swap"); clearTimeout(NS.sw);
   NS.sw = setTimeout(() => { R.t.textContent = NSB[i][1]; R.b.textContent = NSB[i][2]; R.cap.classList.remove("swap"); }, 150);
 }
-function nsFrame(p) {
+function nsFrame(pRaw) {
+  const p = pRaw * NS_END;
   const R = NS.refs, f = v => v.toFixed(3);
   const [cx, cy, bw, bh] = nsCam(p), vw = Math.max(bw, bh * NS.A), vh = vw / NS.A, sc = NS.W / vw;
   R.world.setAttribute("viewBox", `${(cx - vw / 2).toFixed(1)} ${(cy - vh / 2).toFixed(1)} ${vw.toFixed(1)} ${vh.toFixed(1)}`);
@@ -166,8 +170,8 @@ function nsFrame(p) {
 
   const eOn = (p > .06 && p < .44) || (p > .66 && p < .82), cOn = (p > .42 && p < .70) || p > .79;
   R.le.classList.toggle("on", eOn); R.lc.classList.toggle("on", cOn);
-  R.pf.style.height = (p * 100).toFixed(1) + "%";
-  R.cta.hidden = p < .955;
+  R.pf.style.height = (pRaw * 100).toFixed(1) + "%";
+  R.cta.hidden = pRaw < .955;
   let bi = 0; NSB.forEach((b, i) => { if (p >= b[0]) bi = i; }); nsBeat(bi);
 }
 function nsMeasure() {

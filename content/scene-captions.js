@@ -10,7 +10,7 @@
 //   - Words in {curly braces} are filled in automatically. Keep them.
 // ===========================================================================
 
-// Scene 1: "What are neurotransmitters?" (exactly 10 captions, in order)
+// Scene 1: "What are neurotransmitters?" (exactly 6 captions, in order)
 const STORY_SCENE = {
   captions: [
     ["What are neurotransmitters?", "Your brain runs on signals. Scroll to follow one."],
@@ -19,10 +19,6 @@ const STORY_SCENE = {
     ["Meet the neurotransmitters", "Tiny molecules stored in bubbles called vesicles. Dopamine, serotonin, GABA, and the rest of the six."],
     ["Across the gap", "They drift across a space tens of nanometers wide and fit into receptors on the next cell."],
     ["The next cell fires", "Enough filled receptors set off a new electrical pulse. Electrical, then chemical, then electrical again."],
-    ["But who makes them?", "Every neurotransmitter is built inside the cell, starting with raw materials called precursors."],
-    ["Enzymes do the building", "Enzymes convert precursors into the finished chemical, one step at a time."],
-    ["Cofactors keep them working", "Enzymes need vitamins and minerals to run. Without them, the raw materials go nowhere."],
-    ["That's the chain", "Precursors, enzymes, cofactors. Next: where supplements fit in."],
   ],
 };
 
@@ -32,12 +28,12 @@ const STORY_SCENE = {
 // Some captions are not here because they come straight from the data:
 //   - each supplement's caption (name + note) comes from supplement-links.js
 //   - each cofactor caption comes from the cofactor notes in supplement-links.js
-//   - pathways without a "slowest step" use the "Enzymes do the building"
-//     caption from scene 1
+//   - pathways without a "slowest step" use the "enzymes" caption below
 const PATHWAY_SCENE = {
   captions: {
     start:       ["The {nt} assembly line", "Your body already makes {nt} from {madeFrom}. Each station is an enzyme that changes the molecule one step."],
     precursors:  ["Precursors: where supplements join", "Precursors are raw materials. Different supplements add them at different points on the line."],
+    enzymes:     ["Enzymes do the building", "Enzymes convert precursors into the finished chemical, one step at a time."],   // used when a pathway has no "slowest step"
     slowestStep: ["Enzymes: the slowest step", "{enzyme} is the bottleneck, and your body sets its pace. That's why precursors before it are gentler than {lateSupplement}, which joins after it."],
     cofactors:   ["Cofactors: what enzymes run on", "Take the vitamins and minerals away and the line stops. Raw material piles up and goes nowhere."],
     modulators:  ["Modulators: after {nt} is made", "They aren't building blocks. They change how {nt} is stored, released, received, or cleared."],
