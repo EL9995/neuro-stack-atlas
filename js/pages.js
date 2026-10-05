@@ -11,60 +11,47 @@ function viewPath(n) {
     const bl = (st.block || []).map(([label, id]) => `<a class="pill block" href="#${n.id}.${id}" data-go="${n.id}.${id}" title="Blocked by ${esc(label)}">⊘ ${esc(label)}</a>`).join("");
     return `<div class="step">
       ${st.rl ? `<span class="rl">Slowest step</span>` : ""}
-      <span class="enz">${esc(st.e)}</span>
+      ${enzymeFor(st.e) ? `<a class="enz" href="#enzyme:${enzymeFor(st.e).id}" data-go="enzyme:${enzymeFor(st.e).id}">${esc(st.e)}</a>` : `<span class="enz">${esc(st.e)}</span>`}
       ${co || bl ? `<span class="pills">${co}${bl}</span>` : ""}
     </div>`;
   }).join("");
 }
 
 function viewNT(n) {
-  const rows = MAP.filter(r => r[1] === n.id);
-  const hidden = rows.filter(r => byId[r[0]].tier !== "core").length;
-  const visible = rows.filter(r => App.showDeep || byId[r[0]].tier === "core");
+  // Everything is shown, grouped like the animation (precursors, cofactors, modulators) and sorted by evidence.
+  const visible = MAP.filter(r => r[1] === n.id);
   const ntLabel = n.id === "gaba" ? "GABA" : n.name.toLowerCase();
   const groups = [
-    ["Building blocks", `Precursors your body converts into ${ntLabel}.`, r => r[2] === "precursor" && byId[r[0]].cat !== "herbal"],
-    ["Herbal", "Plants, mushrooms and plant extracts.", r => byId[r[0]].cat === "herbal"],
-    ["Other ways in", "Supplements that affect it without being a building block.", r => r[2] !== "precursor" && r[2] !== "cofactor" && byId[r[0]].cat !== "herbal"],
-    ["Cofactors", "Vitamins and minerals the conversion steps need.", r => r[2] === "cofactor"]
+    ["Precursors", `Raw materials your body converts into ${ntLabel}.`, r => r[2] === "precursor"],
+    ["Cofactors", "Vitamins and minerals the conversion steps need.", r => r[2] === "cofactor"],
+    ["Modulators", `They change how ${ntLabel} is made, released, received or cleared, without being a building block.`, r => r[2] !== "precursor" && r[2] !== "cofactor"]
   ];
-  const groupHtml = groups.map(([title, sub, test]) => {
-    const items = visible.filter(test).sort((a, b) => EV[b[3]] - EV[a[3]]);
-    if (!items.length) return "";
-    return `<div class="group">
-      <h3>${title} <small>${esc(sub)}</small></h3>
+  // Three blocks (precursors, cofactors, modulators). Clicking one opens its list below; only one is open at a time.
+  const lists = groups.map(([title, sub, test]) => [title, sub, visible.filter(test).sort((a, b) => EV[b[3]] - EV[a[3]])]).filter(g => g[2].length);
+  const tabsHtml = `<div class="sup-tabs" role="tablist">${lists.map(([title, sub, items], i) => `
+      <button class="sup-tab" role="tab" id="sup-tab-${i}" aria-selected="false" aria-controls="sup-panel-${i}" data-act="sup-tab" data-i="${i}">
+        <span class="sup-tab-top"><b>${title}</b><span class="sup-count">${items.length}</span></span>
+        <span class="sup-tab-sub">${esc(sub)}</span>
+        <span class="sup-tab-names">${items.slice(0, 3).map(([sid]) => esc(byId[sid].name.replace(/ \(.*\)$/, ""))).join(", ")}${items.length > 3 ? ", …" : ""}</span>
+      </button>`).join("")}</div>`;
+  const groupHtml = lists.map(([title, sub, items], i) => `
+    <div class="group sup-panel" role="tabpanel" id="sup-panel-${i}" aria-labelledby="sup-tab-${i}" hidden>
       <div class="rows">
         ${items.map(([sid, , role, ev, note]) => `
           <button class="row" data-go="${n.id}.${sid}">
-            <span class="row-name">${esc(byId[sid].name)} <span class="role">${ROLE[role]}</span>${tierBadge(byId[sid])}</span>
+            <span class="row-name">${esc(byId[sid].name)} ${title === "Modulators" ? `<span class="role">${ROLE[role]}</span>` : ""}${tierBadge(byId[sid])}${ixBadge(byId[sid])}</span>
             <span class="row-note">${esc(note)}</span>
             <span class="row-side">${evDots(ev)}<span class="ev-label">${ev} evidence</span></span>
           </button>`).join("")}
       </div>
-    </div>`;
-  }).join("");
+      <button class="sup-less" type="button" data-act="sup-tab" data-i="${i}">Show less ↑</button>
+    </div>`).join("");
 
   return `<div class="stack">
-    <div class="nt-head">
-      <span class="eyebrow">${esc(n.cls)} · ${esc(n.abbr)}</span>
-      <h1>${esc(n.name)} is <em>${esc(n.word.toLowerCase())}</em>.</h1>
-      <p class="lede">${esc(n.fn)}</p>
-    </div>
-    <div class="balance">
-      <div><h3>Often linked to low levels</h3><ul>${n.low.map(x => `<li>${gloss(x)}</li>`).join("")}</ul></div>
-      <div><h3>Often linked to too much</h3><ul>${n.high.map(x => `<li>${gloss(x)}</li>`).join("")}</ul></div>
-    </div>
-    <section>
-      <h2 class="sec">How your body makes it</h2>
-      <p class="sec-intro">Each arrow is an enzyme doing one conversion. The tags under it are the cofactors that enzyme needs. Tap any supplement or cofactor to open it.</p>
-      <div class="path-scroll"><div class="path">${viewPath(n)}</div></div>
-    </section>
-    <section>
-      <div class="sec-row">
-        <h2 class="sec">Supplements that affect ${esc(ntLabel)}</h2>
-        ${hidden ? `<button class="toggle" data-act="toggle-deep" aria-pressed="${App.showDeep}">
-          <span class="switch" aria-hidden="true"></span>${App.showDeep ? "Showing" : "Show"} deep cuts &amp; caution (${hidden})</button>` : ""}
-      </div>
+    ${pathwayHtml(n)}
+    <section id="nt-sups">
+      <h2 class="sec">Supplements that affect ${esc(ntLabel)}</h2>
+      ${tabsHtml}
       ${groupHtml}
     </section>
   </div>`;
@@ -81,7 +68,7 @@ function viewSupp(s, ctx) {
   return `<div class="stack">
     <div class="s-head">
       <div class="tags">
-        <span class="pill">${CAT[s.cat]}</span>${tierBadge(s)}
+        <span class="pill">${CAT[s.cat]}</span>${tierBadge(s)}${ixBadge(s)}
         ${s.aka.length ? `<span class="aka">also: ${s.aka.map(esc).join(", ")}</span>` : ""}
       </div>
       <h1>${esc(s.name)}</h1>

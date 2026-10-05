@@ -18,8 +18,9 @@ function render(token, force) {
   const sep = `<span class="sep">/</span>`;
   const nt = ntById[a];
   const s = nt ? (b ? byId[b] : null) : byId[a];
+  const ez = token.startsWith("enzyme:") ? enzymeById[token.slice(7)] : null;
   const tab = token === "stack" ? "stack" : token === "track" ? "track" : token === "scan" ? "scan" : "explore";
-  document.body.classList.toggle("is-home", !(token === "stack" || token === "track" || token === "scan" || s || nt));
+  document.body.classList.toggle("is-home", !(token === "stack" || token === "track" || token === "scan" || s || nt || ez));
   document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-current", t.dataset.tab === tab ? "page" : "false"));
   document.documentElement.style.setProperty("--nt", nt ? ntColor(nt.id) : "var(--accent)");
   App.confirmDelete = false;
@@ -33,6 +34,10 @@ function render(token, force) {
   } else if (token === "scan") {
     view.innerHTML = viewScanner(); crumbs.innerHTML = ""; renderScanInput(); renderScanResult();
     document.title = "Scanner · Neuro Stack Atlas";
+  } else if (ez) {
+    view.innerHTML = viewEnzyme(ez);
+    crumbs.innerHTML = home + sep + `<span>${esc(ez.name)}</span>`;
+    document.title = `${ez.name} · Neuro Stack Atlas`;
   } else if (s) {
     view.innerHTML = viewSupp(s, nt ? nt.id : "");
     crumbs.innerHTML = home + (nt ? sep + `<a href="#${nt.id}" data-go="${nt.id}">${esc(nt.name)}</a>` : "") + sep + `<span>${esc(s.name)}</span>`;
@@ -44,8 +49,6 @@ function render(token, force) {
   } else {
     view.innerHTML = viewHome();
     jrInit();
-    nsInit();
-    psInit();
     crumbs.innerHTML = "";
     document.title = "Neuro Stack Atlas";
   }
@@ -59,6 +62,9 @@ function render(token, force) {
   if (bk) bk.hidden = !(NAVST.trail.length && token !== "");
   const sb = document.querySelector(".subbar"); if (sb) sb.hidden = token === "";
   if (!sameView) window.scrollTo(0, NAVST.back ? (NAVST.mem[token] || 0) : 0);
+  // Scroll scenes measure the top bar, so start them only after it has its final size for this page.
+  if (token === "") { nsInit(); pcInit(); }
+  else if (nt && !s) psInit();
 }
 
 function go(token) {

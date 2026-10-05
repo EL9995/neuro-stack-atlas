@@ -41,7 +41,11 @@ function fmtOnset([a, b]) {
 function fmtDur([a, b]) { return a == null ? "Ongoing" : `${range(a, b)} h`; }
 const SOL = { water: "Water", fat: "Fat", both: "Water + fat" };
 const TOL = { none: "None", low: "Low", moderate: "Moderate", high: "High" };
-const tierBadge = s => s.tier === "core" ? "" : `<span class="tier tier-${s.tier}">${TIER[s.tier]}</span>`;
+// Only "Use caution" is shown; "deep" supplements are no longer labeled (evidence dots say how well supported they are).
+const tagHtml = (cls, t) => `<span class="tier ${cls} term" tabindex="0" data-tip-title="${esc(t.label)}" data-tip="${esc(t.tip)}">${esc(t.label)}</span>`;
+const tierBadge = s => s.tier === "caution" ? tagHtml("tier-caution", TAG_TEXT.caution) : "";
+// Any supplement with a major interaction listed under "Watch out for"
+const ixBadge = s => s.ix.some(i => i[1] === "major") ? tagHtml("tier-ix", TAG_TEXT.interactions) : "";
 
 function evDots(level) {
   const n = EV[level];

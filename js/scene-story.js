@@ -1,15 +1,5 @@
-const NSB = [
-  [0, "What are neurotransmitters?", "Your brain runs on signals. Scroll to follow one."],
-  [.10, "It starts with a spark", "A neuron fires. A pulse of electricity leaves the cell body and races down the axon, the cell's long wire."],
-  [.40, "Then a handoff", "At the end of the wire there's a gap, and electricity can't cross it. So the cell releases chemicals instead."],
-  [.50, "Meet the neurotransmitters", "Tiny molecules stored in bubbles called vesicles. Dopamine, serotonin, GABA, and the rest of the six."],
-  [.56, "Across the gap", "They drift across a space tens of nanometers wide and fit into receptors on the next cell."],
-  [.67, "The next cell fires", "Enough filled receptors set off a new electrical pulse. Electrical, then chemical, then electrical again."],
-  [.79, "But who makes them?", "Every neurotransmitter is built inside the cell, starting with raw materials called precursors."],
-  [.87, "Enzymes do the building", "Enzymes convert precursors into the finished chemical, one step at a time."],
-  [.91, "Cofactors keep them working", "Enzymes need vitamins and minerals to run. Without them, the raw materials go nowhere."],
-  [.96, "That's the chain", "Precursors, enzymes, cofactors. Next: where supplements fit in."]
-];
+// Caption wording lives in content/scene-captions.js; these are the scroll points where each appears.
+const NSB = [0, .10, .40, .50, .56, .67, .79, .87, .91, .96].map((p, i) => [p, ...STORY_SCENE.captions[i]]);
 const NSK = [[0, 250, 400, 560, 380], [.14, 380, 400, 640, 300], [.40, 1500, 400, 640, 300], [.50, 1610, 400, 420, 340], [.58, 1715, 400, 330, 300], [.70, 1780, 400, 360, 320], [.78, 2050, 400, 900, 520], [.84, 1560, 400, 260, 240], [1, 1560, 400, 260, 240]];
 const NS_REC = [-110, -66, -22, 22, 66, 110].map(dy => [2000 - 245 * Math.sqrt(1 - (dy / 235) ** 2) - 7, 400 + dy]);
 const NSD = Array.from({ length: 14 }, (_, j) => {
@@ -103,8 +93,7 @@ function nstoryHtml() {
       ${nsSceneHtml()}
       ${nsAsmHtml()}
       <div class="ns-legend" aria-hidden="true"><span class="ns-chip ns-e" id="ns-le"><i></i>Electrical</span><span class="ns-chip ns-c" id="ns-lc"><i></i>Chemical</span></div>
-      <button class="ns-skip" data-scroll="six" type="button">Skip to the six</button>
-      <div class="ns-cap" id="ns-cap" aria-hidden="true"><p class="ns-t" id="ns-t">${NSB[0][1]}</p><p class="ns-b" id="ns-b">${NSB[0][2]}</p><button class="tc-btn ns-cta" id="ns-cta" data-scroll="how" type="button" hidden>See where supplements fit in</button></div>
+      <div class="ns-cap" id="ns-cap" aria-hidden="true"><p class="ns-t" id="ns-t">${NSB[0][1]}</p><p class="ns-b" id="ns-b">${NSB[0][2]}</p><button class="tc-btn ns-cta" id="ns-cta" data-scroll="safe" type="button" hidden>See where supplements fit in</button></div>
       <div class="ns-prog" aria-hidden="true"><i id="ns-pf"></i></div>
     </div>
   </section>`;
@@ -183,8 +172,9 @@ function nsFrame(p) {
 }
 function nsMeasure() {
   const st = NS.stage; if (!st) return;
-  NS.W = st.clientWidth || 1000; NS.H = st.clientHeight || 600; NS.A = NS.W / NS.H;
+  // Set the top-bar height first: it changes the stage's size, which we measure next.
   const ch = document.querySelector(".chrome"); if (ch) document.documentElement.style.setProperty("--chrome-h", ch.offsetHeight + "px");
+  NS.W = st.clientWidth || 1000; NS.H = st.clientHeight || 600; NS.A = NS.W / NS.H;
 }
 function nsUpdate() {
   NS.raf = 0;

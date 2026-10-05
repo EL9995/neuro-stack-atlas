@@ -28,11 +28,18 @@ document.addEventListener("click", e => {
   const act = el.dataset.act, st = active();
   if (act === "toggle-deep") { App.showDeep = !App.showDeep; lsSet("nsa-showDeep", App.showDeep); render(current, true); }
   else if (act === "add-supp") addToStack(el.dataset.sid, el.dataset.stay);
+  else if (act === "sup-tab") {
+    const i = el.dataset.i, tab = document.getElementById("sup-tab-" + i), open = tab.getAttribute("aria-selected") !== "true";
+    document.querySelectorAll(".sup-tab").forEach(t => t.setAttribute("aria-selected", String(open && t === tab)));
+    document.querySelectorAll(".sup-panel").forEach(p => { p.hidden = !(open && p.id === "sup-panel-" + i); });
+    if (!open || el.classList.contains("sup-less")) tab.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
   else if (act === "remove") { st.items = st.items.filter(i => i.id !== el.dataset.item); touch(st); refreshBuilder(); }
   else if (act === "tpl") {
     const t = TEMPLATES[+el.dataset.i];
     const ns = makeStack(t.name, t.items);
-    App.stacks.push(ns); App.activeId = ns.id; saveState(); render("stack", true);
+    App.stacks.push(ns); App.activeId = ns.id; saveState();
+    if (current === "stack") render("stack", true); else go("stack");   // from the home page: also update the address
     toast(`Created “${esc(t.name)}”.`);
   }
   else if (act === "new-stack") {

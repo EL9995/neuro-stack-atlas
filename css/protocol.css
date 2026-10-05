@@ -1,0 +1,63 @@
+/* "Before you start" intro line, and the "Is it safe?" scroll scene on the home page. */
+
+.notice .notice-intro { color: var(--ink); font-size: 1rem; max-width: 64ch; margin-top: -4px; }
+
+.pr { margin-top: 56px; display: grid; gap: 4px; scroll-margin-top: 90px; }
+.pr-head { display: grid; gap: 6px; }
+.pr .ns { margin-top: 18px; }
+
+/* Same scrolling per caption as the first scene: that one scrolls (1120svh - 2 x stage) over 10 captions,
+   so 14 captions need 1.4x that distance; section height = distance + stage height. */
+.ns.pc { height: calc(1568vh - 1.8 * clamp(440px, calc(100vh - var(--chrome-h, 62px) - 24px), 780px)); height: calc(1568svh - 1.8 * clamp(440px, calc(100svh - var(--chrome-h, 62px) - 24px), 780px)); }
+/* Disclaimer at the top of the scene */
+.pc-note { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 3; font-size: 0.78rem; color: #8794b0; white-space: nowrap; pointer-events: none; }
+.pc-svg { position: absolute; left: 0; right: 0; top: 0; bottom: 150px; width: 100%; height: calc(100% - 150px); display: block; padding: 56px 40px 0; box-sizing: border-box; overflow: visible; }
+
+.pc-lab { fill: #b8c7e6; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px; transition: fill .3s; }
+.pc-lab.hot { fill: #7fe6ff; }
+.pc-chip { fill: #e9fbff; font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
+.pc-loopt { fill: #e8edf7; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-weight: 600; font-size: 17px; }
+
+.pc-gear path { fill: var(--gear, #3a4a73); transition: fill .4s; }
+.pc-gear { transform-box: fill-box; transform-origin: center; }
+.pc-gear.run { animation: pc-spin 5s linear infinite; }
+.pc-gear.pc-rev.run { animation-direction: reverse; animation-duration: 3.4s; }
+@keyframes pc-spin { to { transform: rotate(360deg); } }
+
+.pc-on { fill: #1b2a52; stroke: #34508f; stroke-width: 1.5; }
+.pc-off { fill: none; stroke: #34508f; stroke-width: 1.5; stroke-dasharray: 3 3; }
+[id^="pc-day"].past .pc-on { fill: #ffb340; fill-opacity: .45; stroke: #ffb340; }
+[id^="pc-day"].past .pc-off { stroke: #6fe0c8; }
+[id^="pc-day"].now rect { stroke: #e9fbff; stroke-width: 2.5; }
+.pc-offt { fill: #8794b0; font-family: 'IBM Plex Mono', monospace; font-size: 9px; }
+
+.pc-chap i { background: #7fe6ff; }
+.pc-chap.on i { box-shadow: 0 0 8px #7fe6ff; }
+
+.six > .eyebrow { margin-bottom: -8px; }
+
+@media (prefers-reduced-motion: reduce) { .pc-gear.run { animation: none; } }
+
+/* Title card: the six neurotransmitters as cards (replaced the eye art; heroArt() is kept in js/home.js) */
+.tc-six { display: grid; gap: 10px; align-self: center; }
+.tc-six-label { font-family: var(--f-mono); font-size: 0.72rem; letter-spacing: .08em; text-transform: uppercase; color: #8794b0; }
+.tc-six-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.tc-nt { all: unset; box-sizing: border-box; cursor: pointer; display: grid; gap: 3px; align-content: start; padding: 13px 14px 14px; border-radius: 12px;
+  background: rgba(255,255,255,.035); border: 1px solid #22305a; border-left: 3px solid var(--hue);
+  transition: border-color .15s, background .15s, transform .15s; animation: tc-nt-in .45s ease backwards; animation-delay: calc(var(--i) * .07s + .1s); }
+.tc-nt:hover { border-color: var(--hue); background: rgba(255,255,255,.06); transform: translateY(-2px); }
+.tc-nt:focus-visible { outline: 2px solid var(--hue); outline-offset: 2px; }
+.tc-nt-word { font-family: var(--f-display); font-weight: 600; font-size: 1.3rem; letter-spacing: -0.02em; color: #fff; }
+.tc-nt-name { font-family: var(--f-mono); font-size: 0.74rem; color: var(--hue); }
+.tc-nt-job { font-size: 0.84rem; line-height: 1.35; color: #9fb0d0; }
+@keyframes tc-nt-in { from { opacity: 0; transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) { .tc-nt { animation: none; } }
+.tc-six { scroll-margin-top: 90px; }
+
+/* "Ready to get started?" closing panel: same dark look as the title card */
+.go { margin-top: 56px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px 28px; padding: clamp(24px, 4vw, 40px); border-radius: 20px; color: #e8edf7;
+  background: #0a1226 radial-gradient(60% 120% at 90% 50%, rgba(79,125,255,.26), transparent 70%); border: 1px solid #1a2540; }
+.go-copy { display: grid; gap: 8px; max-width: 52ch; }
+.go h2 { font-size: clamp(1.6rem, 3.2vw, 2.1rem); font-weight: 600; letter-spacing: -0.025em; color: #fff; }
+.go p { color: #c9d4ea; font-size: 1.02rem; }
+.go-cta { display: flex; flex-wrap: wrap; gap: 10px; }

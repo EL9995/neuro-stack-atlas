@@ -4,7 +4,8 @@
 body.is-home .wrap { max-width: 1180px; }
 .tc-note { margin-top: 12px; }
 .tc-search { margin-top: 20px; }
-.ns { display: block; position: relative; margin-top: 28px; height: 560vh; height: 560svh; }
+/* Scroll distance = section height - stage height. Story: twice the original 560vh distance, so it plays at half speed. */
+.ns { display: block; position: relative; margin-top: 28px; height: calc(1120vh - clamp(440px, calc(100vh - var(--chrome-h, 62px) - 24px), 780px)); height: calc(1120svh - clamp(440px, calc(100svh - var(--chrome-h, 62px) - 24px), 780px)); }
 .ns-stage { position: sticky; top: calc(var(--chrome-h, 62px) + 10px); height: calc(100vh - var(--chrome-h, 62px) - 24px); height: calc(100svh - var(--chrome-h, 62px) - 24px); min-height: 440px; max-height: 780px; border-radius: 20px; overflow: hidden; background: #060a14; border: 1px solid #1a2540; color: #e8edf7; }
 .ns-world { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .ns-asm { position: absolute; left: 0; right: 0; top: 0; bottom: 150px; width: 100%; height: calc(100% - 150px); display: block; background: #060a14; opacity: 0; visibility: hidden; pointer-events: none; }
@@ -55,3 +56,44 @@ body.is-home .wrap { max-width: 1180px; }
 .ps-stage.narrow .ps-mod, .ps-stage.narrow .ps-supkey { display: none; }
 .ps-stage.narrow .ps-legend .ns-chip { font-size: 0.7rem; padding: 3px 8px; }
 @media (prefers-reduced-motion: reduce) { .tc-scroll span { animation: none; } }
+
+/* Neurotransmitter pages: the assembly line uses the full page width, like the home scenes */
+.stack > .ns.ps { width: min(1140px, calc(100vw - 40px)); margin-left: calc(50% - min(570px, 50vw - 20px)); margin-top: 0; }
+.ps-intro { position: absolute; inset: 0; z-index: 4; display: grid; align-content: center; gap: 14px; padding: clamp(28px, 5vw, 64px);
+  background: linear-gradient(90deg, rgba(6,10,20,.96) 0%, rgba(6,10,20,.88) 60%, rgba(6,10,20,.7) 100%); color: #e8edf7; }
+.ps-intro .eyebrow { color: #8794b0; }
+.ps-intro h1 { font-size: clamp(2.3rem, 5.4vw, 3.6rem); font-weight: 800; letter-spacing: -0.02em; color: #fff; }
+.ps-intro h1 em { font-style: normal; }
+.ps-intro-lede { max-width: 58ch; font-size: 1.1rem; color: #b8c7e6; }
+.ps-intro-bal { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 860px; }
+.ps-intro-bal div { display: grid; gap: 6px; padding: 14px 18px; border-radius: 12px; background: rgba(16,26,54,.85); border: 1px solid #22305a; }
+.ps-intro-bal h3 { font-size: 1rem; color: #fff; }
+.ps-intro-bal ul { margin: 0; padding-left: 18px; color: #b8c7e6; font-size: 0.95rem; }
+@media (max-width: 640px) { .ps-intro-bal { grid-template-columns: 1fr; } }
+
+/* Modulator cards: compact two-line cards (name; role · evidence) */
+.ps-mod { width: 196px; padding: 7px 11px; gap: 2px; }
+.ps-mod b { font-size: 0.86rem; }
+.ps-mod small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ps-mod small .ev { font-size: 0.66rem; }
+
+/* End of the scene: clickable chain + info card */
+.ps-stage.explore .ps-tag[data-ps] { pointer-events: auto; cursor: pointer; }
+.ps-stage.explore .ps-tag[data-ps]:hover, .ps-stage.explore .ps-tag[data-ps]:focus-visible, .ps-tag.sel { border-color: #7fe6ff; box-shadow: 0 0 0 2px rgba(127,230,255,.25); outline: none; }
+.ps-hit { border-radius: 14px; border: 2px solid transparent; }
+.ps-stage.explore .ps-hit:hover, .ps-hit.sel { background: rgba(127,230,255,.06); }
+.ps-hint { margin-top: 12px; display: inline-flex; align-items: center; gap: 8px; font-size: 0.92rem; color: #7fe6ff; }
+.ps-hint::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #7fe6ff; box-shadow: 0 0 8px #7fe6ff; }
+.ps-pop { position: absolute; z-index: 5; top: 64px; right: 28px; width: min(360px, calc(100% - 56px)); max-height: calc(100% - 120px); overflow: auto; display: grid; gap: 8px; align-content: start;
+  padding: 16px 18px 18px; border-radius: 14px; background: rgba(13,20,36,.97); border: 1px solid #2a3a63; box-shadow: 0 18px 44px rgba(0,0,0,.5); color: #e8edf7; }
+.ps-pop h3 { font-size: 1.2rem; color: #fff; padding-right: 24px; }
+.ps-pop p, .ps-pop li { font-size: 0.92rem; color: #c9d4ea; }
+.ps-pop ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.ps-pop b { color: #fff; }
+.ps-pop-kind { font-family: var(--f-mono); font-size: 0.7rem; letter-spacing: .06em; text-transform: uppercase; color: #7fe6ff; }
+.ps-pop-sub { margin-top: 4px; font-family: var(--f-mono); font-size: 0.7rem !important; letter-spacing: .05em; text-transform: uppercase; color: #8794b0 !important; }
+.ps-pop-x { all: unset; cursor: pointer; position: absolute; top: 10px; right: 12px; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 8px; font-size: 1.2rem; color: #8794b0; }
+.ps-pop-x:hover { color: #fff; background: rgba(255,255,255,.06); }
+.ps-pop-more { justify-self: start; margin-top: 4px; color: #7fe6ff; font-size: 0.9rem; text-decoration: none; }
+.ps-pop-more:hover { text-decoration: underline; }
+.ps-pop.left { right: auto; left: 28px; }

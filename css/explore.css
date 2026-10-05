@@ -163,3 +163,34 @@ a.pill:hover, button.pill:hover { border-color: var(--nt); }
 
 footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.85rem; max-width: 70ch; }
 
+
+/* Enzyme pages */
+.ez-reactions { display: grid; gap: 12px; }
+.ez-part { font-family: var(--f-mono); font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; align-self: center; }
+.ez-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.ez-group { display: grid; gap: 8px; align-content: start; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.ez-group h3 { font-size: 1rem; }
+.ez-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.note-box p + p { margin-top: 8px; }
+.list-card p { font-size: 0.97rem; }
+/* Enzyme names in "How your body makes it" open their page */
+a.enz { color: var(--ink); text-decoration: underline dotted; text-underline-offset: 3px; cursor: pointer; }
+a.enz:hover { color: var(--nt); }
+
+/* Supplement blocks on neurotransmitter pages */
+.sup-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 12px; margin-top: 14px; scroll-margin-top: 140px; }
+@media (max-width: 720px) { .sup-tabs { grid-template-columns: 1fr; grid-auto-rows: auto; } }
+.sup-tab { all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-rows: auto auto 1fr; gap: 6px; padding: 16px 18px; border-radius: 12px;
+  background: var(--surface); border: 1px solid var(--line); box-shadow: inset 0 3px 0 var(--nt); transition: border-color .15s, background-color .15s; }
+.sup-tab:hover { border-color: var(--nt); }
+.sup-tab:focus-visible { outline: 2px solid var(--nt); outline-offset: 2px; }
+.sup-tab[aria-selected="true"] { border-color: var(--nt); background: color-mix(in srgb, var(--nt) 7%, var(--surface)); box-shadow: inset 0 3px 0 var(--nt), inset 0 0 0 1px var(--nt); }
+.sup-tab-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.sup-tab-top b { font-family: var(--f-display); font-size: 1.25rem; }
+.sup-count { font-family: var(--f-mono); font-size: 0.8rem; color: var(--nt); }
+.sup-tab-sub { color: var(--muted); font-size: 0.88rem; }
+.sup-tab-names { align-self: end; font-size: 0.82rem; color: var(--ink); opacity: .8; }
+.sup-panel { display: grid; margin-top: 14px; }
+.sup-panel[hidden] { display: none; }
+.sup-less { all: unset; cursor: pointer; justify-self: center; margin-top: 10px; padding: 6px 14px; border-radius: 999px; font-size: 0.88rem; color: var(--muted); border: 1px solid var(--line); }
+.sup-less:hover { color: var(--ink); border-color: var(--ink); }

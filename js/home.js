@@ -1,3 +1,6 @@
+// Wording from content/*.js: escaped, with **bold** and [[glossary term]] tooltips.
+const txt = s => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\[\[(.+?)\]\]/g, (_, t) => gloss(t));
+
 // ---------------------------------------------------------------------------
 // VIEWS: EXPLORE
 // ---------------------------------------------------------------------------
@@ -30,7 +33,8 @@ function heroArt() {
 }
 
 const JR = { n: 0, timers: [], io: null, modName: "", modNote: "" };
-const CYC = { "52": [i => i % 7 < 5, "Weekdays on, weekends off."], eod: [i => i % 2 === 0, "A rest day between every dose."], daily: [() => true, "No built-in breaks."] };
+const CYC_TEXT = LANDING.schedulePicker.schedules;   // schedule picker: not on the home page right now
+const CYC = { "52": [i => i % 7 < 5, CYC_TEXT.fiveTwo.note], eod: [i => i % 2 === 0, CYC_TEXT.everyOther.note], daily: [() => true, CYC_TEXT.daily.note] };
 function cycReadout(k) { const n = Array.from({ length: 14 }, (_, i) => CYC[k][0](i)).filter(Boolean).length; return `${n} dose days in 14, ${14 - n} rest days. ${CYC[k][1]}`; }
 function cycDaysHtml(k) {
   const f = CYC[k][0];
@@ -128,92 +132,55 @@ function jrInit() {
   JR.io.observe(document.getElementById("jr-stage"));
 }
 
-function cyclingHtml() {
-  return `
-  <section class="cyc" id="cycling" aria-labelledby="cyc-h">
-    <h2 class="sec" id="cyc-h">Cycling: why breaks matter</h2>
-    <div class="cyc-grid">
-      <div class="cyc-copy">
-        <p>When a receptor gets flooded day after day, your cells respond by removing receptors or making them less sensitive. You feel that as ${gloss("downregulation")}: the same dose does less, and stopping feels worse than before you started.</p>
-        <div class="cyc-risk">
-          <div><b>Higher risk</b><p>Things that act directly, like Mucuna (L-DOPA), stimulants, PEA and Huperzine A.</p></div>
-          <div><b>Lower risk</b><p>Precursors like L-Tyrosine, because your body still controls how much gets made.</p></div>
-        </div>
-        <p><b>What actually helps:</b> cycling (for example 5 days on, 2 off), the lowest dose that works, not stacking several things on the same target, and sleep and exercise. No supplement has been shown to reset receptors on its own.</p>
-        <p class="cyc-caveat">Cycling is common practice, not a proven protocol. Direct evidence for most supplements is limited, so treat a schedule as a starting point.</p>
-        <div><button class="btn ghost" data-go="stack">Check your stack for breaks</button></div>
-      </div>
-      <div class="cyc-plan">
-        <h3>Try a schedule</h3>
-        <div class="cyc-opts" role="group" aria-label="Schedule">
-          <button class="pill chip" data-cyc="52" aria-pressed="true">5 on, 2 off</button>
-          <button class="pill chip" data-cyc="eod" aria-pressed="false">Every other day</button>
-          <button class="pill chip" data-cyc="daily" aria-pressed="false">Every day</button>
-        </div>
-        <div class="cyc-days" id="cyc-days">${cycDaysHtml("52")}</div>
-        <p class="cyc-read" id="cyc-read" role="status">${cycReadout("52")}</p>
-      </div>
-    </div>
-  </section>`;
-}
-
 function viewHome() {
+  const H = LANDING.hero, N = LANDING.notice, G = LANDING.getStarted;
   return `
   <section class="tc" aria-labelledby="tc-h">
     <div class="tc-copy">
-      <h1 id="tc-h">Neuro Stack Atlas</h1>
-      <p class="tc-tag">Supplements, mapped by brain chemical.</p>
-      <p class="tc-note">Educational only, not medical advice. <button class="tc-link" data-scroll="notice">Read before you start</button></p>
+      <h1 id="tc-h">${txt(H.title)}</h1>
+      <p class="tc-tag">${txt(H.tagline)}</p>
+      <p class="tc-note">${txt(H.note)} <button class="tc-link" data-scroll="notice">${txt(H.noteLink)}</button></p>
       <div class="tc-search" id="hsearch" role="search">
-        <label for="hq" class="sr">Search supplements and brain chemicals</label>
-        <input id="hq" type="search" placeholder="Search a supplement or brain chemical" autocomplete="off">
+        <label for="hq" class="sr">${txt(H.searchLabel)}</label>
+        <input id="hq" type="search" placeholder="${esc(H.searchPlaceholder)}" autocomplete="off">
         <div class="tc-res" id="hq-results" hidden></div>
       </div>
     </div>
-    <div class="tc-art">${heroArt()}</div>
-    <button class="tc-scroll" data-scroll="ns" type="button">Scroll down to explore<span aria-hidden="true">&#8595;</span></button>
+    <div class="tc-six" id="six">
+      <span class="tc-six-label">${txt(H.gridLabel)}</span>
+      <div class="tc-six-grid">
+        ${NTS.map((n, i) => `
+        <button class="tc-nt" style="--hue:${PS_HUE[n.id]};--i:${i}" data-go="${n.id}">
+          <span class="tc-nt-word">${esc(n.word)}</span>
+          <span class="tc-nt-name">${esc(n.name)}${n.abbr !== n.name ? ` · ${esc(n.abbr)}` : ""}</span>
+          <span class="tc-nt-job">${esc(n.fn.split(". ")[0])}.</span>
+        </button>`).join("")}
+      </div>
+      <!-- Reserved: a row of links to the Stack builder, Tracker and games can go here later. -->
+    </div>
+    <button class="tc-scroll" data-scroll="ns" type="button">${txt(H.scrollCue)}<span aria-hidden="true">&#8595;</span></button>
+  </section>
+
+  <section class="notice" id="notice">
+    <h2 class="sec">${txt(N.heading)}</h2>
+    <p class="notice-intro">${txt(N.intro)}</p>
+    <div class="notice-grid">
+      ${N.items.map(([title, body]) => `<div><b>${txt(title)}</b><p>${txt(body)}</p></div>`).join("\n      ")}
+    </div>
   </section>
 
   ${nstoryHtml()}
 
-  ${pathwayHtml()}
+  ${protocolHtml()}
 
-  <section class="six" id="six">
-    <h2 class="sec">Start with what you want to change</h2>
-    <p class="sec-intro">Each brain chemical is tied to a job. Pick one to see how your body makes it and what feeds it.</p>
-    <div class="nt-grid">
-      ${NTS.map(n => `
-      <button class="nt-card" style="--nt:${ntColor(n.id)}" data-go="${n.id}">
-        <span class="nt-big">${esc(n.word)}</span>
-        <span class="nt-sub">${esc(n.name)}, ${esc(n.abbr)}</span>
-        <p>${esc(n.fn.split(". ")[0])}.</p>
-      </button>`).join("")}
+  <section class="go" id="get-started" aria-labelledby="go-h">
+    <div class="go-copy">
+      <h2 id="go-h">${txt(G.heading)}</h2>
+      <p>${txt(G.intro)}</p>
     </div>
-  
-    <article class="fcard">
-      <div class="fcard-head">
-        <span class="nt-big">Recovery &amp; foundations</span>
-        <span class="nt-sub">Supports all six</span>
-        <p>These don't push any one neurotransmitter. They support the system everything else runs on: membranes, energy, and the nutrients enzymes need.</p>
-      </div>
-      <div class="found-list">
-        ${FOUNDATIONS.map(([id, tag, why]) => `
-        <button class="found-item" data-go="${id}" title="${esc(why)}">
-          <b>${esc(byId[id].name.replace(/ \(.*\)$/, ""))}</b><span>${esc(tag)}</span>
-        </button>`).join("")}
-      </div>
-    </article>
-  </section>
-
-  ${cyclingHtml()}
-
-  <section class="notice" id="notice">
-    <h2 class="sec">Before you start</h2>
-    <div class="notice-grid">
-      <div><b>Learning, not advice</b><p>This atlas explains research. It doesn't diagnose or recommend.</p></div>
-      <div><b>Doses are ranges</b><p>Numbers are typical amounts from research and common use, not instructions.</p></div>
-      <div><b>On medication?</b><p>Check "Watch out for" on each supplement, and ask a doctor or pharmacist first.</p></div>
+    <div class="go-cta">
+      <button class="tc-btn" data-go="stack" type="button">${txt(G.builderButton)}</button>
+      <button class="tc-ghost" data-go="track" type="button">${txt(G.trackerButton)}</button>
     </div>
   </section>`;
 }
-

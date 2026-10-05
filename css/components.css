@@ -55,3 +55,6 @@ textarea { width: 100%; resize: vertical; }
 .explainer h3 { font-size: 1.15rem; }
 .explainer p { max-width: 68ch; font-size: 0.95rem; }
 
+.tier-ix { color: var(--sev-moderate); border-color: color-mix(in srgb, var(--sev-moderate) 50%, var(--line)); }
+.sups-note .tier { vertical-align: 1px; }
+.tier.term { text-decoration: none; cursor: help; }

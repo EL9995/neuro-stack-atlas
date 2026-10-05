@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------------
 const tip = document.getElementById("tip");
 function showTip(el) {
-  const g = GLOSS[el.dataset.term];
+  const g = el.dataset.tip ? [el.dataset.tipTitle || "", el.dataset.tip] : GLOSS[el.dataset.term];
   if (!g) return;
   tip.innerHTML = `<b>${esc(g[0])}</b>${esc(g[1])}`;
   tip.hidden = false;
