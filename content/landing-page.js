@@ -41,8 +41,8 @@ const LANDING = {
   // "Is it safe?": heading above the Foundation / Cycles / Recovery scroll scene.
   // The scene's own captions are in scene-captions.js (PROTOCOL_SCENE).
   safety: {
-    heading: "Is it safe?",                                                     // DRAFT
-    intro: "It depends on how you start. Three ideas to understand before you reach for a single neurotransmitter.",   // DRAFT
+    heading: "Start smart",                                                     // DRAFT
+    intro: "Three ideas to understand before you reach for a single neurotransmitter.",   // DRAFT
   },
 
   // Not shown on the home page right now: the "Try a schedule" picker that
