@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hero art concepts</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;700&family=IBM+Plex+Sans:wght@400;600;700&display=swap">
+<style>
+  :root { --ink: #e8edf7; --muted: #8794b0; }
+  body { margin: 0; padding: 28px; background: #060a14; color: var(--ink); font: 15px 'IBM Plex Sans', system-ui, sans-serif; }
+  h1 { font-size: 22px; margin: 0 0 4px; } .lede { color: var(--muted); margin: 0 0 22px; }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; max-width: 1200px; }
+  .card { border-radius: 18px; border: 1px solid #1a2540; background: radial-gradient(120% 90% at 70% 40%, #13214d 0%, #0a1226 55%, #070c1a 100%); padding: 18px 22px 20px; }
+  .card svg { width: 100%; max-width: 420px; display: block; margin: 0 auto; }
+  .card h2 { font-size: 18px; margin: 6px 0 2px; } .card p { color: #b8c7e6; margin: 0; font-size: 14px; }
+  .tag { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #7fe6ff; letter-spacing: .06em; }
+  text.nt { font-family: 'IBM Plex Mono', monospace; font-weight: 700; fill: #0a1226; text-anchor: middle; }
+  .pulse { animation: dash 2.4s linear infinite; }
+  @keyframes dash { to { stroke-dashoffset: -60; } }
+  .twinkle { animation: tw 1.8s ease-in-out infinite alternate; }
+  @keyframes tw { from { opacity: .25; } to { opacity: 1; } }
+</style></head><body>
+<h1>Hero art concepts, round 2: the brain</h1>
+<p class="lede">Each keeps the six neurotransmitter dots (they stay clickable on the real site). All are animated lightly; screenshots catch one frame.</p>
+<div class="grid" id="grid"></div>
+<script>
+const NT = [["DA", "#ffb340"], ["NE", "#ff6961"], ["5-HT", "#c77dff"], ["GABA", "#40e0d0"], ["Glu", "#ff6b8b"], ["ACh", "#4da3ff"]];
+const node = (x, y, [t, c], r = 17) => `<circle cx="${x}" cy="${y}" r="${r + 8}" fill="${c}" opacity=".16"/><circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>
+  <text class="nt" x="${x}" y="${y + 3.6}" font-size="${t.length > 3 ? 8.4 : 10}">${t}</text>`;
+const defs = `<defs>
+  <radialGradient id="soma" cx="40%" cy="38%" r="70%"><stop offset="0" stop-color="#2d4585"/><stop offset="1" stop-color="#101a38"/></radialGradient>
+  <radialGradient id="glow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#7fe6ff" stop-opacity=".55"/><stop offset="1" stop-color="#7fe6ff" stop-opacity="0"/></radialGradient>
+  <radialGradient id="bglow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#4f7dff" stop-opacity=".45"/><stop offset="1" stop-color="#4f7dff" stop-opacity="0"/></radialGradient>
+  <linearGradient id="capA" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#6b92ff"/><stop offset="1" stop-color="#2e55e6"/></linearGradient>
+</defs>`;
+const spark = (x, y, s = 1) => `<path class="twinkle" d="M${x} ${y - 9 * s} L${x + 2.2 * s} ${y - 2.2 * s} L${x + 9 * s} ${y} L${x + 2.2 * s} ${y + 2.2 * s} L${x} ${y + 9 * s} L${x - 2.2 * s} ${y + 2.2 * s} L${x - 9 * s} ${y} L${x - 2.2 * s} ${y - 2.2 * s}Z" fill="#e9fbff"/>`;
+
+// A. Synapse spark: a sending terminal fires; six neurotransmitters cross the gap to a receiving cell.
+function conceptA() {
+  const c = [212, 212], pts = NT.map((_, i) => { const s = (i - 2.5) * 50, f = i % 2 ? 16 : -16; return [c[0] + s * .707 + f * .707, c[1] - s * .707 + f * .707]; });
+  const paths = pts.map(([x, y]) => `<path d="M140 150 Q${x - 24} ${y - 24} ${x} ${y} T 268 268" fill="none" stroke="#7fe6ff" stroke-opacity=".22" stroke-dasharray="2 6"/>`).join("");
+  const cups = [[232, 318], [250, 290], [278, 262], [306, 244], [334, 236]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="7" fill="#26345a" stroke="#7fe6ff" stroke-width="1.5"/>`).join("");
+  return `<svg viewBox="0 0 400 400">${defs}
+    <circle cx="200" cy="200" r="190" fill="url(#bglow)" opacity=".6"/>
+    <path d="M22 22 Q50 50 72 80" stroke="#2a3a66" stroke-width="14" stroke-linecap="round" fill="none"/>
+    <path class="pulse" d="M22 22 Q50 50 72 80" stroke="#7fe6ff" stroke-width="3" stroke-dasharray="12 48" stroke-linecap="round" fill="none"/>
+    <ellipse cx="108" cy="116" rx="62" ry="48" transform="rotate(40 108 116)" fill="url(#soma)" stroke="#34508f" stroke-width="2"/>
+    ${[[92, 104], [118, 96], [100, 132], [128, 126]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="10" fill="#ffb340" fill-opacity=".12" stroke="#ffb340" stroke-opacity=".7"/>`).join("")}
+    <ellipse cx="318" cy="318" rx="88" ry="66" transform="rotate(40 318 318)" fill="url(#soma)" stroke="#34508f" stroke-width="2"/>
+    ${cups}
+    ${paths}
+    <circle cx="212" cy="212" r="100" fill="url(#glow)" opacity=".3"/>
+    ${spark(156, 160, 1.3)}
+    ${pts.map((p, i) => node(p[0], p[1], NT[i])).join("")}
+  </svg>`;
+}
+
+// B. Capsule burst: a supplement capsule opens and its contents fire out as the six.
+function conceptB() {
+  const ang = [15, 55, 95, 195, 235, 275], R = 148;
+  const rays = ang.map(a => { const r = a * Math.PI / 180, x = 200 + R * Math.cos(r), y = 200 + R * Math.sin(r);
+    const tx = 200 + (R + 30) * Math.cos(r), ty = 200 + (R + 30) * Math.sin(r);
+    const tw = [-22, 22].map(d => { const rr = r + d * Math.PI / 180; return `<line x1="${x}" y1="${y}" x2="${(x + 26 * Math.cos(rr)).toFixed(1)}" y2="${(y + 26 * Math.sin(rr)).toFixed(1)}" stroke="#34508f" stroke-width="2.5" stroke-linecap="round"/>`; }).join("");
+    return `<line class="pulse" x1="${200 + 34 * Math.cos(r)}" y1="${200 + 34 * Math.sin(r)}" x2="${x}" y2="${y}" stroke="#7fe6ff" stroke-width="2" stroke-dasharray="6 9" stroke-opacity=".7"/>${tw}`; }).join("");
+  const nodes = ang.map((a, i) => { const r = a * Math.PI / 180; return node(200 + R * Math.cos(r), 200 + R * Math.sin(r), NT[i]); }).join("");
+  const dots = Array.from({ length: 16 }, (_, i) => { const a = (i * 47) % 360 * Math.PI / 180, d = 40 + (i * 23) % 70; return `<circle cx="${(200 + d * Math.cos(a)).toFixed(1)}" cy="${(200 + d * Math.sin(a)).toFixed(1)}" r="${1.6 + (i % 3)}" fill="#e9fbff" opacity="${.3 + (i % 4) * .15}"/>`; }).join("");
+  return `<svg viewBox="0 0 400 400">${defs}
+    <circle cx="200" cy="200" r="190" fill="url(#bglow)" opacity=".6"/>
+    <circle cx="200" cy="200" r="110" fill="url(#glow)" opacity=".55"/>
+    ${rays}${dots}
+    <g transform="rotate(-35 200 200)">
+      <path d="M190 172 H128 a28 28 0 0 0 0 56 H190 Z" fill="url(#capA)"/>
+      <path d="M210 172 H272 a28 28 0 0 1 0 56 H210 Z" fill="#7fe6ff" fill-opacity=".18" stroke="#7fe6ff" stroke-width="2"/>
+      <path d="M118 186 H170" stroke="#fff" stroke-opacity=".35" stroke-width="4" stroke-linecap="round"/>
+    </g>
+    ${spark(200, 200, 1.6)}
+    ${nodes}
+  </svg>`;
+}
+
+// C. Neuron tree: one neuron's branches end in the six; signals run out along the branches.
+function conceptC() {
+  const soma = [118, 262], forks = [[150, 160], [245, 196], [222, 305]];
+  const tips = [[95, 78], [212, 66], [330, 118], [346, 238], [318, 338], [190, 366]];
+  const br = forks.flatMap((f, k) => [tips[k * 2], tips[k * 2 + 1]].map(t => `M${soma[0]} ${soma[1]} Q${f[0]} ${f[1]} ${t[0]} ${t[1]}`));
+  return `<svg viewBox="0 0 400 400">${defs}
+    <circle cx="200" cy="200" r="190" fill="url(#bglow)" opacity=".55"/>
+    ${br.map(d => `<path d="${d}" stroke="#2a3a66" stroke-width="9" stroke-linecap="round" fill="none"/>`).join("")}
+    ${br.map((d, i) => `<path class="pulse" d="${d}" stroke="#7fe6ff" stroke-width="2.5" stroke-dasharray="10 50" stroke-dashoffset="${i * 13}" stroke-linecap="round" fill="none"/>`).join("")}
+    <path d="M90 300 Q60 340 30 392" stroke="#2a3a66" stroke-width="12" stroke-linecap="round" fill="none"/>
+    <circle cx="${soma[0]}" cy="${soma[1]}" r="64" fill="url(#glow)" opacity=".55"/>
+    <circle cx="${soma[0]}" cy="${soma[1]}" r="38" fill="url(#soma)" stroke="#34508f" stroke-width="2"/>
+    <circle cx="${soma[0] - 6}" cy="${soma[1] - 4}" r="13" fill="#0f1a38" stroke="#2c4478" stroke-width="2"/>
+    ${tips.map((t, i) => node(t[0], t[1], NT[i])).join("")}
+  </svg>`;
+}
+
+// D. Hex synapse: the six sit on a chemistry ring; every edge is a tiny synapse, and a pulse travels around.
+function conceptD() {
+  const V = NT.map((_, k) => { const a = (-90 + 60 * k) * Math.PI / 180; return [200 + 140 * Math.cos(a), 200 + 140 * Math.sin(a)]; });
+  const edges = V.map((a, k) => { const b = V[(k + 1) % 6], m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], ux = (b[0] - a[0]) / 140, uy = (b[1] - a[1]) / 140;
+    return `<line x1="${a[0]}" y1="${a[1]}" x2="${m[0] - ux * 9}" y2="${m[1] - uy * 9}" stroke="#4c6aa8" stroke-width="3"/>
+      <line x1="${m[0] + ux * 9}" y1="${m[1] + uy * 9}" x2="${b[0]}" y2="${b[1]}" stroke="#4c6aa8" stroke-width="3"/>
+      <circle class="twinkle" cx="${m[0]}" cy="${m[1]}" r="3" fill="#7fe6ff" style="animation-delay:${k * .3}s"/>`; }).join("");
+  const ring = V.map((p, k) => `${k ? "L" : "M"}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ") + " Z";
+  const inner = NT.map((_, k) => { const a = (-90 + 60 * k) * Math.PI / 180; return `${k ? "L" : "M"}${(200 + 78 * Math.cos(a)).toFixed(1)} ${(200 + 78 * Math.sin(a)).toFixed(1)}`; }).join(" ") + " Z";
+  return `<svg viewBox="0 0 400 400">${defs}
+    <circle cx="200" cy="200" r="190" fill="url(#bglow)" opacity=".6"/>
+    <path d="${inner}" fill="none" stroke="#7fe6ff" stroke-opacity=".18" stroke-dasharray="3 6"/>
+    ${V.map(p => `<line x1="200" y1="200" x2="${p[0]}" y2="${p[1]}" stroke="#7fe6ff" stroke-opacity=".12"/>`).join("")}
+    ${edges}
+    <circle r="6" fill="#e9fbff"><animateMotion dur="6s" repeatCount="indefinite" path="${ring}"/></circle>
+    <circle cx="200" cy="200" r="60" fill="url(#glow)" opacity=".7"/>
+    <g transform="rotate(-35 200 200)">
+      <path d="M197 186 H170 a14 14 0 0 0 0 28 H197 Z" fill="url(#capA)"/>
+      <path d="M203 186 H230 a14 14 0 0 1 0 28 H203 Z" fill="#7fe6ff" fill-opacity=".2" stroke="#7fe6ff" stroke-width="1.6"/>
+    </g>
+    ${V.map((p, i) => node(p[0], p[1], NT[i])).join("")}
+  </svg>`;
+}
+
+// Shared brain outline (side view), roughly 300 x 230 inside the 400 box.
+const BRAIN = "M70 205 C55 148 95 95 150 90 C172 58 232 54 256 80 C292 70 336 96 340 136 C366 160 360 210 330 226 C324 254 290 268 262 262 C246 284 210 290 194 272 C170 290 120 286 104 262 C80 260 64 238 70 205 Z";
+const SULCI = ["M150 92 C160 130 140 160 150 195", "M215 70 C205 110 230 140 215 180", "M290 88 C275 120 300 150 285 190", "M100 215 C150 200 205 215 250 200", "M120 140 C140 150 160 140 180 150", "M240 150 C260 160 285 150 320 165"];
+const brain = (op = 1) => `<path d="${BRAIN}" fill="url(#soma)" opacity="${.85 * op}"/>
+  ${SULCI.map(d => `<path d="${d}" fill="none" stroke="#3a5aa8" stroke-width="2" stroke-linecap="round" opacity="${.7 * op}"/>`).join("")}
+  <path d="M240 262 C246 290 244 315 236 340" stroke="#2a3a66" stroke-width="14" stroke-linecap="round" fill="none" opacity="${op}"/>
+  <ellipse cx="296" cy="262" rx="36" ry="22" fill="#16254a" stroke="#34508f" stroke-width="1.5" opacity="${op}"/>
+  <path d="${BRAIN}" fill="none" stroke="#7fe6ff" stroke-width="2.2" stroke-opacity=".75"/>`;
+const capsule = (x, y, s = 1, rot = -35) => `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${s})">
+  <path d="M-2 -14 H-26 a14 14 0 0 0 0 28 H-2 Z" fill="url(#capA)"/>
+  <path d="M2 -14 H26 a14 14 0 0 1 0 28 H2 Z" fill="#7fe6ff" fill-opacity=".2" stroke="#7fe6ff" stroke-width="1.6"/></g>`;
+const lbl = (x, y, t, anchor = "middle") => `<text x="${x}" y="${y}" text-anchor="${anchor}" font-family="IBM Plex Mono, monospace" font-size="12" fill="#b8c7e6">${t}</text>`;
+
+// E. Supplement into the brain: a capsule's path enters the brain, reaches a hub, and splits to the six.
+function conceptE() {
+  const hub = [205, 175], P = [[130, 135], [205, 100], [285, 128], [305, 195], [250, 235], [150, 225]];
+  const links = P.map(([x, y], i) => `<path d="M${hub[0]} ${hub[1]} L${x} ${y}" stroke="#2a3a66" stroke-width="5" stroke-linecap="round"/><path class="pulse" d="M${hub[0]} ${hub[1]} L${x} ${y}" stroke="#7fe6ff" stroke-width="2" stroke-dasharray="8 40" stroke-dashoffset="${i * 9}" stroke-linecap="round"/>`).join("");
+  return `<svg viewBox="0 0 400 400">${defs}
+    <circle cx="200" cy="190" r="185" fill="url(#bglow)" opacity=".55"/>
+    ${brain()}
+    <path class="pulse" d="M70 352 C110 330 140 300 170 250 S195 200 ${hub[0]} ${hub[1]}" fill="none" stroke="#7fe6ff" stroke-width="2.5" stroke-dasharray="6 9" stroke-opacity=".8"/>
+    ${capsule(60, 356, 1.15)}
+    ${links}
+    <circle cx="${hub[0]}" cy="${hub[1]}" r="34" fill="url(#glow)"/>${spark(hub[0], hub[1], 1.3)}
+    ${P.map((p, i) => node(p[0], p[1], NT[i], 15)).join("")}
+    ${lbl(98, 390, "Supplement", "start")}${lbl(330, 72, "Brain chemicals")}
+  </svg>`;
+}
+
+// F. Brain atlas: the brain drawn like a map, the six as pins, connected by firing links.
+function conceptF() {
+  const P = [[130, 138], [208, 102], [292, 132], [315, 200], [232, 232], [140, 222]];
+  const grid = [110, 150, 190, 230].map(y => `<path d="M60 ${y} H360" stroke="#7fe6ff" stroke-opacity=".08"/>`).join("") + [120, 180, 240, 300].map(x => `<path d="M${x} 50 V300" stroke="#7fe6ff" stroke-opacity=".08"/>`).join("");
+  const E = [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0], [0, 4], [1, 4], [2, 4]];
+  const links = E.map(([a, b], i) => `<path d="M${P[a][0]} ${P[a][1]} L${P[b][0]} ${P[b][1]}" stroke="#7fe6ff" stroke-opacity=".3" stroke-width="1.5"/><path class="pulse" d="M${P[a][0]} ${P[a][1]} L${P[b][0]} ${P[b][1]}" stroke="#7fe6ff" stroke-width="2" stroke-dasharray="6 54" stroke-dashoffset="${i * 7}"/>`).join("");
+  const pin = (x, y, nt) => `<path d="M${x} ${y + 30} C${x - 6} ${y + 18} ${x - 19} ${y + 8} ${x - 19} ${y} a19 19 0 0 1 38 0 C${x + 19} ${y + 8} ${x + 6} ${y + 18} ${x} ${y + 30}Z" fill="${nt[1]}"/><text class="nt" x="${x}" y="${y + 3.6}" font-size="${nt[0].length > 3 ? 8.4 : 10}">${nt[0]}</text>`;
+  return `<svg viewBox="0 0 400 400">${defs}
+    <circle cx="200" cy="190" r="185" fill="url(#bglow)" opacity=".55"/>
+    ${brain()}
+    <clipPath id="bclip"><path d="${BRAIN}"/></clipPath><g clip-path="url(#bclip)">${grid}</g>
+    ${links}
+    ${P.map((p, i) => pin(p[0], p[1] - 14, NT[i])).join("")}
+    ${capsule(330, 340, 1, -20)}${lbl(330, 384, "+ supplements")}
+  </svg>`;
+}
+
+// G. Hex brain: Concept D's ring of six, set inside the brain, with the capsule at its center.
+function conceptG() {
+  const cx = 205, cy = 172, R = 78;
+  const V = NT.map((_, k) => { const a = (-90 + 60 * k) * Math.PI / 180; return [cx + R * Math.cos(a), cy + R * Math.sin(a)]; });
+  const ring = V.map((p, k) => `${k ? "L" : "M"}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ") + " Z";
+  const edges = V.map((a, k) => { const b = V[(k + 1) % 6], m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], ux = (b[0] - a[0]) / R, uy = (b[1] - a[1]) / R;
+    return `<line x1="${a[0]}" y1="${a[1]}" x2="${m[0] - ux * 7}" y2="${m[1] - uy * 7}" stroke="#7fe6ff" stroke-opacity=".6" stroke-width="2.5"/><line x1="${m[0] + ux * 7}" y1="${m[1] + uy * 7}" x2="${b[0]}" y2="${b[1]}" stroke="#7fe6ff" stroke-opacity=".6" stroke-width="2.5"/><circle class="twinkle" cx="${m[0]}" cy="${m[1]}" r="2.6" fill="#e9fbff" style="animation-delay:${k * .3}s"/>`; }).join("");
+  return `<svg viewBox="0 0 400 400">${defs}
+    <circle cx="200" cy="190" r="185" fill="url(#bglow)" opacity=".55"/>
+    ${brain()}
+    ${V.map(p => `<line x1="${cx}" y1="${cy}" x2="${p[0]}" y2="${p[1]}" stroke="#7fe6ff" stroke-opacity=".14"/>`).join("")}
+    ${edges}
+    <circle r="5" fill="#e9fbff"><animateMotion dur="6s" repeatCount="indefinite" path="${ring}"/></circle>
+    <circle cx="${cx}" cy="${cy}" r="40" fill="url(#glow)"/>${capsule(cx, cy, .8)}
+    ${V.map((p, i) => node(p[0], p[1], NT[i], 15)).join("")}
+  </svg>`;
+}
+
+const C = [
+  ["E", "Supplement → brain", "A capsule's path enters the brain, hits a hub and splits to the six chemicals. Explains the whole site in one picture. Small labels: “Supplement”, “Brain chemicals”.", conceptE],
+  ["F", "Brain atlas", "The brain drawn like a map, with the six as map pins linked by firing signals. Leans into the “Atlas” name.", conceptF],
+  ["G", "Hex brain", "Concept D's ring of six, set inside the brain, capsule at the center. Most logo-like of the brain options.", conceptG],
+  ["D", "Hex synapse (earlier pick)", "For comparison: no brain outline.", conceptD],
+];
+document.getElementById("grid").innerHTML = C.map(([k, t, d, f]) => `<div class="card"><span class="tag">CONCEPT ${k}</span>${f()}<h2>${t}</h2><p>${d}</p></div>`).join("");
+</script>
+</body></html>
