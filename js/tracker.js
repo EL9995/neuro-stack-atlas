@@ -79,14 +79,18 @@ function renderInsights() {
     return;
   }
   const arrow = { down: "↓", up: "↑", flat: "" };
-  const top = r.actions.slice(0, 3);
   el.innerHTML = `<div class="ins">
     ${r.safety ? `<div class="ins-safety">${esc(r.safety)}</div>` : ""}
-    <p class="ins-verdict">${esc(r.verdict)}</p>
+    <p class="ins-verdict">${esc(r.summary)}</p>
     <div class="ins-metrics">${r.metrics.map(x => `<span class="mchip ${x.dir}"><span>${esc(x.label)}</span> <b>${arrow[x.dir]}</b> ${x.dir === "flat" ? x.last.toFixed(1) : `${x.first.toFixed(1)} → ${x.last.toFixed(1)}`}</span>`).join("")}</div>
-    ${top.length ? `<div class="ins-block"><span class="eyebrow">Try this</span><ol class="ins-list">${top.map(a => `
-      <li><details><summary>${esc(a.text)}</summary><p>${esc(a.why)}</p></details></li>`).join("")}</ol></div>` : ""}
-    ${r.keep.length ? `<div class="ins-block"><span class="eyebrow">Keep</span><p class="ins-keep">${esc(r.keep[0])}</p></div>` : ""}
+    <div class="ins-block"><span class="eyebrow">Patterns in your log</span>
+      ${r.logged < r.need
+        ? `<p class="ins-keep muted">Not enough data yet to link supplements to changes: ${r.logged} of ${r.need} logged days (ratings and doses on the same day).</p>`
+        : r.patterns.length
+          ? `<ul class="ins-list">${r.patterns.map(x => `<li>${esc(x.text)}</li>`).join("")}</ul><p class="hint">These are patterns in your own log, not proof that a supplement caused the difference. Sleep, stress, illness and other changes can all play a part.</p>`
+          : `<p class="ins-keep muted">No clear differences between days with and without each supplement yet.</p>`}
+    </div>
+    ${r.looks.length ? `<div class="ins-block"><span class="eyebrow">Worth a look</span><ul class="ins-list">${r.looks.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
     ${r.note ? `<p class="hint">${esc(r.note)}</p>` : ""}
   </div>`;
 }

@@ -70,3 +70,5 @@
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
 
+.ins-keep.muted { color: var(--muted); }
+.ins-list li { font-size: 0.93rem; }
