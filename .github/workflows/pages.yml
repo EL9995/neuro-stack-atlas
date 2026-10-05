@@ -29,7 +29,7 @@ jobs:
       - name: Collect the site files
         run: |
           mkdir _site
-          cp -r index.html favicon.svg og-image.png .nojekyll css js content _site/
+          cp -r index.html favicon.svg og-image.png .nojekyll css js content food _site/
           rm -f _site/content/*.md
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
