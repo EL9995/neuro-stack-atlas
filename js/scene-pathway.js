@@ -403,3 +403,10 @@ document.addEventListener("keydown", e => {
   if (e.key === "Escape") psClosePop();
   if ((e.key === "Enter" || e.key === " ") && e.target.closest && e.target.closest("#ps-stage [data-ps]")) { e.preventDefault(); psOpenPop(e.target.closest("[data-ps]")); }
 });
+
+// Pause the assembly line (and every CSS animation) while the tab is hidden; resume on return.
+document.addEventListener("visibilitychange", () => {
+  document.documentElement.classList.toggle("tab-hidden", document.hidden);
+  if (document.hidden) { if (PS.loop) cancelAnimationFrame(PS.loop); PS.loop = 0; PS.last = 0; }
+  else psOnScroll();
+});

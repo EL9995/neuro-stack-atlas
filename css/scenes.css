@@ -98,3 +98,4 @@ body.is-home .wrap { max-width: 1180px; }
 .ps-pop-more { justify-self: start; margin-top: 4px; color: #7fe6ff; font-size: 0.9rem; text-decoration: none; }
 .ps-pop-more:hover { text-decoration: underline; }
 .ps-pop.left { right: auto; left: 28px; }
+.tab-hidden *, .tab-hidden *::before, .tab-hidden *::after { animation-play-state: paused !important; }
