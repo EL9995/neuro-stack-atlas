@@ -1,6 +1,14 @@
-// ---------------------------------------------------------------------------
-// DATA
-// ---------------------------------------------------------------------------
+// ===========================================================================
+// THE SIX NEUROTRANSMITTERS
+// Name, job, what low and high levels feel like, and how the body makes each
+// one (the pathway shown on its page).
+//
+// HOW TO EDIT
+//   - Change only text inside "quotes". Keep quotes, commas and brackets.
+//   - Words like "moderate", "precursor", "am" or ids like "l-tyrosine" are
+//     codes the app reads. Don't change those without asking.
+//   - Save, then refresh the page to see the change.
+// ===========================================================================
 const NTS = [
   { id: "dopamine", name: "Dopamine", abbr: "DA", word: "Drive", cls: "Catecholamine",
     fn: "Motivation, reward, and focus. It's the chemical behind wanting something and going after it, and it also controls smooth movement.",

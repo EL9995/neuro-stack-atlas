@@ -1,3 +1,14 @@
+// ===========================================================================
+// FOUNDATIONS, BETTER SWAPS, SPACING RULES, LIMITS, TEMPLATES
+// The text in quotes is shown in the stack builder's suggestions and checks,
+// and in the "Recovery & foundations" card on the home page.
+//
+// HOW TO EDIT
+//   - Change only text inside "quotes". Keep quotes, commas and brackets.
+//   - Words like "moderate", "precursor", "am" or ids like "l-tyrosine" are
+//     codes the app reads. Don't change those without asking.
+//   - Save, then refresh the page to see the change.
+// ===========================================================================
 // Recovery & foundations: support the system instead of pushing one neurotransmitter.
 // [id, short tag, one-line why]
 const FOUNDATIONS = [

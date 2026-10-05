@@ -1,3 +1,14 @@
+// ===========================================================================
+// MAGNESIUM, ZINC AND IRON FORMS
+// Same format as supplements.js. This file also contains a little setup code
+// that copies shared details between forms; edit only the text in quotes.
+//
+// HOW TO EDIT
+//   - Change only text inside "quotes". Keep quotes, commas and brackets.
+//   - Words like "moderate", "precursor", "am" or ids like "l-tyrosine" are
+//     codes the app reads. Don't change those without asking.
+//   - Save, then refresh the page to see the change.
+// ===========================================================================
 // ---------------------------------------------------------------------------
 // Magnesium forms. All share group "magnesium": the daily limit, spacing rules
 // and suggestions treat them as one mineral. `elemental` converts a compound

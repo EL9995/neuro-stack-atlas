@@ -1,3 +1,14 @@
+// ===========================================================================
+// GLOSSARY (hover tooltips)
+// Each entry: "lowercase word": ["Display name", "Explanation"].
+// Any time the word appears in supplement text, it gets a tooltip.
+//
+// HOW TO EDIT
+//   - Change only text inside "quotes". Keep quotes, commas and brackets.
+//   - Words like "moderate", "precursor", "am" or ids like "l-tyrosine" are
+//     codes the app reads. Don't change those without asking.
+//   - Save, then refresh the page to see the change.
+// ===========================================================================
 const GLOSS = {
   "bh4": ["BH4", "Tetrahydrobiopterin. A helper molecule your body makes. The first step in making dopamine and serotonin can't run without it. Folate and vitamin C help keep it topped up."],
   "aadc": ["AADC", "The enzyme that turns L-DOPA into dopamine and 5-HTP into serotonin. Runs on vitamin B6."],

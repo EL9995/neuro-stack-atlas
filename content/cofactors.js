@@ -1,3 +1,13 @@
+// ===========================================================================
+// COFACTORS ("Take it with" on supplement pages)
+// Each item: [cofactor id, why it helps, when to take it].
+//
+// HOW TO EDIT
+//   - Change only text inside "quotes". Keep quotes, commas and brackets.
+//   - Words like "moderate", "precursor", "am" or ids like "l-tyrosine" are
+//     codes the app reads. Don't change those without asking.
+//   - Save, then refresh the page to see the change.
+// ===========================================================================
 // supplementId -> { items: [[cofactorId, reason, timing]], note }
 const COF = {
   "l-tyrosine": { items: [

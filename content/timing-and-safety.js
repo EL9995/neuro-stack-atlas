@@ -1,3 +1,14 @@
+// ===========================================================================
+// TIER, TIMING, FOOD AND SAFETY TAGS
+// Mostly codes the stack builder and checker read. The "cycle" text is shown on
+// supplement pages.
+//
+// HOW TO EDIT
+//   - Change only text inside "quotes". Keep quotes, commas and brackets.
+//   - Words like "moderate", "precursor", "am" or ids like "l-tyrosine" are
+//     codes the app reads. Don't change those without asking.
+//   - Save, then refresh the page to see the change.
+// ===========================================================================
 // Tier, safety tags, timing and food hints. Applied to every supplement below.
 // tier: core | deep | caution    when: am | pm | any    food: empty | with_food | with_fat | carbs | any
 // tags drive the stack checker: serotonergic, dopaminergic, stimulant, sedative, cholinergic, lat1, mao, liver, bp_up, downreg

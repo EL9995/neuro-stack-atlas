@@ -1,3 +1,14 @@
+// ===========================================================================
+// SUPPLEMENTS, PART 1
+// One entry per supplement: summary (sum), dose, timing, tolerance, effects (fx),
+// side effects (se), interactions (ix), mechanism (mech), absorption (bio), metabolism (met).
+//
+// HOW TO EDIT
+//   - Change only text inside "quotes". Keep quotes, commas and brackets.
+//   - Words like "moderate", "precursor", "am" or ids like "l-tyrosine" are
+//     codes the app reads. Don't change those without asking.
+//   - Save, then refresh the page to see the change.
+// ===========================================================================
 const S = [
   { id: "l-tyrosine", name: "L-Tyrosine", cat: "amino_acid", aka: ["Tyrosine"],
     sum: "An amino acid your body turns into dopamine and norepinephrine. Best for staying sharp under stress or sleep loss.",

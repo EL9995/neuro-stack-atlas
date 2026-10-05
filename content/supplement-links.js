@@ -1,3 +1,15 @@
+// ===========================================================================
+// SUPPLEMENT -> NEUROTRANSMITTER LINKS + EVIDENCE RATINGS
+// Each row: [supplement id, neurotransmitter id, role, evidence rating, note].
+// Evidence ratings: strong | moderate | limited | theoretical.
+// The note is shown on neurotransmitter pages and in the dopamine scroll scene.
+//
+// HOW TO EDIT
+//   - Change only text inside "quotes". Keep quotes, commas and brackets.
+//   - Words like "moderate", "precursor", "am" or ids like "l-tyrosine" are
+//     codes the app reads. Don't change those without asking.
+//   - Save, then refresh the page to see the change.
+// ===========================================================================
 // [supplementId, neurotransmitterId, role, evidence, plain-English note]
 const MAP = [
   ["l-tyrosine", "dopamine", "precursor", "moderate", "The raw material for dopamine. Helps most when you're stressed, sleep-deprived, or running on empty."],

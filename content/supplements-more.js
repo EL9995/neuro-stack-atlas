@@ -1,3 +1,13 @@
+// ===========================================================================
+// SUPPLEMENTS, PART 2 (deeper cuts) + extra links and cofactors
+// Same format as supplements.js, supplement-links.js and cofactors.js.
+//
+// HOW TO EDIT
+//   - Change only text inside "quotes". Keep quotes, commas and brackets.
+//   - Words like "moderate", "precursor", "am" or ids like "l-tyrosine" are
+//     codes the app reads. Don't change those without asking.
+//   - Save, then refresh the page to see the change.
+// ===========================================================================
 // ---------------------------------------------------------------------------
 // DATA, PART 2: deeper supplements, recovery/foundations, safety metadata
 // ---------------------------------------------------------------------------
