@@ -12,7 +12,7 @@
 const BUILDER_TEXT = {
   eyebrow: "Stack builder",
   title: "Build a stack. See how the day plays out.",
-  lede: "Five steps: name it, set your day, add supplements, then see when everything works and what to watch out for.",
+  lede: "Six steps: name it, set your day, add supplements, see when everything works, check for warnings, then save.",
   tourPrompt: "New here? The 1-minute tour shows you around.",
   tourButton: "Take the tour",
   dismiss: "Not now",
@@ -49,6 +49,17 @@ const BUILDER_TEXT = {
       heading: "Check your stack",
       intro: "Conflicts, timing problems, missing cofactors and tolerance risks, based on your times and doses.",
     },
+    save: {
+      heading: "Save your stack",
+      intro: "Saving confirms you've reviewed the check above, and makes the stack available in the Tracker. Your edits are always kept as a draft in the meantime.",
+      empty: "Add at least one supplement first.",
+      ack: "I've read the warnings in step 5.",
+      reminder: "Saving doesn't mean a stack is right for you. Check with a doctor or pharmacist first, especially if you take medication.",
+      button: "Save stack",
+      saved: "Saved",
+      changed: "You've made changes since your last save. Review step 5 and save again.",
+      openTracker: "Open the Tracker →",
+    },
   },
 
   // Click-through tours. Each step highlights one part of the page.
@@ -63,6 +74,7 @@ const BUILDER_TEXT = {
       { target: "#b-items", title: "Your supplements", text: "Change a dose or time here. “What is this?” gives a quick summary without leaving the page." },
       { target: "#bs-timeline", title: "4. See your day", text: "Each bar shows when a supplement kicks in, works and wears off. Drag a bar or a meal to move it, or let Optimize timing do it." },
       { target: "#bs-check", title: "5. Check your stack", text: "Conflicts, timing problems and missing cofactors show up here, with one-tap fixes where possible." },
+      { target: "#bs-save", title: "6. Save your stack", text: "Once you've read the check, save. Only saved stacks show up as a checklist in the Tracker, and any later change asks you to review and save again." },
     ],
     meals: [
       { target: "#wake", title: "Wake time", text: "When your day starts. Morning supplements are placed after this." },

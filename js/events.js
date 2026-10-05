@@ -29,6 +29,12 @@ document.addEventListener("click", e => {
   if (act === "toggle-deep") { App.showDeep = !App.showDeep; lsSet("nsa-showDeep", App.showDeep); render(current, true); }
   else if (act === "add-supp") addToStack(el.dataset.sid, el.dataset.stay);
   else if (act === "tour") startTour(el.dataset.tour);
+  else if (act === "save-stack") {
+    const ack = document.getElementById("save-ack");
+    if (el.disabled || (ack && !ack.checked)) return;
+    st.savedAt = new Date().toISOString(); st.wasSaved = false; saveState(); renderSave();
+    toast(`Saved “${esc(st.name)}”. <button data-go="track">Open the Tracker</button>`);
+  }
   else if (act === "tour-dismiss") { lsSet("nsa-tourSeen", true); el.closest(".tour-prompt")?.remove(); }
   else if (act === "browse-nt") { App.browseNT = App.browseNT === el.dataset.nt ? null : el.dataset.nt; renderBrowse(); }
   else if (act === "sup-tab") {
@@ -109,6 +115,7 @@ document.addEventListener("click", e => {
   }
 });
 
+document.addEventListener("change", e => { if (e.target.id === "save-ack") { const b = document.getElementById("save-btn"); if (b) b.disabled = !e.target.checked; } });
 document.addEventListener("change", e => {
   const t = e.target, st = active();
   if (t.id === "stack-select" || t.id === "t-stack") { App.activeId = t.value; saveState(); render(current, true); }

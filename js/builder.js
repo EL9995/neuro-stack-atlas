@@ -79,6 +79,9 @@ function viewBuilder() {
       ${step(5, "bs-check", P.check.heading, `
           <p class="pr-intro">${esc(P.check.intro)}</p>
           <div id="b-checks"></div>`)}
+      ${step(6, "bs-save", P.save.heading, `
+          <p class="pr-intro">${esc(P.save.intro)}</p>
+          <div id="b-save"></div>`)}
     </ol>
   </div>`;
 }
@@ -300,8 +303,28 @@ function renderSuggest() {
   ${list.length > 4 ? `<button class="linkish" data-act="more-sugg">${App.showAllSugg ? "Show fewer" : `Show ${list.length - 4} more`}</button>` : ""}`;
 }
 
-function refreshBuilder() { renderItems(); renderBrowse(); renderSuggest(); renderMeals(); renderTimeline(); renderChecks(); }
+function refreshBuilder() { renderItems(); renderBrowse(); renderSuggest(); renderMeals(); renderTimeline(); renderChecks(); renderSave(); }
 
+// Step 6: saving needs at least one supplement, and an explicit "I've read the warnings" when the check found serious or to-review items.
+function renderSave() {
+  const el = document.getElementById("b-save");
+  if (!el) return;
+  const st = active(), P = BUILDER_TEXT.steps.save, F = analyze(st);
+  const serious = F.filter(f => f.sev === "major").length, review = F.filter(f => f.sev === "moderate").length;
+  const needsAck = serious + review > 0, n = st.items.filter(i => byId[i.sid]).length;
+  const summary = [`${n} supplement${n === 1 ? "" : "s"}`, serious ? `${serious} serious` : "", review ? `${review} to review` : ""].filter(Boolean).join(" · ");
+  const when = st.savedAt ? new Date(st.savedAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "";
+  el.innerHTML = `<div class="save-box${st.savedAt ? " is-saved" : ""}">
+    <div class="save-sum"><b>${esc(st.name)}</b><span>${esc(summary)}</span></div>
+    ${st.savedAt ? `<p class="save-ok">✓ ${esc(P.saved)} ${esc(when)}. <a href="#track" data-go="track">${esc(P.openTracker)}</a></p>`
+      : st.wasSaved ? `<p class="save-changed">${esc(P.changed)}</p>` : ""}
+    ${!st.savedAt ? (n ? `
+      ${needsAck ? `<label class="save-ack"><input type="checkbox" id="save-ack"> ${esc(P.ack)}</label>` : ""}
+      <p class="hint">${esc(P.reminder)}</p>
+      <div><button class="btn" id="save-btn" data-act="save-stack"${needsAck ? " disabled" : ""}>${esc(P.button)}</button></div>`
+      : `<p class="hint">${esc(P.empty)}</p>`) : ""}
+  </div>`;
+}
 let tlFrame = 0;
 const scheduleTimeline = () => { if (!tlFrame) tlFrame = requestAnimationFrame(() => { tlFrame = 0; renderTimeline(); }); };
 let lastOpt = null; // { stackId, times: {itemId: time} } for undo

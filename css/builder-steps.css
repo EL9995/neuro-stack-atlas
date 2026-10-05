@@ -58,3 +58,15 @@
 .tour-btns span { display: flex; gap: 6px; }
 @media (prefers-reduced-motion: reduce) { .tour-spot { transition: none; } }
 
+/* Step 6: save */
+.save-box { display: grid; gap: 10px; padding: 14px 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); max-width: 640px; }
+.save-box.is-saved { border-color: color-mix(in srgb, var(--sev-good) 55%, var(--line)); }
+.save-sum { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
+.save-sum b { font-family: var(--f-display); font-size: 1.1rem; }
+.save-sum span { font-family: var(--f-mono); font-size: 0.8rem; color: var(--muted); }
+.save-ack { display: flex; gap: 8px; align-items: center; font-weight: 600; cursor: pointer; }
+.save-ack input { width: 18px; height: 18px; accent-color: var(--accent); }
+.save-ok { color: var(--sev-good); font-weight: 600; }
+.save-ok a { margin-left: 6px; font-weight: 500; }
+.save-changed { color: var(--sev-moderate); font-weight: 600; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }

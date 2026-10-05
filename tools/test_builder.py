@@ -1,4 +1,4 @@
-"""Click-through test of the Stack builder: tours, browse-by-neurotransmitter, search.
+"""Click-through test of the Stack builder: tours, browse-by-neurotransmitter, search, step 6 save and the Tracker gate.
 Usage: python3 tools/test_builder.py [base-url]   (screenshots go to /tmp/nsa-builder-*.png)
 """
 import base64, json, os, subprocess, sys, tempfile, time, urllib.request
@@ -42,6 +42,23 @@ try:
     # Search
     ev("const q=document.getElementById('add-q'); q.value='theanine'; q.dispatchEvent(new Event('input',{bubbles:true}))"); time.sleep(.3)
     print("search results:", ev("document.querySelectorAll('#add-results .result').length"))
+    # Step 6: save needs the warnings box ticked; edits mark it changed; the Tracker only shows saved stacks
+    ev("document.getElementById('bs-save').scrollIntoView({block:'center'})"); time.sleep(.3)
+    print("save disabled before ack:", ev("document.getElementById('save-btn')?.disabled"), "| ack shown:", ev("!!document.getElementById('save-ack')"))
+    shot("save-before")
+    ev("(()=>{const a=document.getElementById('save-ack'); a.checked=true; a.dispatchEvent(new Event('change',{bubbles:true}))})()")
+    print("save enabled after ack:", ev("!document.getElementById('save-btn').disabled"))
+    ev("document.getElementById('save-btn').click()"); time.sleep(.3)
+    print("saved:", ev("!!active().savedAt"), "|", ev("document.querySelector('.save-ok')?.textContent.trim()"))
+    shot("save-after")
+    ev("document.getElementById('wake').value='06:30'; document.getElementById('wake').dispatchEvent(new Event('change',{bubbles:true}))"); time.sleep(.3)
+    print("after an edit:", ev("document.querySelector('.save-changed')?.textContent.trim()"), "| savedAt:", ev("active().savedAt"))
+    ev("location.hash='track'"); time.sleep(.8)
+    print("tracker gate (unsaved):", ev("!!document.querySelector('.save-gate')"))
+    ev("location.hash='stack'"); time.sleep(.6)
+    ev("(()=>{const a=document.getElementById('save-ack'); if(a){a.checked=true; a.dispatchEvent(new Event('change',{bubbles:true}))} document.getElementById('save-btn').click()})()"); time.sleep(.3)
+    ev("location.hash='track'"); time.sleep(.8)
+    print("tracker checklist (saved):", ev("document.querySelectorAll('.checklist .tick').length"), "| gate gone:", ev("!document.querySelector('.save-gate')"))
     print("errors:", ev("__e"))
 finally:
     proc.terminate()

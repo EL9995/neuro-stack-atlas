@@ -16,7 +16,7 @@ function viewTracker() {
       ${isToday ? "" : `<button class="btn ghost" data-act="day" data-d="0">Today</button>`}
       <div class="field inline">
         <label for="t-stack">Following</label>
-        <select id="t-stack">${App.stacks.map(s => `<option value="${s.id}"${s.id === App.activeId ? " selected" : ""}>${esc(s.name)}</option>`).join("")}</select>
+        <select id="t-stack">${App.stacks.map(s => `<option value="${s.id}"${s.id === App.activeId ? " selected" : ""}>${esc(s.name)}${s.savedAt ? "" : " (not saved)"}</option>`).join("")}</select>
       </div>
     </div>
     <div id="t-day"></div>
@@ -45,7 +45,8 @@ function renderTrackDay() {
   el.innerHTML = `<div class="track-grid">
     <div class="panel">
       <div class="panel-head"><h3>Checklist</h3><span class="hint">${takenCount} of ${items.length} taken</span></div>
-      ${items.length ? `<div class="checklist">${items.map(i => {
+      ${!active().savedAt ? `<div class="empty small save-gate">“${esc(active().name)}” isn't saved yet. Review its warnings and save it in the Stack builder (step 6) before tracking it. <button class="linkish" data-go="stack">Go to step 6 →</button></div>`
+      : items.length ? `<div class="checklist">${items.map(i => {
         const s = byId[i.sid], t = day.taken[i.id];
         return `<label class="tick${t ? " done" : ""}">
           <input type="checkbox" data-act="take" data-item="${i.id}"${t ? " checked" : ""}>
