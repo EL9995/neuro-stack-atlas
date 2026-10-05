@@ -28,6 +28,9 @@ document.addEventListener("click", e => {
   const act = el.dataset.act, st = active();
   if (act === "toggle-deep") { App.showDeep = !App.showDeep; lsSet("nsa-showDeep", App.showDeep); render(current, true); }
   else if (act === "add-supp") addToStack(el.dataset.sid, el.dataset.stay);
+  else if (act === "tour") startTour(el.dataset.tour);
+  else if (act === "tour-dismiss") { lsSet("nsa-tourSeen", true); el.closest(".tour-prompt")?.remove(); }
+  else if (act === "browse-nt") { App.browseNT = App.browseNT === el.dataset.nt ? null : el.dataset.nt; renderBrowse(); }
   else if (act === "sup-tab") {
     const i = el.dataset.i, tab = document.getElementById("sup-tab-" + i), open = tab.getAttribute("aria-selected") !== "true";
     document.querySelectorAll(".sup-tab").forEach(t => t.setAttribute("aria-selected", String(open && t === tab)));

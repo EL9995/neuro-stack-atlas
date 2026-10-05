@@ -1,78 +1,110 @@
 // ---------------------------------------------------------------------------
 // VIEWS: STACK BUILDER
 // ---------------------------------------------------------------------------
+// Five numbered steps: name, day, add, timeline, check. Wording in content/stack-builder.js.
 function viewBuilder() {
-  const st = active();
+  const st = active(), T = BUILDER_TEXT, P = T.steps;
+  const step = (n, id, heading, body) => `
+      <li class="pr-step bstep" id="${id}">
+        <span class="pr-num" aria-hidden="true">${n}</span>
+        <div class="pr-body">
+          <h2 class="pr-h">${esc(heading)}</h2>
+          ${body}
+        </div>
+      </li>`;
+  const seenTour = lsGet("nsa-tourSeen", false);
   return `<div class="stack">
     <div class="page-head">
-      <span class="eyebrow">Stack builder</span>
-      <h1>Build a stack. See how the day plays out.</h1>
-      <p class="lede">Add supplements with a dose and a time. The timeline shows when each one is working, and the checker flags conflicts, timing problems, missing cofactors and tolerance risks.</p>
+      <span class="eyebrow">${esc(T.eyebrow)}</span>
+      <h1>${esc(T.title)}</h1>
+      <p class="lede">${esc(T.lede)}</p>
+      ${seenTour ? `<div><button class="btn ghost" data-act="tour" data-tour="page">${esc(T.tourButton)}</button></div>`
+        : `<div class="tour-prompt"><span>${esc(T.tourPrompt)}</span><button class="btn" data-act="tour" data-tour="page">${esc(T.tourButton)}</button><button class="linkish" data-act="tour-dismiss">${esc(T.dismiss)}</button></div>`}
     </div>
 
-    <div class="toolbar">
-      <div class="field">
-        <label for="stack-select">Stack</label>
-        <select id="stack-select">${App.stacks.map(s => `<option value="${s.id}"${s.id === st.id ? " selected" : ""}>${esc(s.name)}</option>`).join("")}</select>
-      </div>
-      <div class="field grow">
-        <label for="stack-name">Name</label>
-        <input id="stack-name" value="${esc(st.name)}" maxlength="60">
-      </div>
-      <div class="toolbar-btns">
-        <button class="btn" data-act="new-stack">New stack</button>
-        <button class="btn ${App.confirmDelete ? "danger" : "ghost"}" data-act="del-stack">${App.confirmDelete ? "Confirm delete" : "Delete"}</button>
-      </div>
-    </div>
-    ${st.example || st.items.length < 2 ? `<div class="banner">
-      <b>${st.example ? "This is an example stack." : "Getting started"}</b>
-      <ol>
-        <li>Type what you already take into the box under “In this stack”. Use the ingredient (“fish oil”, “vitamin D”, “magnesium”), not the brand.</li>
-        <li>Tap <b>What is this?</b> on any item to see what it does and what to watch out for.</li>
-        <li><b>Suggestions</b> shows what pairs well. <b>Optimize timing</b> finds the best time for each dose around your meals.</li>
-      </ol>
-    </div>` : ""}
-    <div class="templates">
-      <span class="eyebrow">Templates</span>
-      ${TEMPLATES.map((t, i) => `<button class="pill chip" data-act="tpl" data-i="${i}">+ ${esc(t.name)}</button>`).join("")}
-    </div>
-
-    <section>
-      <h2 class="sec">In this stack</h2>
-      <div id="b-items"></div>
-      <div class="adder">
-        <label for="add-q" class="sr">Add a supplement</label>
-        <input id="add-q" placeholder="Add a supplement: type a name, like “theanine” or “B6”" autocomplete="off">
-        <div id="add-results" class="results"></div>
-      </div>
-    </section>
-
-    <section>
-      <h2 class="sec">Suggestions</h2>
-      <p class="sec-intro">Based on what's in your stack. Each one has been checked so it doesn't add a new conflict, and gets added at its best time.</p>
-      <div id="b-suggest"></div>
-    </section>
-
-    <section>
-      <h2 class="sec">Your day</h2>
-      <div class="day-set">
-        <div class="field"><label for="wake">Wake</label><input id="wake" type="time" value="${esc(st.wake)}"></div>
-        <div class="field"><label for="bed">Bed</label><input id="bed" type="time" value="${esc(st.bed)}"></div>
-        <div class="field grow"><span class="field-label">Meals</span><div id="b-meals"></div></div>
-      </div>
-      <div class="tl-bar-row">
-        <p class="sec-intro"><b>Drag any bar or meal to move it</b> (arrow keys work too). Light = kicking in, solid = working, fade = wearing off, dashed = builds over weeks. Faded bars mean food is cutting absorption. The red line is the current time.</p>
-        <button class="btn" data-act="optimize">Optimize timing</button>
-      </div>
-      <div id="b-opt"></div>
-      <div id="b-timeline"></div>
-    </section>
-
-    <section>
-      <h2 class="sec">Stack check</h2>
-      <div id="b-checks"></div>
-    </section>
+    <ol class="pr-steps bsteps">
+      ${step(1, "bs-name", P.name.heading, `
+          <p class="pr-intro">${esc(P.name.intro)}</p>
+          ${st.example ? `<p class="hint">${esc(P.name.exampleNote)}</p>` : ""}
+          <div class="toolbar">
+            <div class="field">
+              <label for="stack-select">Your stacks</label>
+              <select id="stack-select">${App.stacks.map(s => `<option value="${s.id}"${s.id === st.id ? " selected" : ""}>${esc(s.name)}</option>`).join("")}</select>
+            </div>
+            <div class="field grow">
+              <label for="stack-name">Name</label>
+              <input id="stack-name" value="${esc(st.name)}" maxlength="60">
+            </div>
+            <div class="toolbar-btns">
+              <button class="btn" data-act="new-stack">New stack</button>
+              <button class="btn ${App.confirmDelete ? "danger" : "ghost"}" data-act="del-stack">${App.confirmDelete ? "Confirm delete" : "Delete"}</button>
+            </div>
+          </div>`)}
+      ${step(2, "bs-day", P.day.heading, `
+          <p class="pr-intro">${esc(P.day.intro)}</p>
+          <div class="day-set">
+            <div class="field"><label for="wake">Wake</label><input id="wake" type="time" value="${esc(st.wake)}"></div>
+            <div class="field"><label for="bed">Bed</label><input id="bed" type="time" value="${esc(st.bed)}"></div>
+            <div class="field grow"><span class="field-label">Meals</span><div id="b-meals"></div></div>
+          </div>
+          <div><button class="linkish tour-link" id="tour-meals" data-act="tour" data-tour="meals">${esc(P.day.mealsTour)} →</button></div>`)}
+      ${step(3, "bs-add", P.add.heading, `
+          <p class="pr-intro">${esc(P.add.intro)}</p>
+          <div class="adder big">
+            <label for="add-q" class="sr">${esc(P.add.searchLabel)}</label>
+            <input id="add-q" type="search" placeholder="${esc(P.add.searchPlaceholder)}" autocomplete="off">
+            <div id="add-results" class="results"></div>
+          </div>
+          <div class="browse" id="bs-browse">
+            <span class="eyebrow">${esc(P.add.browseLabel)}</span>
+            <div class="browse-tabs" role="tablist">${NTS.map(n => `<button class="browse-tab" role="tab" data-act="browse-nt" data-nt="${n.id}" style="--hue:${ntColor(n.id)}" aria-selected="${App.browseNT === n.id}"><b>${esc(n.word)}</b><span>${esc(n.name)}</span></button>`).join("")}</div>
+            <div id="b-browse"></div>
+          </div>
+          <div class="templates" id="bs-templates">
+            <span class="eyebrow">${esc(P.add.templatesLabel)}</span>
+            ${TEMPLATES.map((t, i) => `<button class="pill chip" data-act="tpl" data-i="${i}">+ ${esc(t.name)}</button>`).join("")}
+          </div>
+          <h3 class="sub-h">${esc(P.add.inStack)}</h3>
+          <div id="b-items"></div>
+          <h3 class="sub-h">${esc(P.add.suggestions)}</h3>
+          <p class="sec-intro">${esc(P.add.suggestionsIntro)}</p>
+          <div id="b-suggest"></div>`)}
+      ${step(4, "bs-timeline", P.timeline.heading, `
+          <div class="tl-bar-row">
+            <p class="sec-intro"><b>Drag any bar or meal to move it</b> (arrow keys work too). Light = kicking in, solid = working, fade = wearing off, dashed = builds over weeks. Faded bars mean food is cutting absorption. The red line is the current time.</p>
+            <button class="btn" data-act="optimize">Optimize timing</button>
+          </div>
+          <div id="b-opt"></div>
+          <div id="b-timeline"></div>`)}
+      ${step(5, "bs-check", P.check.heading, `
+          <p class="pr-intro">${esc(P.check.intro)}</p>
+          <div id="b-checks"></div>`)}
+    </ol>
   </div>`;
+}
+
+// Browse by neurotransmitter: its supplements in three groups, strongest evidence first, one tap to add.
+function renderBrowse() {
+  const el = document.getElementById("b-browse");
+  if (!el) return;
+  const nt = ntById[App.browseNT], P = BUILDER_TEXT.steps.add;
+  document.querySelectorAll(".browse-tab").forEach(t => t.setAttribute("aria-selected", String(t.dataset.nt === App.browseNT)));
+  if (!nt) { el.innerHTML = `<p class="hint">${esc(P.browseHint)}</p>`; return; }
+  const rows = MAP.filter(r => r[1] === nt.id), inStack = new Set(active().items.map(i => i.sid));
+  const groups = [["Precursors", r => r[2] === "precursor"], ["Cofactors", r => r[2] === "cofactor"], ["Modulators", r => r[2] !== "precursor" && r[2] !== "cofactor"]];
+  el.innerHTML = `<div class="browse-groups" style="--nt:${ntColor(nt.id)}">${groups.map(([title, test]) => {
+    const items = rows.filter(test).sort((a, b) => EV[b[3]] - EV[a[3]]);
+    if (!items.length) return "";
+    return `<div class="browse-group"><h4>${title}</h4>${items.map(([sid, , role, ev, note]) => {
+      const s = byId[sid], has = inStack.has(sid);
+      return `<div class="browse-item${has ? " has" : ""}">
+        <div class="browse-main"><span class="item-name">${esc(s.name)}</span>${title === "Modulators" ? `<span class="role">${ROLE[role]}</span>` : ""}${tierBadge(s)}${ixBadge(s)}
+          <span class="browse-note">${esc(note)}</span></div>
+        <span class="browse-ev" title="${ev} evidence">${evDots(ev)}</span>
+        <button class="btn small${has ? " ghost" : ""}" data-act="add-supp" data-sid="${sid}" data-stay="1" aria-label="Add ${esc(s.name)}">${has ? `✓ ${esc(P.added)}` : esc(P.add)}</button>
+      </div>`;
+    }).join("")}</div>`;
+  }).join("")}</div>`;
 }
 
 function renderItems() {
@@ -98,7 +130,7 @@ function renderItems() {
       <button class="x" data-act="remove" data-item="${i.id}" aria-label="Remove ${esc(s.name)}">×</button>
       ${App.openInfo.has(s.id) ? itemInfo(s) : ""}
     </div>`;
-  }).join("")}</div>` : `<div class="empty">Nothing here yet. Add a supplement below or start from a template.</div>`;
+  }).join("")}</div>` : `<div class="empty">Nothing here yet. Search, browse or pick a template above.</div>`;
 }
 
 const TL_START = 5 * 60, TL_END = 25 * 60, TL_SPAN = TL_END - TL_START;
@@ -268,7 +300,8 @@ function renderSuggest() {
   ${list.length > 4 ? `<button class="linkish" data-act="more-sugg">${App.showAllSugg ? "Show fewer" : `Show ${list.length - 4} more`}</button>` : ""}`;
 }
 
-function refreshBuilder() { renderItems(); renderSuggest(); renderMeals(); renderTimeline(); renderChecks(); }
+function refreshBuilder() { renderItems(); renderBrowse(); renderSuggest(); renderMeals(); renderTimeline(); renderChecks(); }
+
 let tlFrame = 0;
 const scheduleTimeline = () => { if (!tlFrame) tlFrame = requestAnimationFrame(() => { tlFrame = 0; renderTimeline(); }); };
 let lastOpt = null; // { stackId, times: {itemId: time} } for undo
