@@ -69,7 +69,7 @@ For a new Claude instance picking this up. Read this first, then `README.md` and
 11. Review every `verified: false` entry in `content/side-effects.js` and NEEDS SOURCE rules in `content/med-rules.js`.
 5. The header status text "Saved in this browser" may be confused with step 6 "Save stack". Consider "Draft kept in this browser".
 6. Add enzymes to search; maybe make enzyme labels in the scene link to enzyme pages.
-7. Reflex games to measure stack effects (priority 3 originally).
+7. Games at `#games`, proof of concept: Sequence (arrow combos), Reaction (black → white, click) and Sweet Spot (timed press in a moving zone; smart ramp + elite zone, tuned with Eric's play feedback). Files: js/games.js (page shell + game registry + Sequence), js/game-reaction.js, js/game-timing.js, content/games.js, css/games.css, tools/test_games.py. Scope and what's on hold: `docs/games/*.md`. Next: server storage + end-of-day summary, Sequence memory mode, practice run, convert Reaction for mobile.
 8. Hub page for Mind · Body · Food.
 
 12. **Stewing (Eric, 2026-10-05):** meal size / digestion time (idea: Snack / Light / Regular / Large per meal, fat lengthens the window; maybe meals as bars instead of thin shading so they don't drown under the lanes) and onset/duration sourcing (many entries use a repeated 30–60 min / 2–4 h default with no source; idea: add a source field, audit, mark unsourced "approximate").

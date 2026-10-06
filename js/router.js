@@ -19,11 +19,12 @@ function render(token, force) {
   const nt = ntById[a];
   const s = nt ? (b ? byId[b] : null) : byId[a];
   const ez = token.startsWith("enzyme:") ? enzymeById[token.slice(7)] : null;
-  const tab = ["stack", "track", "scan", "sim"].includes(token) ? token : "explore";
-  document.body.classList.toggle("is-home", !(["stack", "track", "scan", "sim"].includes(token) || s || nt || ez));
+  const tab = ["stack", "track", "scan", "sim", "games"].includes(token) ? token : "explore";
+  document.body.classList.toggle("is-home", !(["stack", "track", "scan", "sim", "games"].includes(token) || s || nt || ez));
   document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-current", t.dataset.tab === tab ? "page" : "false"));
   document.documentElement.style.setProperty("--nt", nt ? ntColor(nt.id) : "var(--accent)");
   App.confirmDelete = false;
+  if (token !== "games") gamesStop();
 
   if (token === "stack") {
     view.innerHTML = viewBuilder(); crumbs.innerHTML = ""; refreshBuilder();
@@ -34,6 +35,11 @@ function render(token, force) {
   } else if (token === "sim") {
     view.innerHTML = viewSim(); crumbs.innerHTML = ""; renderSim();
     document.title = "Simulator · Neuro Stack Atlas";
+  } else if (token === "games") {
+    gamesStop();
+    view.innerHTML = viewGames(); crumbs.innerHTML = ""; renderGames();
+    gamesLoad().then(() => { if (current === "games" && gamesIdle()) renderGames(); });
+    document.title = "Games · Neuro Stack Atlas";
   } else if (token === "scan") {
     view.innerHTML = viewScanner(); crumbs.innerHTML = ""; renderScanInput(); renderScanResult();
     document.title = "Scanner · Neuro Stack Atlas";

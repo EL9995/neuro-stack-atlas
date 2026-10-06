@@ -64,6 +64,11 @@ document.addEventListener("click", e => {
   const el = e.target.closest("[data-act]");
   if (!el) return;
   const act = el.dataset.act, st = active();
+  if (act === "seq-start") { seqStart(); return; }
+  if (act === "seq-clear") { gamesClearScores(); return; }
+  if (act === "game-pick") { gamePick(el.dataset.game); return; }
+  if (act === "rt-start") { rtStart(); return; }
+  if (act === "ss-start") { ssStart(); return; }
   if (act === "toggle-deep") { App.showDeep = !App.showDeep; lsSet("nsa-showDeep", App.showDeep); render(current, true); }
   else if (act === "add-supp") addToStack(el.dataset.sid, el.dataset.stay, false, el);
   else if (act === "in-stack") showInStackMenu(el, el.dataset.sid);
