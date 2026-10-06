@@ -19,6 +19,8 @@
   --c-glutamate: #b02d6a;
   --c-acetylcholine: #2766b8;
   --c-foundation: #5f7d1f;
+  --c-meal: #8f7600;   /* meals on the timeline: a hue no pathway uses */
+  --c-fast: #56627a;   /* fasting windows on the timeline: neutral slate */
 
   --sev-critical: #8a1238;
   --sev-major: #c0262d;
@@ -37,7 +39,7 @@
   :root:not([data-theme="light"]) {
     --bg: #060a14; --surface: #0d1424; --ink: #e8edf7; --muted: #8794b0; --line: #1a2540; --soft: #121b30; --accent: #4f7dff; --signal: #7fe6ff; --on-accent: #060a14;
     --c-dopamine: #f0a24a; --c-norepinephrine: #ff7d62; --c-serotonin: #ab97ff;
-    --c-gaba: #3fd0bb; --c-glutamate: #f27db3; --c-acetylcholine: #7fb0ff; --c-foundation: #a9cf5f;
+    --c-gaba: #3fd0bb; --c-glutamate: #f27db3; --c-acetylcholine: #7fb0ff; --c-foundation: #a9cf5f; --c-meal: #f5d742; --c-fast: #b9c4da;
     --sev-critical: #ff4f8b; --sev-major: #ff6b6b; --sev-moderate: #f0a24a; --sev-minor: #98a8b3; --sev-good: #5fd38f;
     color-scheme: dark;
   }
@@ -45,7 +47,7 @@
 :root[data-theme="dark"] {
   --bg: #060a14; --surface: #0d1424; --ink: #e8edf7; --muted: #8794b0; --line: #1a2540; --soft: #121b30; --accent: #4f7dff; --signal: #7fe6ff; --on-accent: #060a14;
   --c-dopamine: #f0a24a; --c-norepinephrine: #ff7d62; --c-serotonin: #ab97ff;
-  --c-gaba: #3fd0bb; --c-glutamate: #f27db3; --c-acetylcholine: #7fb0ff; --c-foundation: #a9cf5f;
+  --c-gaba: #3fd0bb; --c-glutamate: #f27db3; --c-acetylcholine: #7fb0ff; --c-foundation: #a9cf5f; --c-meal: #f5d742; --c-fast: #b9c4da;
   --sev-critical: #ff4f8b; --sev-major: #ff6b6b; --sev-moderate: #f0a24a; --sev-minor: #98a8b3; --sev-good: #5fd38f;
   color-scheme: dark;
 }

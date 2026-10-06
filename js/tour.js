@@ -3,14 +3,14 @@
 // Highlights one part of the page at a time with a short explanation.
 // Never blocks the page: Skip, Escape, or clicking outside ends it.
 // Steps live in content/stack-builder.js (BUILDER_TEXT.tours).
-// opts.within: only the tour steps inside this element (one builder step at a time).
+// opts.within: only the tour steps inside this element, or any of these elements (one builder step at a time).
 // opts.onSkip: what the popup's Skip button does instead of just closing.
 // ---------------------------------------------------------------------------
 const TOUR = { steps: null, i: 0, spot: null, pop: null, onSkip: null };
 
 function startTour(name, opts = {}) {
   const all = (BUILDER_TEXT.tours || {})[name] || [];
-  TOUR.steps = all.filter(s => { const el = document.querySelector(s.target); return el && el.getClientRects().length && (!opts.within || opts.within.contains(el)); });   // skip parts that aren't on the page (or are folded away) right now
+  TOUR.steps = all.filter(s => { const el = document.querySelector(s.target); return el && el.getClientRects().length && (!opts.within || [].concat(opts.within).some(w => w && w.contains(el))); });   // skip parts that aren't on the page (or are folded away) right now
   TOUR.onSkip = opts.onSkip || null;
   if (!TOUR.steps.length) return;
   lsSet("nsa-tourSeen", true);

@@ -114,11 +114,11 @@ const LOAD_RULES = {
     body: "{n} supplements in one stack. If something changes, good or bad, you won't know which one did it. Add new ones one at a time, a week or two apart." },   // DRAFT
   // Amino acids that share the same doorway into the brain (the "lat1" tag)
   aminoAcids: { tag: "lat1", at: 2, sev: "info", title: "Amino acids competing",   // DRAFT
-    body: "{names} use the same transporter (LAT1) to get into the brain, so taking them together blunts each one." },   // DRAFT
+    body: "{names} use the same transporter (LAT1) to get into the brain, so taking them together blunts each one. Step 4 helps you space them apart." },   // DRAFT ("Step 4…" added: timing moved there)
 
   // Dose ranking in the stack check. "times" = how many times the top of the typical range
   // (supplements.js) a single dose is; the highest step that applies wins. "serious" (major) and
-  // "critical" doses pause the timeline and need review + approval in step 4.
+  // "critical" doses pause the timeline and need review + approval in step 3.
   // {name}, {dose}, {range}, {x}, {ul}, {total} are filled in by the app. DRAFT (thresholds for legal/ethics to confirm)
   dose: {
     steps: [
@@ -142,15 +142,15 @@ const LOAD_RULES = {
   // Timeline step and Tracker while a serious or critical finding is open. DRAFT
   paused: {
     timeline: "Fix the warnings before we plan timing",
-    timelineBody: "This stack has a serious warning in step 4. The timeline comes back once it's fixed or the supplement is removed.",
-    goToCheck: "Go to step 4",
-    tracker: "“{name}” has a serious warning, so there's no checklist for it. Fix it in the Stack builder (step 4) or remove the supplement.",
-    summary: "Paused until step 4 is fixed",
+    timelineBody: "This stack has a serious warning in step 3. The timeline comes back once it's fixed or the supplement is removed.",
+    goToCheck: "Go to step 3",
+    tracker: "“{name}” has a serious warning, so there's no checklist for it. Fix it in the Stack builder (step 3) or remove the supplement.",
+    summary: "Paused until step 3 is fixed",
   },
   // "Approve anyway": the person can still plan and track a stack with serious warnings after
   // confirming each one. The approval is kept with the stack (in their browser only) and covers
   // exactly the warnings confirmed: a new or worse serious warning needs approving again. allowCritical: false would keep "critical" stacks paused. DRAFT
-  // Review flow (step 4): the person reviews each serious / to-review warning before the approval unlocks. DRAFT
+  // Review flow (step 3): the person reviews each serious / to-review warning before the approval unlocks. DRAFT
   review: {
     button: "Review the warnings", reviewing: "Reviewing…",
     hint: "Go through each warning, then approve the stack at the bottom.",
@@ -166,9 +166,29 @@ const LOAD_RULES = {
     go: "Approve stack",
     done: "Approved anyway on {when}, despite {n} serious warning{s}.",
     withdraw: "Withdraw approval",
-    timelineNote: "You approved this stack despite serious warnings in step 4.",
+    timelineNote: "You approved this stack despite serious warnings in step 3.",
     trackerNote: "You approved this stack despite serious warnings.",
     criticalBlocked: "Stacks with a critical warning can't be approved. Fix it first.",
+  },
+
+  // Added after an interaction that mostly matters when the two are taken close together (e.g. LAT1). DRAFT
+  spaceInStep5: "Spacing them apart in step 4 helps.",
+
+  // Final gate at the end of step 3 ("Acknowledge and approve"), shown for every stack, even a clean one.
+  // Step 4 (Plan your protocol), the Next button and Save stay locked until it's done. Changing supplements or doses
+  // (not times) asks again. A stack with serious warnings is approved through the review above instead. DRAFT
+  ack: {
+    heading: "Acknowledge and approve",
+    body: "Read the check above before you plan your schedule. It only covers what's in our data, and it isn't medical advice.",
+    changed: "Your stack changed since you approved it. Read the check above and approve it again.",
+    confirm: "I've read the check above. I'll talk to a doctor or pharmacist before starting, especially if I take medication.",
+    go: "Acknowledge and approve",
+    done: "Approved on {when}.",
+    withdraw: "Withdraw",
+    next: "Acknowledge and approve the check to continue.",
+    timeline: "Approve your stack first",
+    timelineBody: "Your plan opens once you've acknowledged and approved the check in step 3.",
+    save: "Acknowledge and approve the check in step 3 before saving.",
   },
 
   // Dose monitor: pops up next to a dose box when a dose goes above the top of the typical range

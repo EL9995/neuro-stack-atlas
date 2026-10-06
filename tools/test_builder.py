@@ -1,4 +1,4 @@
-"""Click-through test of the Stack builder: step-by-step opening, tours, browse-by-neurotransmitter, search, step 6 save and the Tracker gate.
+"""Click-through test of the Stack builder: step-by-step opening, tours, browse-by-neurotransmitter, search, step 5 save and the Tracker gate.
 Usage: python3 tools/test_builder.py [base-url]   (screenshots go to /tmp/nsa-builder-*.png)
 """
 import base64, json, os, subprocess, sys, tempfile, time, urllib.request
@@ -30,7 +30,7 @@ try:
     print("header buttons:", ev("[...document.querySelectorAll('.page-head button')].map(b=>b.textContent).join(' | ')"))
     # Take the tour: step 1 plus its tour; each Next opens one more step and plays its part
     ev("document.querySelector('[data-tour=\"page\"]').click()"); time.sleep(.6)
-    for k in range(6):
+    for k in range(len(["name", "add", "check", "timeline", "save"])):
         n = ev("TOUR.steps ? TOUR.steps.length : 0"); seen = []
         for i in range(n):
             seen.append(ev("document.querySelector('.tour-pop h3').textContent"))
@@ -39,10 +39,14 @@ try:
         print(f"step {k+1} open, tour stops:", " / ".join(seen) or "(none)", "| locked left:", ev("document.querySelectorAll('.bstep.locked').length"))
         if k == 0: shot("gated")
         if not ev("!!document.getElementById('step-next')"): break
+        if k == 2:   # step 3's final gate: Next waits for "Acknowledge and approve"
+            print("step 3 next before approving disabled:", ev("document.getElementById('step-next').disabled"), "|", ev("document.getElementById('step-next-hint').textContent"))
+            ev("(()=>{const c=document.getElementById('ack-check'); if(c){c.checked=true; c.dispatchEvent(new Event('change',{bubbles:true})); document.getElementById('ack-go').click()}})()"); time.sleep(.3)
+            print("after approving, next enabled:", ev("!document.getElementById('step-next').disabled"))
         ev("document.getElementById('step-next').click()"); time.sleep(.6)
     # Step 3 gate: Next waits for a supplement
-    ev("localStorage.setItem('nsa-builderOpen','3'); active().items=[]; render('stack',true)"); time.sleep(.3)
-    print("step 3 next with empty stack disabled:", ev("document.getElementById('step-next').disabled"), "|", ev("document.getElementById('step-next-hint').textContent"))
+    ev("localStorage.setItem('nsa-builderOpen','2'); active().items=[]; render('stack',true)"); time.sleep(.3)
+    print("step 2 next with empty stack disabled:", ev("document.getElementById('step-next').disabled"), "|", ev("document.getElementById('step-next-hint').textContent"))
     ev("document.querySelector('[data-act=tpl]').click()"); time.sleep(.4)
     print("after template, next enabled:", ev("!document.getElementById('step-next')?.disabled"))
     # Skip the tour opens everything and hides itself
@@ -54,8 +58,7 @@ try:
     ev("document.querySelector('.tour-pop [data-tour-act=skip]').click()"); time.sleep(.5)
     print("popup skip -> locked:", ev("document.querySelectorAll('.bstep.locked').length"), "| tour closed:", ev("!TOUR.steps"))
     # Meals tour still works on its own
-    ev("document.querySelector('[data-tour=\"meals\"]').click()"); time.sleep(.4)
-    print("meals tour stops:", ev("TOUR.steps ? TOUR.steps.length : 0")); ev("tourEnd()")
+    print("meals tour link hidden while step 4 is locked:", ev("document.getElementById('tour-meals').hidden"))
     # Back to the example stack with every step open for the rest of the test
     ev("localStorage.clear(); localStorage.setItem('nsa-builderOpen','6'); localStorage.setItem('nsa-tourSeen','true'); location.reload()"); time.sleep(2)
     ev("window.__e=[];addEventListener('error',e=>__e.push(e.message))")
@@ -71,7 +74,9 @@ try:
     # Search
     ev("const q=document.getElementById('add-q'); q.value='theanine'; q.dispatchEvent(new Event('input',{bubbles:true}))"); time.sleep(.3)
     print("search results:", ev("document.querySelectorAll('#add-results .result').length"))
-    # Step 6: save needs the warnings box ticked; edits mark it changed; the Tracker only shows saved stacks
+    # Step 5: save waits for step 3's final gate, then needs the warnings box ticked; edits mark it changed; the Tracker only shows saved stacks
+    print("save locked before step 3 approval:", ev("!document.getElementById('save-btn')"), "|", ev("document.querySelector('#b-save .hint')?.textContent"))
+    ev("(()=>{const c=document.getElementById('ack-check'); if(c){c.checked=true; c.dispatchEvent(new Event('change',{bubbles:true})); document.getElementById('ack-go').click()}})()"); time.sleep(.3)
     ev("document.getElementById('bs-save').scrollIntoView({block:'center'})"); time.sleep(.3)
     print("save disabled before ack:", ev("document.getElementById('save-btn')?.disabled"), "| ack shown:", ev("!!document.getElementById('save-ack')"))
     shot("save-before")
@@ -80,7 +85,17 @@ try:
     ev("document.getElementById('save-btn').click()"); time.sleep(.3)
     print("saved:", ev("!!active().savedAt"), "|", ev("document.querySelector('.save-ok')?.textContent.trim()"))
     shot("save-after")
-    ev("document.getElementById('wake').value='06:30'; document.getElementById('wake').dispatchEvent(new Event('change',{bubbles:true}))"); time.sleep(.3)
+    # Day rows on the step 4 timeline: wake handle (keyboard), click-to-edit a meal, add a fast and its heads-ups
+    ev("document.querySelector('[data-drag=\"wake:\"]').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true}))"); time.sleep(.3)
+    print("wake moved by keyboard:", ev("active().wake"))
+    ev("(()=>{const c=document.querySelector('.tl-mealchip'); c.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))})()"); time.sleep(.3)
+    print("meal editor opens:", ev("!!document.getElementById('tl-editor')"), "| fields:", ev("document.querySelectorAll('#tl-editor input').length"))
+    ev("document.querySelector('[data-act=tl-edit-close]').click()"); time.sleep(.2)
+    ev("document.querySelector('[data-act=fast-add]').click()"); time.sleep(.3)
+    print("fast added:", ev("JSON.stringify(active().fasts.map(f=>f.from+'-'+f.to))"), "| blocks:", ev("document.querySelectorAll('.tl-fastblock').length"))
+    print("fasting heads-ups:", ev("analyzeTiming(active()).filter(f=>/fast/.test(f.title)).length"))
+    ev("document.querySelector('[data-tour=\"meals\"]').click()"); time.sleep(.4)
+    print("meals tour stops:", ev("TOUR.steps ? TOUR.steps.length : 0"), "|", ev("TOUR.steps ? TOUR.steps.map(s=>s.title).join(' / ') : ''")); ev("tourEnd()")
     print("after an edit:", ev("document.querySelector('.save-changed')?.textContent.trim()"), "| savedAt:", ev("active().savedAt"))
     ev("location.hash='track'"); time.sleep(.8)
     print("tracker gate (unsaved):", ev("!!document.querySelector('.save-gate')"))

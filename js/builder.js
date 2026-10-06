@@ -1,22 +1,27 @@
 // ---------------------------------------------------------------------------
 // VIEWS: STACK BUILDER
 // ---------------------------------------------------------------------------
-// Six numbered steps: name, day, add, check, timeline, save. The check comes before the timeline
-// so nobody reaches the schedule without seeing the warnings first. Wording in content/stack-builder.js.
+// An optional step 0 (About you: medications and conditions, shared by every stack; never locked, never required),
+// then five numbered steps: name, add, check, plan (your day + timing tips + timeline), save. The check comes before the schedule
+// so nobody reaches it without seeing the warnings first. Steps 2–3 are the shopping list and its safety
+// check (doses and interactions, including against About you); timing and food tips and the timeline
+// live in step 4 ("Plan your protocol") next to the wake/meal/bed times, so changing your day and seeing the effect happen in one place. Wording in content/stack-builder.js.
 // Steps open one at a time ("Next" at the end of each); "Skip the tour" opens them all.
-// How far this browser has got is kept in localStorage (nsa-builderOpen, 1–6).
+// How far this browser has got is kept in localStorage (nsa-builderOpen, 1–5).
 // Open steps can also be folded down to a one-line summary (nsa-builderExpanded: the step numbers shown in full).
-const BSTEPS = ["name", "day", "add", "check", "timeline", "save"];
-const builderOpen = () => Math.min(6, Math.max(1, +lsGet("nsa-builderOpen", 1) || 1));
+const BSTEPS = ["name", "add", "check", "timeline", "save"];
+const LAST = BSTEPS.length;
+const stepEl = n => document.getElementById("bs-" + (n === 0 ? "about" : BSTEPS[n - 1]));
+const builderOpen = () => Math.min(LAST, Math.max(1, +lsGet("nsa-builderOpen", 1) || 1));
 function builderExpanded() {
   const open = builderOpen(), saved = lsGet("nsa-builderExpanded", null);
-  return new Set(Array.isArray(saved) ? saved.filter(n => n <= open) : open === 6 ? [1, 2, 3, 4, 5, 6] : [open]);
+  return new Set(Array.isArray(saved) ? saved.filter(n => n <= open) : open === LAST ? [0, ...BSTEPS.map((_, k) => k + 1)] : [0, open]);
 }
 const setExpanded = set => lsSet("nsa-builderExpanded", [...set].sort());
 
 // Undo / redo for the Stack builder: a snapshot of what the person edits (supplements, doses,
 // times, meals, wake and bed) is taken on every change (touch). History is per stack and lasts for the visit.
-const HIST_FIELDS = ["items", "meals", "wake", "bed"];
+const HIST_FIELDS = ["items", "meals", "fasts", "wake", "bed"];
 const histSnap = st => JSON.stringify(HIST_FIELDS.map(f => st[f]));
 const histOf = st => (App.hist || (App.hist = {}))[st.id] || (App.hist[st.id] = { past: [], future: [], cur: histSnap(st) });
 let histApplying = false;
@@ -49,20 +54,25 @@ function medClassFor(name) {
   MED_CLASSES.forEach(c => c.names.forEach(n => { if ((q === n || q.includes(n) || (n.length > 4 && n.includes(q))) && (!best || n.length > best.n.length)) best = { cls: c.id, n }; }));
   return best ? best.cls : "other";
 }
+// One line for the folded step 2, e.g. "2 medication types · 1 conditions".
+function aboutSummary(a = aboutYou()) {
+  const T = ABOUT_TEXT;
+  const medsCount = new Set([...a.meds, ...a.names.map(n => n.cls)].filter(m => m !== "none" && m !== "pnts")).size, condCount = a.conds.filter(c => c !== "none" && c !== "pnts").length;
+  return !a.meds.length && !a.names.length && !a.conds.length ? T.summaryEmpty
+    : T.summary.replace("{meds}", a.meds.includes("pnts") ? T.summaryPnts : a.meds.includes("none") ? T.summaryNone : medsCount).replace("{conds}", a.conds.includes("pnts") ? T.summaryPnts : a.conds.includes("none") ? T.summaryNone : condCount);
+}
+
+// Whether medication and condition checks can run: something filled in, and not "Prefer not to say" for both.
+const aboutOn = (a = aboutYou()) => !!(a.meds.length || a.names.length || a.conds.length) && ![a.meds, a.conds].every(l => l.includes("pnts"));
+
 function renderAbout() {
   const el = document.getElementById("b-about"); if (!el) return;
-  const T = ABOUT_TEXT, a = aboutYou(), open = !!App.aboutOpen;
-  const medsCount = new Set([...a.meds, ...a.names.map(n => n.cls)].filter(m => m !== "none" && m !== "pnts")).size, condCount = a.conds.filter(c => c !== "none" && c !== "pnts").length;
-  const summary = !a.meds.length && !a.names.length && !a.conds.length ? T.summaryEmpty
-    : T.summary.replace("{meds}", a.meds.includes("pnts") ? T.summaryPnts : a.meds.includes("none") ? T.summaryNone : medsCount).replace("{conds}", a.conds.includes("pnts") ? T.summaryPnts : a.conds.includes("none") ? T.summaryNone : condCount);
+  const T = ABOUT_TEXT, a = aboutYou();
   const chip = (list, id, label) => `<button class="pill chip about-chip" data-act="about-toggle" data-list="${list}" data-id="${id}" aria-pressed="${a[list].includes(id)}">${esc(label)}</button>`;
-  el.innerHTML = `<div class="about${open ? " open" : ""}">
-    <button class="about-head" data-act="about-fold" aria-expanded="${open}" aria-controls="about-body">
-      <svg class="caret" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M3 1.5 7 5 3 8.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <b>${esc(T.heading)}</b><span class="about-opt">${esc(T.optional)}</span><span class="about-sum">${esc(summary)}</span>
-    </button>
-    ${open ? `<div class="about-body" id="about-body">
-      <p class="hint">${esc(T.intro)}</p>
+  const skipped = !aboutOn(a);
+  el.innerHTML = `<div class="about open">
+    <div class="about-body" id="about-body">
+      <p class="about-status ${skipped ? "off" : "on"}" aria-live="polite"><b>${esc(skipped ? T.statusOff : T.statusOn)}</b> ${esc(skipped ? T.statusOffBody : aboutSummary(a))}</p>
       <p class="about-privacy">🔒 ${esc(T.privacy)}</p>
       <div class="about-group"><span class="field-label">${esc(T.medsLabel)}</span>
         <div class="about-search"><label for="about-q" class="sr">${esc(T.medsSearchLabel)}</label>
@@ -75,7 +85,7 @@ function renderAbout() {
       <div class="about-group"><span class="field-label">${esc(T.condLabel)}</span>
         <div class="about-chips">${CONDITIONS.map(c => chip("conds", c.id, c.label)).join("")}${chip("conds", "none", T.none)}${chip("conds", "pnts", T.pnts)}</div>
       </div>
-    </div>` : ""}
+    </div>
   </div>`;
 }
 
@@ -95,7 +105,7 @@ function safetyHtml(sid, compact) {
   </div>`;
 }
 
-// Step 3's add panel: Search, Browse or Templates, one at a time (remembered for this visit).
+// Step 2's add panel: Search, Browse or Templates, one at a time (remembered for this visit).
 const addTab = () => App.addTab || "search";
 function setAddTab(k) {
   App.addTab = k;
@@ -121,12 +131,12 @@ function viewBuilder() {
           <p class="step-sum" id="${id}-sum"></p>
           <div class="step-content" id="${id}-body"${shown.has(n) ? "" : " hidden"}>
           ${body}
-          ${n === open && n < 6 ? `<div class="step-next"><button class="btn" id="step-next" data-act="step-next">${esc(G.next)} ${esc(P[BSTEPS[n]].heading)} →</button><span class="hint" id="step-next-hint"></span></div>` : ""}
+          ${n === open && n < LAST ? `<div class="step-next"><button class="btn" id="step-next" data-act="step-next">${esc(G.next)} ${esc(P[BSTEPS[n]].heading)} →</button><span class="hint" id="step-next-hint"></span></div>` : ""}
           </div>
         </div>
       </li>`;
   const seenTour = lsGet("nsa-tourSeen", false);
-  const skip = open < 6 ? `<button class="btn ghost" data-act="tour-skip">${esc(T.skipButton)}</button>` : "";
+  const skip = open < LAST ? `<button class="btn ghost" data-act="tour-skip">${esc(T.skipButton)}</button>` : "";
   return `<div class="stack">
     <div class="page-head">
       <span class="eyebrow">${esc(T.eyebrow)}</span>
@@ -138,6 +148,9 @@ function viewBuilder() {
 
     ${open > 1 ? `<div class="fold-all"><button class="linkish" data-act="steps-all" data-show="1">${esc(T.fold.expandAll)}</button><span aria-hidden="true">·</span><button class="linkish" data-act="steps-all" data-show="0">${esc(T.fold.collapseAll)}</button></div>` : ""}
     <ol class="pr-steps bsteps">
+      ${step(0, "bs-about", ABOUT_TEXT.heading, `
+          <p class="pr-intro">${esc(ABOUT_TEXT.intro)}</p>
+          <div id="b-about"></div>`)}
       ${step(1, "bs-name", P.name.heading, `
           <p class="pr-intro">${esc(P.name.intro)}</p>
           ${st.example ? `<p class="hint">${esc(P.name.exampleNote)}</p>` : ""}
@@ -155,16 +168,7 @@ function viewBuilder() {
               <button class="btn ${App.confirmDelete ? "danger" : "ghost"}" data-act="del-stack">${App.confirmDelete ? "Confirm delete" : "Delete"}</button>
             </div>
           </div>`)}
-      ${step(2, "bs-day", P.day.heading, `
-          <p class="pr-intro">${esc(P.day.intro)}</p>
-          <div class="day-set">
-            <div class="field"><label for="wake">Wake</label><input id="wake" type="time" value="${esc(st.wake)}"></div>
-            <div class="field"><label for="bed">Bed</label><input id="bed" type="time" value="${esc(st.bed)}"></div>
-            <div class="field grow"><span class="field-label">Meals</span><div id="b-meals"></div></div>
-          </div>
-          <div><button class="linkish tour-link" id="tour-meals" data-act="tour" data-tour="meals">${esc(P.day.mealsTour)} →</button></div>
-          <div id="b-about"></div>`)}
-      ${step(3, "bs-add", P.add.heading, `
+      ${step(2, "bs-add", P.add.heading, `
           <p class="pr-intro">${esc(P.add.intro)}</p>
           <div class="stack-panel">
           <div class="sp-add">
@@ -204,17 +208,18 @@ function viewBuilder() {
           </div>
           </div>
           <div id="b-suggest"></div>`)}
-      ${step(4, "bs-check", P.check.heading, `
+      ${step(3, "bs-check", P.check.heading, `
           <p class="pr-intro">${esc(P.check.intro)} <button class="linkish" data-act="about-open">${esc(ABOUT_TEXT.fromCheck)}</button></p>
           <div id="b-checks"></div>`)}
-      ${step(5, "bs-timeline", P.timeline.heading, `
+      ${step(4, "bs-timeline", P.timeline.heading, `
+          <div id="b-timing"></div>
           <div class="tl-bar-row">
-            <p class="sec-intro">${esc(P.timeline.intro)} <b>Drag any bar or meal to move it</b> (arrow keys work too). Light = kicking in, solid = working, fade = wearing off, dashed = builds over weeks. Faded bars mean food is cutting absorption. The red line is the current time.</p>
-            <div class="tl-actions"><span class="fold-mini"><button class="linkish" data-act="lanes-all" data-show="1">${esc(T.fold.expandAll)}</button> · <button class="linkish" data-act="lanes-all" data-show="0">${esc(T.fold.collapseAll)}</button></span><button class="btn" data-act="optimize">Optimize timing</button><a href="#sim" data-go="sim" class="sim-link">${esc(SIM_TEXT.open)}</a></div>
+            <p class="sec-intro">${esc(P.timeline.intro)} <b>Drag any bar, meal, fast or end of your day to move it</b> (arrow keys work too); click a meal or fast to edit it. Light = kicking in, solid = working, fade = wearing off, dashed = builds over weeks. Faded bars mean food is cutting absorption. <button class="linkish tour-link" id="tour-meals" data-act="tour" data-tour="meals">${esc(P.day.mealsTour)} →</button></p>
+            <div class="tl-actions"><button class="btn" data-act="optimize">Optimize timing</button><a href="#sim" data-go="sim" class="sim-link">${esc(SIM_TEXT.open)}</a></div>
           </div>
           <div id="b-opt"></div>
           <div id="b-timeline"></div>`)}
-      ${step(6, "bs-save", P.save.heading, `
+      ${step(5, "bs-save", P.save.heading, `
           <p class="pr-intro">${esc(P.save.intro)}</p>
           <div id="b-save"></div>`)}
     </ol>
@@ -361,11 +366,9 @@ function renderItems() {
     .map(g => ({ ...g, items: items.filter(i => laneOf(i.sid) === g.id) })).filter(g => g.items.length);
   const item = i => {
     const s = byId[i.sid];
-    const ab = absorb(i, active());
     return `<div class="item" style="--nt:${laneColor(laneOf(i.sid))}">
       <div class="item-main">
         <a href="#${s.id}" data-go="${s.id}" class="item-name">${esc(s.name)}</a>${tierBadge(s)}
-        ${ab.label ? `<span class="ab ab-${ab.level}">${ab.level === "good" ? "✓ " : ab.level === "warn" || ab.level === "bad" ? "! " : ""}${esc(ab.label)}</span>` : ""}
         <span class="item-meta">${FOOD[s.food]} · typical ${range(s.dose[0], s.dose[1])} ${esc(s.dose[2])} ·
           <button class="linkish" data-act="info" data-sid="${s.id}" aria-expanded="${App.openInfo.has(s.id)}">${App.openInfo.has(s.id) ? "Hide info" : "What is this?"}</button></span>
       </div>
@@ -381,8 +384,8 @@ function renderItems() {
   };
   el.innerHTML = items.length ? `<div class="items">${groups.map(g => {
     const isOpen = open.has(g.id), n = g.items.length;
-    // Folded groups still say when something inside needs a look (caution tag or a food/timing flag).
-    const flagged = g.items.filter(i => byId[i.sid].tier === "caution" || ["warn", "bad"].includes(absorb(i, active()).level)).length;
+    // Folded groups still say when something inside needs a look (caution tag). Food and timing flags are in step 4.
+    const flagged = g.items.filter(i => byId[i.sid].tier === "caution").length;
     const names = [...new Set(g.items.map(i => byId[i.sid].name))].join(", ");
     return `<div class="item-group${isOpen ? " open" : ""}" style="--nt:${laneColor(g.id)}">
       <button class="group-head" data-act="items-group" data-group="${g.id}" aria-expanded="${isOpen}">
@@ -409,10 +412,11 @@ function renderTimeline() {
   if (!el) return;
   const st = active();
   // Don't help run a bad stack: no schedule or Optimize while a serious/critical finding is open.
-  const paused = stackPaused(st), Z = LOAD_RULES.paused;
-  document.querySelectorAll("[data-act='optimize']").forEach(b => { b.hidden = paused; });
-  if (paused) {
-    el.innerHTML = `<div class="paused-box"><b>${esc(Z.timeline)}</b><p>${esc(Z.timelineBody)}</p><div><button class="btn small" data-act="step-toggle" data-step="${BSTEPS.indexOf("check") + 1}" data-open="1">${esc(Z.goToCheck)}</button></div></div>`;
+  const paused = stackPaused(st), unacked = !paused && !stackAcked(st), Z = LOAD_RULES.paused, K = LOAD_RULES.ack;
+  document.querySelectorAll("[data-act='optimize'], #tour-meals").forEach(b => { b.hidden = paused || unacked; });
+  renderTiming(paused || unacked);
+  if (paused || unacked) {
+    el.innerHTML = `<div class="paused-box"><b>${esc(paused ? Z.timeline : K.timeline)}</b><p>${esc(paused ? Z.timelineBody : K.timelineBody)}</p><div><button class="btn small" data-act="step-toggle" data-step="${BSTEPS.indexOf("check") + 1}" data-open="1">${esc(Z.goToCheck)}</button></div></div>`;
     return;
   }
   // While dragging, keep rows in the order they had when the drag started so the row under the pointer never moves.
@@ -422,12 +426,11 @@ function renderTimeline() {
 
   const ticks = [];
   for (let h = 6; h <= 24; h += 3) ticks.push(`<span style="left:${pct(h * 60)}%">${h % 12 || 12}${h < 12 || h === 24 ? "a" : "p"}</span>`);
-  const now = new Date(), nowM = now.getHours() * 60 + now.getMinutes();
   const wake = mins(st.wake), bed = mins(st.bed);
-  // Shared background for every track: night shading, meal windows, now line
+  // Shared background for every track: night shading, meal windows, fasting windows. No "now" line: this is a planner, not a tracker.
   const backdrop = `<span class="tl-night" style="left:0;width:${pct(wake)}%"></span><span class="tl-night" style="left:${pct(bed)}%;right:0"></span>` +
     (st.meals || []).map(m => { const t = mins(m.time); return `<span class="tl-meal" style="left:${pct(t - 30)}%;width:${pct(t + 120) - pct(t - 30)}%"></span>`; }).join("") +
-    (nowM >= TL_START && nowM <= TL_END ? `<span class="tl-now" style="left:${pct(nowM)}%"></span>` : "");
+    fastSpans(st).map(g => `<span class="tl-fast" style="left:${pct(g.a)}%;width:${pct(g.b) - pct(g.a)}%"></span>`).join("");
 
   // Coverage per neurotransmitter, 15-minute slots
   const SLOT = 15, slots = TL_SPAN / SLOT;
@@ -439,9 +442,23 @@ function renderTimeline() {
     for (let k = 0; k < slots; k++) { const m = TL_START + k * SLOT; if (m >= from && m < to) arr[k] += w; }
   });
 
-  const mealRow = `<div class="tl-row meals-row"><span class="tl-label">Meals<small>${(st.meals || []).length ? "drag to move" : "none set"}</small></span>
+  // The top rows are the day editor: drag the ends of the day, drag or click meals and fasts (content: BUILDER_TEXT.dayRows / fasting).
+  const DR = BUILDER_TEXT.dayRows, FT = BUILDER_TEXT.fasting;
+  const dayRow = `<div class="tl-row meals-row day-row"><span class="tl-label">${esc(DR.day)}
+      <span class="tl-daytimes"><label>${esc(DR.wake)}<input type="time" id="wake" value="${esc(st.wake)}"></label><label>${esc(DR.bed)}<input type="time" id="bed" value="${esc(st.bed)}"></label></span></span>
+    <div class="tl-track">${backdrop}<span class="tl-awake" style="left:${pct(wake)}%;width:${pct(bed) - pct(wake)}%"><span class="tl-awake-lab">${esc(DR.wake)} ${fmt12(st.wake)}</span><span class="tl-awake-lab r">${esc(DR.bed)} ${fmt12(st.bed)}</span></span>
+      <span class="tl-handle" data-drag="wake:" tabindex="0" role="slider" aria-label="${esc(DR.wake)}" aria-valuetext="${fmt12(st.wake)}" style="left:${pct(wake)}%" title="${esc(DR.wake)} ${fmt12(st.wake)}"></span>
+      <span class="tl-handle" data-drag="bed:" tabindex="0" role="slider" aria-label="${esc(DR.bed)}" aria-valuetext="${fmt12(st.bed)}" style="left:${pct(bed)}%" title="${esc(DR.bed)} ${fmt12(st.bed)}"></span></div></div>`;
+  const mealRow = `<div class="tl-row meals-row"><span class="tl-label">${esc(DR.meals)}<span class="tl-adds"><button class="tl-add" data-act="meal-add" data-kind="meal">${esc(DR.addMeal)}</button><button class="tl-add" data-act="meal-add" data-kind="snack">${esc(DR.addSnack)}</button></span></span>
     <div class="tl-track">${backdrop}${(st.meals || []).map(m => `
-      <span class="tl-mealchip" data-drag="meal:${m.id}" tabindex="0" role="slider" aria-label="${esc(m.label)} time" aria-valuetext="${fmt12(m.time)}" style="left:${pct(mins(m.time))}%">${esc(m.label)}</span>`).join("")}</div></div>`;
+      <span class="tl-mealchip" data-drag="meal:${m.id}" tabindex="0" role="slider" aria-label="${esc(m.label)} time" aria-valuetext="${fmt12(m.time)}" aria-haspopup="dialog" style="left:${pct(mins(m.time))}%">${esc(m.label)}</span>`).join("")}</div></div>`;
+  const fastRow = `<div class="tl-row meals-row fast-row"><span class="tl-label">${esc(FT.row)}<span class="tl-adds"><button class="tl-add" data-act="fast-add">${esc(FT.add)}</button></span></span>
+    <div class="tl-track">${backdrop}${(st.fasts || []).map(f => fastSegments(f).map((g, k, all) => `
+      <span class="tl-fastblock" data-drag="fast:${f.id}:move" tabindex="0" role="slider" aria-label="${esc(FT.edit)} ${fmt12(f.from)} – ${fmt12(f.to)}" aria-valuetext="${fmt12(f.from)}" aria-haspopup="dialog" style="left:${pct(g.a)}%;width:${pct(g.b) - pct(g.a)}%">
+        ${g.from ? `<span class="tl-fastedge l" data-drag="fast:${f.id}:from" title="${esc(FT.from)} ${fmt12(f.from)}"></span>` : ""}
+        <span class="tl-fastlab">${g.b - g.a === Math.max(...all.map(x => x.b - x.a)) ? `${fmt12(f.from)} – ${fmt12(f.to)}` : ""}</span>
+        ${g.to ? `<span class="tl-fastedge r" data-drag="fast:${f.id}:to" title="${esc(FT.to)} ${fmt12(f.to)}"></span>` : ""}
+      </span>`).join("")).join("")}</div></div>`;
 
   const T = BUILDER_TEXT.steps.timeline, open = App.tlOpen || (App.tlOpen = new Set());
   // One row per supplement; shown under its lane when that lane is opened.
@@ -500,29 +517,48 @@ function renderTimeline() {
   }).join("");
 
   el.innerHTML = `${approvalValid(st) && stackBlocked(st) ? `<p class="approved-note">${esc(LOAD_RULES.approve.timelineNote)}</p>` : ""}<div class="tl">
-    <div class="tl-row axis"><span class="tl-label"></span><div class="tl-axis">${ticks.join("")}${nowM >= TL_START && nowM <= TL_END
-      ? `<span class="tl-nowtag" style="left:${pct(nowM)}%">Now · ${fmt12(hhmm(nowM))}</span>` : ""}</div></div>
-    ${mealRow}
-    ${lanes ? `<div class="tl-divider"><span class="eyebrow">Pathway coverage</span></div>${lanes}
+    <div class="tl-divider tl-planner-head"><span class="eyebrow">${esc(DR.title)}</span><span class="hint">${esc(DR.titleHint)}</span></div>
+    <div class="tl-row axis"><span class="tl-label"></span><div class="tl-axis">${ticks.join("")}</div></div>
+    ${dayRow}${mealRow}${fastRow}
+    ${lanes ? `<div class="tl-divider"><span class="eyebrow">Pathway coverage</span><span class="fold-mini"><button class="linkish" data-act="lanes-all" data-show="1">${esc(BUILDER_TEXT.fold.expandAll)}</button> · <button class="linkish" data-act="lanes-all" data-show="0">${esc(BUILDER_TEXT.fold.collapseAll)}</button></span></div>${lanes}
     <p class="tl-caption">Darker means more of your stack is acting on that pathway at that hour, adjusted roughly for food. It's a map of your schedule, not a measurement of brain chemistry.</p>`
       : `<div class="empty small">Add supplements to see them on the timeline.</div>`}
   </div>`;
 }
 
-function renderMeals() {
-  const el = document.getElementById("b-meals");
-  if (!el) return;
-  const meals = [...(active().meals || [])].sort((a, b) => mins(a.time) - mins(b.time));
-  el.innerHTML = `<div class="meals">${meals.map(m => `
-    <div class="meal">
-      <input type="time" class="meal-time" data-meal="${m.id}" value="${esc(m.time)}" aria-label="${esc(m.label)} time">
-      <input class="meal-label" data-meal="${m.id}" value="${esc(m.label)}" maxlength="24" aria-label="Meal name">
-      <div class="flags">${["protein", "fat", "carbs"].map(f => `<button data-act="meal-flag" data-meal="${m.id}" data-flag="${f}" aria-pressed="${!!m[f]}">${f[0].toUpperCase() + f.slice(1)}</button>`).join("")}</div>
-      <button class="x" data-act="meal-remove" data-meal="${m.id}" aria-label="Remove ${esc(m.label)}">×</button>
-    </div>`).join("")}
-    <div class="meal-adds"><button class="pill chip" data-act="meal-add" data-kind="meal">+ Meal</button><button class="pill chip" data-act="meal-add" data-kind="snack">+ Carb snack</button></div>
-  </div>`;
+// A fasting window as timeline segments: one, or two when it runs past midnight (evening part, then morning part).
+// from/to say which segment carries the window's start and end handles.
+function fastSegments(f) {
+  const a = mins(f.from), b = mins(f.to), seg = (x, y, from, to) => ({ a: Math.max(TL_START, x), b: Math.min(TL_END, y), from: from && x >= TL_START, to: to && y <= TL_END });
+  return (a <= b ? [seg(a, b, true, true)] : [seg(a, TL_END, true, false), seg(TL_START, b, false, true)]).filter(g => g.b > g.a);
 }
+const fastSpans = st => (st.fasts || []).flatMap(fastSegments);
+
+// Click a meal or fast on the timeline: a small editor pops up next to it (name, time, what's in it; or from/to).
+function openTlEditor(key, anchor) {
+  closeTlEditor();
+  const [kind, id] = key.split(":"), st = active(), DR = BUILDER_TEXT.dayRows, FT = BUILDER_TEXT.fasting;
+  const m = kind === "meal" && (st.meals || []).find(x => x.id === id), f = kind === "fast" && (st.fasts || []).find(x => x.id === id);
+  if (!m && !f) return;
+  const pop = Object.assign(document.createElement("div"), { className: "addwarn addwarn-pop tl-editor", id: "tl-editor" });
+  pop.setAttribute("role", "dialog"); pop.setAttribute("aria-label", m ? DR.editMeal : FT.edit); pop.dataset.key = key;
+  pop.innerHTML = m ? `<b>${esc(DR.editMeal)}</b>
+      <div class="tl-ed-row"><label>${esc(DR.name)}<input class="meal-label" data-meal="${m.id}" value="${esc(m.label)}" maxlength="24"></label>
+        <label>${esc(DR.time)}<input type="time" class="meal-time" data-meal="${m.id}" value="${esc(m.time)}"></label></div>
+      <div class="flags">${["protein", "fat", "carbs"].map(k => `<button data-act="meal-flag" data-meal="${m.id}" data-flag="${k}" aria-pressed="${!!m[k]}">${k[0].toUpperCase() + k.slice(1)}</button>`).join("")}</div>
+      <div class="tl-ed-btns"><button class="btn small" data-act="tl-edit-close">${esc(DR.done)}</button><button class="btn small ghost danger-ghost" data-act="meal-remove" data-meal="${m.id}">${esc(DR.removeMeal)}</button></div>`
+    : `<b>${esc(FT.edit)}</b>
+      <div class="tl-ed-row"><label>${esc(FT.from)}<input type="time" class="fast-time" data-fast="${f.id}" data-end="from" value="${esc(f.from)}"></label>
+        <label>${esc(FT.to)}<input type="time" class="fast-time" data-fast="${f.id}" data-end="to" value="${esc(f.to)}"></label></div>
+      <div class="tl-ed-btns"><button class="btn small" data-act="tl-edit-close">${esc(FT.done)}</button><button class="btn small ghost danger-ghost" data-act="fast-remove" data-fast="${f.id}">${esc(FT.remove)}</button></div>`;
+  document.body.appendChild(pop);
+  const r = anchor.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight, below = r.bottom + 8 + h < innerHeight || r.top - 8 - h < 0;
+  pop.style.left = `${Math.max(12, Math.min(innerWidth - w - 12, r.left + r.width / 2 - w / 2)) + scrollX}px`;
+  pop.style.top = `${(below ? r.bottom + 8 : r.top - 8 - h) + scrollY}px`;
+  pop.querySelector("input")?.focus();
+}
+function closeTlEditor() { document.getElementById("tl-editor")?.remove(); }
+document.addEventListener("pointerdown", e => { const pop = document.getElementById("tl-editor"); if (pop && !pop.contains(e.target) && !e.target.closest(".tl-mealchip, .tl-fastblock")) closeTlEditor(); });
 
 function renderOpt(result) {
   const el = document.getElementById("b-opt");
@@ -580,11 +616,51 @@ function approvePanel(F) {
   </div>`;
 }
 
+// Final gate at the end of step 3, for every stack (stackAcked in stack-checker.js). Wording in content/recommendations.js (LOAD_RULES.ack).
+function ackPanel(st, F) {
+  const K = LOAD_RULES.ack;
+  if (stackAcked(st, F)) {
+    const when = new Date(st.ack.at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    return `<div class="approve-box ack-box is-acked" id="ack-box"><span class="ack-done">✓ ${esc(K.done.replace("{when}", when))}</span><button class="linkish" data-act="ack-withdraw">${esc(K.withdraw)}</button></div>`;
+  }
+  return `<div class="approve-box ack-box" id="ack-box">
+    <b>${esc(K.heading)}</b>
+    <p class="hint">${esc(st.ack ? K.changed : K.body)}</p>
+    <label class="save-ack"><input type="checkbox" id="ack-check"> ${esc(K.confirm)}</label>
+    <div><button class="btn" id="ack-go" data-act="ack-go" disabled>${esc(K.go)}</button></div>
+  </div>`;
+}
+
+// Timing and food tips for step 4 (analyzeTiming). Advice only: nothing here pauses or needs approving.
+// Heads-ups come first; only the first few show until "Show all" is pressed, so a big stack doesn't bury the timeline.
+const TIPS_SHOWN = 3;
+function renderTiming(paused) {
+  const el = document.getElementById("b-timing");
+  if (!el) return;
+  const T = BUILDER_TEXT.steps.timeline, F = paused ? [] : analyzeTiming(active()).sort((a, b) => SEV_ORDER[a.sev] - SEV_ORDER[b.sev]);
+  if (!F.length) { el.innerHTML = ""; return; }
+  const open = App.timingOpen !== false, all = !!App.timingAll, heads = F.filter(f => f.sev !== "info").length, tips = F.length - heads;
+  const counts = [heads ? `${heads} ${T.headsUpCount}` : "", tips ? `${tips} ${tips === 1 ? T.tipCount1 : T.tipCount}` : ""].filter(Boolean).join(" · ");
+  const shown = all ? F : F.slice(0, TIPS_SHOWN);
+  el.innerHTML = `<div class="timing-tips">
+    <h3 class="sub-h"><button class="sugg-toggle" data-act="timing-toggle" aria-expanded="${open}">
+      <svg class="caret" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M3 1.5 7 5 3 8.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      ${esc(T.tipsHeading)}<span class="sugg-count">${esc(counts)}</span></button></h3>
+    ${open ? `<p class="sec-intro">${esc(T.tipsIntro)}</p><div class="checks tips-list">${shown.map(f => `
+      <div class="check tip-row sevline-${f.sev === "moderate" ? "minor" : f.sev}">
+        <span class="sev sev-${f.sev === "info" ? "info" : "minor"}">${esc(f.sev === "info" ? T.tipLabel : T.headsUpLabel)}</span>
+        <div><div class="check-title">${esc(f.title)}</div><p>${gloss(f.body)}</p></div>
+        ${f.move ? `<button class="pill chip" data-act="move" data-item="${f.move.item}" data-time="${f.move.time}">Move to ${fmt12(f.move.time)}</button>` : ""}
+      </div>`).join("")}</div>
+      ${F.length > TIPS_SHOWN ? `<button class="linkish tips-more" data-act="timing-all">${esc(all ? T.tipsFewer : T.tipsAll.replace("{n}", F.length))}</button>` : ""}` : ""}
+  </div>`;
+}
+
 function renderChecks() {
   const el = document.getElementById("b-checks");
   if (!el) return;
   const st = active(), F = analyze(st);
-  if (!F.length) { el.innerHTML = `<div class="empty">Add supplements to see conflicts, timing tips and missing cofactors.</div>`; return; }
+  if (!F.length) { el.innerHTML = `<div class="empty">Add supplements to check doses, interactions and missing cofactors.</div>`; return; }
   const count = sev => F.filter(f => f.sev === sev).length, V = LOAD_RULES.verdict, A = LOAD_RULES.approve, R = LOAD_RULES.review;
   const stop = F.some(isStop), review = count("moderate") > 0, approved = stop && approvalValid(st, F);
   const gated = stop && !approved, reviewing = gated && App.checkReview === st.id;
@@ -615,12 +691,12 @@ function renderChecks() {
         <div><div class="check-title">${esc(f.title)}</div><p>${gloss(f.body)}</p>
         ${f.adds && f.adds.length ? `<div class="check-adds">${f.adds.map(id => `<button class="pill chip" data-act="add-supp" data-sid="${id}" data-stay="1">+ Add ${esc(byId[id].name)}</button>`).join("")}</div>` : ""}
         ${f.about ? `<div class="check-adds"><button class="pill chip" data-act="about-open">${esc(ABOUT_TEXT.open)} →</button></div>` : ""}
-        ${f.move ? `<div class="check-adds"><button class="pill chip" data-act="move" data-item="${f.move.item}" data-time="${f.move.time}">Move to ${fmt12(f.move.time)}</button></div>` : ""}
         ${reviewing && needsReview(f) ? `<label class="review-tick"><input type="checkbox" data-review="${esc(revKey(f))}"${seen.has(revKey(f)) ? " checked" : ""}> ${esc(R.tick)}</label>` : ""}
         </div>
       </div>`).join("")}</div></div>`;
   });
   if (reviewing) html += approvePanel(F);
+  else if (!gated) html += ackPanel(st, F);
   el.innerHTML = html;
 }
 
@@ -667,11 +743,11 @@ function renderSuggest() {
     ${open ? body : ""}`;
 }
 
-function refreshBuilder() { renderItems(); renderBrowse(); renderSuggest(); renderMeals(); renderTimeline(); renderChecks(); renderSave(); renderStepGate(); renderHistBtns(); renderAbout(); }
+function refreshBuilder() { renderItems(); renderBrowse(); renderSuggest(); renderTimeline(); renderChecks(); renderSave(); renderStepGate(); renderHistBtns(); renderAbout(); }
 
 // Fold or unfold one step; unfolding scrolls it into view so it works as a jump.
 function toggleStep(n, show) {
-  const shown = builderExpanded(), li = document.getElementById("bs-" + BSTEPS[n - 1]);
+  const shown = builderExpanded(), li = stepEl(n);
   if (!li || li.classList.contains("locked")) return;
   show = show ?? !shown.has(n);
   show ? shown.add(n) : shown.delete(n); setExpanded(shown);
@@ -688,47 +764,48 @@ function renderStepSummaries() {
   const st = active(), S = BUILDER_TEXT.fold, set = (k, t) => { const el = document.getElementById(`bs-${k}-sum`); if (el) el.textContent = t; };
   const items = st.items.filter(i => byId[i.sid]), F = analyze(st), meals = (st.meals || []).length;
   set("name", st.name);
-  set("day", `${S.wake} ${fmt12(st.wake)} · ${S.bed} ${fmt12(st.bed)} · ${meals} ${meals === 1 ? S.meal : S.meals}`);
+  set("about", aboutOn() ? `${ABOUT_TEXT.statusOn} ${aboutSummary()}` : ABOUT_TEXT.statusOff);
   const names = [...new Set(items.map(i => byId[i.sid].name))];
   set("add", items.length ? `${items.length} ${items.length === 1 ? S.supp : S.supps}: ${names.length > 3 ? names.slice(0, 3).join(", ") + ", …" : listJoin(names)}` : S.noSupps);
   const times = items.map(i => mins(i.time)).sort((a, b) => a - b);
-  if (stackPaused(st)) set("timeline", LOAD_RULES.paused.summary); else set("timeline", times.length ? `${S.doses} ${fmt12(hhmm(times[0]))} – ${fmt12(hhmm(times[times.length - 1]))}` : S.noSupps);
+  const day = `${S.wake} ${fmt12(st.wake)} · ${S.bed} ${fmt12(st.bed)} · ${meals} ${meals === 1 ? S.meal : S.meals}`;
+  if (stackPaused(st)) set("timeline", LOAD_RULES.paused.summary); else set("timeline", times.length ? `${day} · ${S.doses} ${fmt12(hhmm(times[0]))} – ${fmt12(hhmm(times[times.length - 1]))}` : day);
   const n = sev => F.filter(f => f.sev === sev).length;
-  set("check", [[n("critical"), "critical"], [n("major"), S.serious], [n("moderate"), S.review], [n("minor"), S.minor]].filter(x => x[0]).map(([k, l]) => `${k} ${l}`).join(" · ") || S.noIssues);
+  set("check", ([[n("critical"), "critical"], [n("major"), S.serious], [n("moderate"), S.review], [n("minor"), S.minor]].filter(x => x[0]).map(([k, l]) => `${k} ${l}`).join(" · ") || S.noIssues) + " · " + (stackAcked(st, F) ? S.acked : S.notAcked));
   set("save", st.savedAt ? S.saved : st.wasSaved ? S.changed : S.notSaved);
 }
 
 const LOCK_ICON = `<svg class="lock-ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>`;
 
-// Step 3's "Next" waits until the stack has at least one supplement.
+// Step 2's "Next" waits until the stack has at least one supplement.
 function renderStepGate() {
   const btn = document.getElementById("step-next");
   if (!btn) return;
-  const blocked = builderOpen() === 3 && !active().items.some(i => byId[i.sid]);
-  btn.disabled = blocked;
-  document.getElementById("step-next-hint").textContent = blocked ? BUILDER_TEXT.gate.needItem : "";
+  const open = builderOpen(), noItems = open === BSTEPS.indexOf("add") + 1 && !active().items.some(i => byId[i.sid]), noAck = open === BSTEPS.indexOf("check") + 1 && !stackReady(active());
+  btn.disabled = noItems || noAck;
+  document.getElementById("step-next-hint").textContent = noItems ? BUILDER_TEXT.gate.needItem : noAck ? LOAD_RULES.ack.next : "";
 }
 
 // Opens the next step (or all of them), redraws, and in tour mode plays the new step's part of the tour.
 let builderTouring = false;
 function openSteps(n, opts = {}) {
-  const shown = n === 1 ? new Set() : builderExpanded();
-  if (n === 6 && opts.scrollTo === 0) [1, 2, 3, 4, 5].forEach(k => shown.add(k));   // Skip the tour: everything open
+  const shown = n === 1 ? new Set(builderExpanded().has(0) ? [0] : []) : builderExpanded();
+  if (n === LAST && opts.scrollTo === 0) BSTEPS.forEach((_, k) => shown.add(k));   // Skip the tour: everything open
   else shown.delete(n - 1);   // Next: fold the step just finished
   shown.add(n); setExpanded(shown);
   lsSet("nsa-builderOpen", n);
   render("stack", true);
-  const el = document.getElementById("bs-" + BSTEPS[(opts.scrollTo || n) - 1]);
+  const el = stepEl(opts.scrollTo || n);
   if (opts.scrollTo !== 0 && el) el.scrollIntoView({ block: "start", behavior: builderTouring ? "auto" : "smooth" });
-  if (builderTouring && el) startTour("page", { within: el, onSkip: skipTour });
+  if (builderTouring && el) startTour("page", { within: n === 1 ? [stepEl(0), el] : el, onSkip: skipTour });   // step 1's part of the tour starts at step 0
 }
 window.addEventListener("hashchange", () => { builderTouring = false; });
 function skipTour() {
   builderTouring = false; tourEnd(); lsSet("nsa-tourSeen", true);
-  openSteps(6, { scrollTo: 0 });
+  openSteps(LAST, { scrollTo: 0 });
 }
 
-// Step 6: saving needs at least one supplement, and an explicit "I've read the warnings" when the check found serious or to-review items.
+// Step 5: saving needs at least one supplement, and an explicit "I've read the warnings" when the check found serious or to-review items.
 function renderSave() {
   const el = document.getElementById("b-save");
   if (!el) return;
@@ -742,7 +819,7 @@ function renderSave() {
     <div class="save-sum"><b>${esc(st.name)}</b><span>${esc(summary)}</span></div>
     ${st.savedAt ? `<p class="save-ok">✓ ${esc(P.saved)} ${esc(when)}. <a href="#track" data-go="track">${esc(P.openTracker)}</a></p>`
       : st.wasSaved ? `<p class="save-changed">${esc(P.changed)}</p>` : ""}
-    ${!st.savedAt ? (n ? `
+    ${!st.savedAt ? (n && !stackReady(st) ? `<p class="hint">${esc(LOAD_RULES.ack.save)}</p>` : n ? `
       ${needsAck ? `<label class="save-ack"><input type="checkbox" id="save-ack"> ${esc(P.ack)}</label>` : ""}
       <p class="hint">${esc(P.reminder)}</p>
       <div><button class="btn" id="save-btn" data-act="save-stack"${needsAck ? " disabled" : ""}>${esc(P.button)}</button></div>`

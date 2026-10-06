@@ -1,7 +1,10 @@
 // ---------------------------------------------------------------------------
 // STACK CHECKER
 // ---------------------------------------------------------------------------
-const CHECK_CATS = ["Interactions", MED_RULES.category, LOAD_RULES.category, "Timing", "Dose", "Tolerance", "Balance", "Food", "Cofactors", "Recovery"];
+const CHECK_CATS = ["Interactions", MED_RULES.category, LOAD_RULES.category, "Dose", "Tolerance", "Balance", "Cofactors", "Recovery"];
+// Timing and food advice lives in the Schedule step (analyzeTiming below). It is advice only:
+// it never pauses the timeline or the Tracker and never needs approving.
+const TIMING_CATS = ["Timing", "Food"];
 
 // "Serious" or worse: the timeline and the Tracker checklist pause until it's fixed.
 const isStop = f => f.sev === "critical" || f.sev === "major";
@@ -12,6 +15,13 @@ const canApprove = F => LOAD_RULES.approve.allowCritical || !F.some(f => f.sev =
 const stopKey = f => `${f.rule || f.title}:${f.sev}`;
 const approvalValid = (stack, F = analyze(stack)) => !!stack.approved && canApprove(F) && F.filter(isStop).every(f => stack.approved.keys.includes(stopKey(f)));
 const stackPaused = stack => { const F = analyze(stack); return F.some(isStop) && !approvalValid(stack, F); };
+// Final gate (end of step 4): every stack, clean or not, is acknowledged before the Schedule step opens.
+// It covers exactly these supplements, doses and findings: changing any of them (or About you, when that
+// changes a finding) asks again. Moving times in step 5 doesn't.
+const ackSig = (stack, F = analyze(stack)) => JSON.stringify([stack.items.filter(i => byId[i.sid]).map(i => `${i.sid}:${+i.dose || 0}`).sort(), F.map(stopKey).sort()]);
+const stackAcked = (stack, F = analyze(stack)) => !!stack.ack && stack.ack.sig === ackSig(stack, F);
+// Ready to schedule, save and track: nothing serious left open, and the check acknowledged.
+const stackReady = stack => { const F = analyze(stack); return !(F.some(isStop) && !approvalValid(stack, F)) && stackAcked(stack, F); };
 
 // True when a supplement joins a neurotransmitter's pathway after its slow (rate-limiting) step.
 function pastSlowStep(sid, nt) {
@@ -122,10 +132,10 @@ function analyze(stack) {
   for (const key in pairs) {
     const p = pairs[key];
     if (key === "mucuna-pruriens|vitamin-b6" && total("vitamin-b6") <= 25) continue; // only high-dose B6 matters
-    // Absorption clashes stop mattering once the doses are spaced far enough apart
+    // Pairs that clash when taken close together (SEP) are always listed here; step 5 (analyzeTiming)
+    // says how far apart to space them. The check never depends on dose times.
     const sep = SEP.find(r => [r[0], r[1]].sort().join("|") === key);
-    if (sep && p.sev !== "major" && items.filter(i => i.sid === sep[0]).every(x => items.filter(i => i.sid === sep[1]).every(y => Math.abs(mins(x.time) - mins(y.time)) >= sep[2] * 60))) continue;
-    F.push({ cat: "Interactions", sev: p.sev === "beneficial" ? "good" : p.sev, title: `${byId[p.a].name} + ${byId[p.b].name}`, body: p.note, ids: [p.a, p.b] });
+    F.push({ cat: "Interactions", sev: p.sev === "beneficial" ? "good" : p.sev, title: `${byId[p.a].name} + ${byId[p.b].name}`, body: sep && p.sev !== "major" ? `${p.note} ${LOAD_RULES.spaceInStep5}` : p.note, ids: [p.a, p.b] });
   }
 
   // Class-level stacking
@@ -167,35 +177,6 @@ function analyze(stack) {
 
   // Medications & conditions (About you, content/medications.js + med-rules.js) and side effects (side-effects.js)
   medFindings(items, F, uniq, names, tagged, fill);
-
-  // Timing: spacing rules
-  SEP.forEach(([a, b, h, why]) => {
-    const A = items.filter(i => i.sid === a), B = items.filter(i => i.sid === b);
-    for (const x of A) for (const y of B) {
-      const gap = Math.abs(mins(x.time) - mins(y.time));
-      if (gap < h * 60) {
-        F.push({ cat: "Timing", sev: "moderate", title: `Space out ${byId[a].name} and ${byId[b].name}`,
-          body: `${why} Take them at least ${h} hour${h > 1 ? "s" : ""} apart. Right now they're ${gap ? fmtGap(gap) + " apart" : "taken together"}.` });
-        return;
-      }
-    }
-  });
-  // Timing: time of day
-  items.forEach(i => {
-    const s = byId[i.sid], t = mins(i.time);
-    if (s.tags.includes("stimulant") && t >= 14 * 60) {
-      let body = `Taken at ${fmt12(i.time)}, it may still be active at bedtime.`;
-      if (i.sid === "caffeine") {
-        const left = Math.round((+i.dose || 0) * Math.pow(0.5, Math.max(0, 23 * 60 - t) / 300));
-        body = `About ${left} mg of this ${num(+i.dose || 0)} mg dose will still be in your system at 11 pm. Caffeine's half-life is about 5 hours.`;
-      }
-      F.push({ cat: "Timing", sev: "moderate", title: `${s.name} at ${fmt12(i.time)}`, body });
-    } else if (s.when === "am" && t >= 15 * 60) {
-      F.push({ cat: "Timing", sev: "minor", title: `${s.name} at ${fmt12(i.time)}`, body: "Usually taken in the morning. Later doses can interfere with sleep." });
-    } else if (s.when === "pm" && t < 12 * 60) {
-      F.push({ cat: "Timing", sev: "minor", title: `${s.name} at ${fmt12(i.time)}`, body: "Usually taken in the evening. It can make you drowsy during the day." });
-    }
-  });
 
   // Dose
   // Doses above the typical range are ranked by how far above they are (LOAD_RULES.dose).
@@ -242,17 +223,6 @@ function analyze(stack) {
   if (has("mucuna-pruriens") && !sero.length) F.push({ cat: "Balance", sev: "info", title: "Mucuna without serotonin support",
     body: "Theory, limited evidence: regular L-DOPA can crowd out serotonin production through the same enzyme. Worth watching your mood and sleep." });
 
-  // Food, against the meals in "Your day"
-  if (!(stack.meals || []).length) F.push({ cat: "Food", sev: "info", title: "No meals set",
-    body: "The builder is assuming an empty stomach all day. Add your usual meals under “Your day” to see how food changes absorption." });
-  items.forEach(i => {
-    const ab = absorb(i, stack);
-    if (ab.level !== "warn" && ab.level !== "bad") return;
-    const others = items.filter(x => x.id !== i.id), b = bestSlot(i, stack, others), to = hhmm(b.t);
-    F.push({ cat: "Food", sev: ab.level === "bad" ? "moderate" : "minor", title: `${byId[i.sid].name} at ${fmt12(i.time)}`, body: ab.why,
-      move: to !== i.time && absorb({ ...i, time: to }, stack).factor > ab.factor ? { item: i.id, time: to } : null });
-  });
-
   // Recovery (additions themselves live in the Suggestions panel)
   const pushers = uniq(items).filter(i => { const s = byId[i.sid]; return s.tags.includes("downreg") || s.tags.includes("stimulant") || s.tol[0] === "high"; });
   if (pushers.length) F.push({ cat: "Recovery", sev: "info", title: "Protect your baseline",
@@ -260,6 +230,71 @@ function analyze(stack) {
 
   if (!F.some(f => isStop(f) || f.sev === "moderate")) F.unshift({ cat: "Interactions", sev: "good", title: "No known conflicts in our data", body: "Nothing in this stack is known to clash. Still introduce one new supplement at a time so you can tell what's doing what." });
   return F.sort((a, b) => CHECK_CATS.indexOf(a.cat) - CHECK_CATS.indexOf(b.cat) || SEV_ORDER[a.sev] - SEV_ORDER[b.sev]);
+}
+
+// Timing and food advice for the Schedule step: spacing, time of day, and absorption against the meals in "Your day".
+function analyzeTiming(stack) {
+  const F = [];
+  const items = stack.items.filter(i => byId[i.sid]);
+  if (!items.length) return F;
+
+  // Timing: spacing rules
+  SEP.forEach(([a, b, h, why]) => {
+    const A = items.filter(i => i.sid === a), B = items.filter(i => i.sid === b);
+    for (const x of A) for (const y of B) {
+      const gap = Math.abs(mins(x.time) - mins(y.time));
+      if (gap < h * 60) {
+        F.push({ cat: "Timing", sev: "moderate", title: `Space out ${byId[a].name} and ${byId[b].name}`,
+          body: `${why} Take them at least ${h} hour${h > 1 ? "s" : ""} apart. Right now they're ${gap ? fmtGap(gap) + " apart" : "taken together"}.` });
+        return;
+      }
+    }
+  });
+  // Timing: time of day
+  items.forEach(i => {
+    const s = byId[i.sid], t = mins(i.time);
+    if (s.tags.includes("stimulant") && t >= 14 * 60) {
+      let body = `Taken at ${fmt12(i.time)}, it may still be active at bedtime.`;
+      if (i.sid === "caffeine") {
+        const left = Math.round((+i.dose || 0) * Math.pow(0.5, Math.max(0, 23 * 60 - t) / 300));
+        body = `About ${left} mg of this ${num(+i.dose || 0)} mg dose will still be in your system at 11 pm. Caffeine's half-life is about 5 hours.`;
+      }
+      F.push({ cat: "Timing", sev: "moderate", title: `${s.name} at ${fmt12(i.time)}`, body });
+    } else if (s.when === "am" && t >= 15 * 60) {
+      F.push({ cat: "Timing", sev: "minor", title: `${s.name} at ${fmt12(i.time)}`, body: "Usually taken in the morning. Later doses can interfere with sleep." });
+    } else if (s.when === "pm" && t < 12 * 60) {
+      F.push({ cat: "Timing", sev: "minor", title: `${s.name} at ${fmt12(i.time)}`, body: "Usually taken in the evening. It can make you drowsy during the day." });
+    }
+  });
+
+  // Food, against the meals in "Your day"
+  if (!(stack.meals || []).length) F.push({ cat: "Food", sev: "info", title: "No meals set",
+    body: "The builder is assuming an empty stomach all day. Add your usual meals under “Your day” to see how food changes absorption." });
+  // Fasting windows: meals inside a fast and fat-soluble supplements dosed during one are heads-ups;
+  // water-soluble ones marked take-with-food (stomach comfort) are a softer tip. Never blocking.
+  const FT = BUILDER_TEXT.fasting, fill = (t, v) => t.replace(/\{(\w+)\}/g, (m, k) => v[k] ?? m);
+  (stack.meals || []).filter(m => fastAt(stack, mins(m.time))).forEach(m =>
+    F.push({ cat: "Food", sev: "moderate", title: fill(FT.mealTitle, { meal: m.label, time: fmt12(m.time) }), body: FT.mealBody }));
+  const fasting = new Set();
+  items.forEach(i => {
+    const s = byId[i.sid];
+    const fat = ["fat", "both"].includes(s.sol?.[0]) || s.food === "with_fat";   // fat-soluble (supplements.js "sol"): absorbs poorly without a meal
+    if (!fastAt(stack, mins(i.time)) || !(fat || s.food === "with_food")) return;
+    fasting.add(i.id);
+    const others = items.filter(x => x.id !== i.id), b = bestSlot(i, stack, others), to = hhmm(b.t);
+    F.push({ cat: "Food", sev: fat ? "moderate" : "info", title: fill(FT.suppTitle, { name: s.name, time: fmt12(i.time) }), body: fill(fat ? FT.fatBody : FT.foodBody, { name: s.name }),
+      move: to !== i.time && !fastAt(stack, b.t) ? { item: i.id, time: to } : null });
+  });
+  items.forEach(i => {
+    if (fasting.has(i.id)) return;
+    const ab = absorb(i, stack);
+    if (ab.level !== "warn" && ab.level !== "bad") return;
+    const others = items.filter(x => x.id !== i.id), b = bestSlot(i, stack, others), to = hhmm(b.t);
+    F.push({ cat: "Food", sev: ab.level === "bad" ? "moderate" : "minor", title: `${byId[i.sid].name} at ${fmt12(i.time)}`, body: ab.why,
+      move: to !== i.time && absorb({ ...i, time: to }, stack).factor > ab.factor ? { item: i.id, time: to } : null });
+  });
+
+  return F.sort((a, b) => TIMING_CATS.indexOf(a.cat) - TIMING_CATS.indexOf(b.cat) || SEV_ORDER[a.sev] - SEV_ORDER[b.sev]);
 }
 
 // ---------------------------------------------------------------------------

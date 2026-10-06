@@ -231,7 +231,7 @@ function renderSim() {
   const lineIds = new Set(m.sources.map(s => s.sid));
   document.getElementById("sim-note").textContent = !m.sources.length ? T.empty : lineIds.has("5-htp") ? T.route5htp : "";
   // Warnings from the stack check, with a "Show" that highlights the supplements involved
-  const F = analyze(st).filter(f => SEV_ORDER[f.sev] <= SEV_ORDER.moderate);
+  const F = [...analyze(st), ...analyzeTiming(st)].filter(f => SEV_ORDER[f.sev] <= SEV_ORDER.moderate);
   document.getElementById("sim-warn").innerHTML = F.length ? `<ul class="sim-warnlist">${F.map((f, k) => `<li><span class="sev sev-${f.sev}">${f.sev}</span><div><b>${esc(f.title)}</b><p>${gloss(f.body)}</p>
       ${(f.ids || []).length ? `<button class="linkish" data-act="sim-show" data-ids="${esc(f.ids.join(","))}">${esc(T.show)}</button>` : ""}</div></li>`).join("")}</ul>`
     : `<p class="hint">${esc(T.warningsNone)}</p>`;

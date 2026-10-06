@@ -13,10 +13,10 @@ const defaultMeals = () => [
 ];
 function makeStack(name, items, extra = {}) {
   return { id: newId(), name, items: items.map(([sid, dose, time]) => ({ id: newId(), sid, dose, time })),
-    meals: defaultMeals(), wake: "07:00", bed: "23:00", ...extra };
+    meals: defaultMeals(), fasts: [], wake: "07:00", bed: "23:00", ...extra };
 }
 function migrateStack(s) {
-  return { ...s, items: (s.items || []).filter(i => byId[i.sid]), meals: Array.isArray(s.meals) ? s.meals : defaultMeals(), wake: s.wake || "07:00", bed: s.bed || "23:00" };
+  return { ...s, items: (s.items || []).filter(i => byId[i.sid]), meals: Array.isArray(s.meals) ? s.meals : defaultMeals(), fasts: Array.isArray(s.fasts) ? s.fasts : [], wake: s.wake || "07:00", bed: s.bed || "23:00" };
 }
 
 // ---------------------------------------------------------------------------
@@ -24,6 +24,10 @@ function migrateStack(s) {
 // A meal puts you in the "fed" state from 30 min before it to 2 h after.
 // Factors are rough, illustrative multipliers, not pharmacokinetic data.
 // ---------------------------------------------------------------------------
+// Fasting windows ({ id, from, to }, "HH:MM"). A window can run past midnight (from 20:00 to 12:00).
+const inWindow = (t, f) => { const a = mins(f.from), b = mins(f.to), x = ((t % 1440) + 1440) % 1440; return a <= b ? x >= a && x < b : x >= a || x < b; };
+const fastAt = (stack, t) => (stack.fasts || []).find(f => inWindow(t, f));
+
 function mealNear(stack, t) {
   let best = null;
   for (const m of stack.meals || []) {

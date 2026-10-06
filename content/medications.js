@@ -55,9 +55,12 @@ const CONDITIONS = [
 ];
 
 const ABOUT_TEXT = {
-  heading: "About you",
+  heading: "About you (optional)",   // DRAFT: now step 0, above "Name your stack"
   optional: "Optional",
-  intro: "Add your medications and health conditions for a fuller check. You can skip this; it never blocks anything.",
+  intro: "We use your medications and health conditions to check your stacks for interactions, like an antidepressant with 5-HTP. It's optional and never blocks anything, but if you skip it, those checks can't run.",   // DRAFT
+  statusOn: "Interaction checks on:",   // DRAFT: followed by the summary, e.g. "2 medication types · 1 conditions"
+  statusOff: "Medication and condition checks are off.",   // DRAFT
+  statusOffBody: "Fill this in any time to turn them on. It applies to all your stacks.",   // DRAFT
   privacy: "Stays on this device. Not sent anywhere.",
   medsLabel: "Medications",
   medsSearch: "Type a medicine name, e.g. “Zoloft” or “sertraline”",

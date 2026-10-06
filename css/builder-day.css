@@ -1,14 +1,7 @@
 /* Stack builder: day settings, meals, absorption, suggestions, item info. */
 
 /* ---------- Day settings, meals, absorption ---------- */
-.day-set { display: flex; flex-wrap: wrap; gap: 12px; align-items: start; }
-.day-set .grow { flex: 1 1 360px; }
-.day-set input[type="time"] { font-family: var(--f-mono); font-size: 0.85rem; padding: 6px 8px; }
 .field-label { font-family: var(--f-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
-.meals { display: grid; gap: 6px; }
-.meal { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
-.meal-time { font-family: var(--f-mono); font-size: 0.85rem; padding: 5px 8px; }
-.meal-label { width: 120px; padding: 5px 8px; font-size: 0.9rem; }
 .flags { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
 .flags button { all: unset; cursor: pointer; padding: 5px 10px; font-size: 0.8rem; color: var(--muted); border-left: 1px solid var(--line); }
 .flags button:first-child { border-left: 0; }
@@ -16,7 +9,6 @@
 .flags button:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
 .flags button[aria-pressed="true"] { background: var(--soft); color: var(--ink); font-weight: 700; }
 .flags button[aria-pressed="true"]::before { content: "✓ "; }
-.meal-adds { display: flex; gap: 6px; flex-wrap: wrap; }
 
 .ab { font-size: 0.75rem; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
 .ab-good { color: var(--sev-good); border-color: color-mix(in srgb, var(--sev-good) 45%, var(--line)); }
@@ -42,9 +34,40 @@
 .tl-track.drag:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
 body.dragging, body.dragging * { cursor: grabbing !important; }
 .tl-night { position: absolute; top: 0; bottom: 0; background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--muted) 12%, transparent) 0 3px, transparent 3px 7px); }
-.tl-meal { position: absolute; top: 0; bottom: 0; background: color-mix(in srgb, var(--sev-moderate) 9%, transparent); }
+.tl-meal { position: absolute; top: 0; bottom: 0; background: color-mix(in srgb, var(--c-meal) 10%, transparent); box-shadow: inset 1px 0 color-mix(in srgb, var(--c-meal) 35%, transparent), inset -1px 0 color-mix(in srgb, var(--c-meal) 35%, transparent); }
 .meals-row .tl-track { overflow: visible; touch-action: pan-y; }
-.tl-mealchip { position: absolute; top: 1px; bottom: 1px; transform: translateX(-50%); display: grid; place-items: center; padding: 0 8px; border-radius: 999px; background: var(--surface); border: 1px solid var(--sev-moderate); color: var(--sev-moderate); font-size: 0.7rem; font-weight: 700; white-space: nowrap; cursor: grab; z-index: 2; touch-action: pan-y; }
+/* Day editor rows (step 4): the awake span with draggable ends, meal chips, fasting blocks */
+.tl-label .tl-adds { display: flex; flex-wrap: wrap; gap: 2px 10px; margin-top: 2px; }
+.tl-add { all: unset; cursor: pointer; font-family: var(--f-mono); font-size: 0.7rem; font-weight: 500; color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+.tl-add:hover { color: var(--ink); }
+.tl-add:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 3px; }
+.tl-awake { position: absolute; top: 4px; bottom: 4px; border-radius: 999px; background: color-mix(in srgb, var(--ink) 10%, transparent); border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent); }
+.tl-planner-head { margin-top: 0; padding-top: 0; border-top: 0; margin-bottom: 4px; }
+.tl-planner-head .hint { font-size: 0.8rem; }
+.tl-daytimes { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 3px; }
+.tl-daytimes label { display: inline-flex; align-items: center; gap: 4px; font-family: var(--f-mono); font-size: 0.66rem; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.tl-daytimes input { font-family: var(--f-mono); font-size: 0.72rem; padding: 1px 4px; width: 104px; }
+.tl-daytimes label { width: 100%; justify-content: space-between; }
+.tl-awake-lab { position: absolute; top: 50%; transform: translateY(-50%); left: 12px; font-family: var(--f-mono); font-size: 0.64rem; color: var(--muted); white-space: nowrap; pointer-events: none; }
+.tl-awake-lab.r { left: auto; right: 12px; }
+.tl-handle { position: absolute; top: 3px; bottom: 3px; width: 10px; transform: translateX(-50%); border-radius: 5px; background: var(--ink); cursor: ew-resize; z-index: 2; touch-action: pan-y; }
+.tl-handle:hover { box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 25%, transparent); }
+.tl-handle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tl-fast { position: absolute; top: 0; bottom: 0; background: color-mix(in srgb, var(--c-fast) 9%, transparent); border-left: 1px dashed color-mix(in srgb, var(--c-fast) 45%, transparent); border-right: 1px dashed color-mix(in srgb, var(--c-fast) 45%, transparent); }
+.tl-fastblock { position: absolute; top: 2px; bottom: 2px; display: flex; align-items: center; justify-content: safe center; border-radius: 6px; background: color-mix(in srgb, var(--c-fast) 22%, var(--surface)); border: 1px solid var(--c-fast); color: var(--c-fast); cursor: grab; z-index: 2; touch-action: pan-y; overflow: hidden; }
+.tl-fastblock:hover { background: color-mix(in srgb, var(--c-fast) 32%, var(--surface)); }
+.tl-fastblock:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+.tl-fastlab { font-family: var(--f-mono); font-size: 0.68rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; pointer-events: none; padding: 0 10px; }
+.tl-fastedge { position: absolute; top: 0; bottom: 0; width: 9px; cursor: ew-resize; }
+.tl-fastedge.l { left: 0; border-left: 3px solid var(--c-fast); }
+.tl-fastedge.r { right: 0; border-right: 3px solid var(--c-fast); }
+.tl-editor { width: min(320px, calc(100vw - 24px)); border-color: var(--line); }
+.tl-ed-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.tl-ed-row label { display: grid; gap: 4px; font-family: var(--f-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.tl-ed-row input { font-family: var(--f-body, inherit); font-size: 0.88rem; padding: 5px 8px; text-transform: none; letter-spacing: 0; }
+.tl-ed-row input[type="time"] { font-family: var(--f-mono); }
+.tl-ed-btns { display: flex; gap: 8px; justify-content: space-between; }
+.tl-mealchip { position: absolute; top: 1px; bottom: 1px; transform: translateX(-50%); display: grid; place-items: center; padding: 0 8px; border-radius: 999px; background: var(--surface); border: 1px solid var(--c-meal); color: var(--c-meal); font-size: 0.7rem; font-weight: 700; white-space: nowrap; cursor: grab; z-index: 2; touch-action: pan-y; }
 .tl-mealchip:hover { background: var(--soft); }
 .tl-mealchip:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
 
@@ -78,6 +101,13 @@ details.explainer > p { padding-inline: 18px; margin-top: 8px; }
 .more-link { font-weight: 700; text-decoration-color: var(--muted); text-underline-offset: 3px; justify-self: start; }
 
 #b-suggest { display: grid; gap: 10px; }
+/* Step 5: Your day, then timing tips, then the timeline */
+#b-timing:not(:empty) { display: grid; gap: 10px; margin: 18px 0 8px; }
+.timing-tips { display: grid; gap: 10px; }
+.tips-list .tip-row { grid-template-columns: 96px minmax(0, 1fr) auto; align-items: start; padding-top: 10px; padding-bottom: 10px; }
+.tips-list .tip-row p { font-size: 0.88rem; }
+.tips-list .tip-row > .pill { align-self: center; white-space: nowrap; }
+.tips-more { justify-self: start; font-size: 0.88rem; }
 .sugg-toggle { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; border-radius: 6px; }
 .sugg-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .sugg-toggle .caret { color: var(--muted); transition: transform .15s; }

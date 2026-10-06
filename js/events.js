@@ -86,9 +86,15 @@ document.addEventListener("click", e => {
   else if (act === "approve-go") {
     const F = analyze(st);
     if (!document.getElementById("approve-ack")?.checked || !canApprove(F) || !F.filter(needsReview).every(f => reviewedSet(st).has(revKey(f)))) return;
-    App.checkReview = null; st.approved = { at: new Date().toISOString(), keys: analyze(st).filter(isStop).map(stopKey) }; saveState(); refreshBuilder();
+    const at = new Date().toISOString();
+    App.checkReview = null; st.approved = { at, keys: analyze(st).filter(isStop).map(stopKey) }; st.ack = { at, sig: ackSig(st) }; saveState(); refreshBuilder();   // approving the warnings also passes the final gate
   }
-  else if (act === "approve-withdraw") { st.approved = null; saveState(); refreshBuilder(); }
+  else if (act === "approve-withdraw") { st.approved = null; st.ack = null; saveState(); refreshBuilder(); }
+  else if (act === "ack-go") {
+    if (!document.getElementById("ack-check")?.checked || stackPaused(st)) return;
+    st.ack = { at: new Date().toISOString(), sig: ackSig(st) }; saveState(); refreshBuilder();
+  }
+  else if (act === "ack-withdraw") { st.ack = null; saveState(); refreshBuilder(); }
   else if (act === "trim-systems") {
     const plan = trimPlan(st); if (!plan.remove.length) return;
     App.undoTrim = { stackId: st.id, items: st.items.map(i => ({ ...i })) };
@@ -116,9 +122,10 @@ document.addEventListener("click", e => {
   else if (act === "sim-show") simHighlight(el.dataset.ids.split(","));
   else if (act === "add-tab") setAddTab(el.dataset.addTab);
   // About you (localStorage only)
-  else if (act === "about-fold") { App.aboutOpen = !App.aboutOpen; renderAbout(); }
+  else if (act === "timing-toggle") { App.timingOpen = App.timingOpen === false; renderTimeline(); }
+  else if (act === "timing-all") { App.timingAll = !App.timingAll; renderTimeline(); }
   else if (act === "about-open") {
-    App.aboutOpen = true; toggleStep(BSTEPS.indexOf("day") + 1, true); renderAbout();
+    toggleStep(0, true);
     setTimeout(() => document.getElementById("b-about")?.scrollIntoView({ block: "start", behavior: "smooth" }), 50);
   }
   else if (act === "about-toggle") {
@@ -141,7 +148,7 @@ document.addEventListener("click", e => {
   else if (act === "dose-step") stepDose(el.dataset.item, +el.dataset.dir);
   else if (act === "step-toggle") toggleStep(+el.dataset.step, el.dataset.open ? true : undefined);
   else if (act === "steps-all") {
-    const show = el.dataset.show === "1", all = [1, 2, 3, 4, 5, 6].filter(n => n <= builderOpen());
+    const show = el.dataset.show === "1", all = [0, ...BSTEPS.map((_, k) => k + 1)].filter(n => n <= builderOpen());
     setExpanded(new Set(show ? all : [])); render("stack", true);
   }
   else if (act === "step-next") { if (!el.disabled) openSteps(builderOpen() + 1); }
@@ -211,7 +218,14 @@ document.addEventListener("click", e => {
     const m = st.meals.find(x => x.id === el.dataset.meal);
     if (m) { m[el.dataset.flag] = !m[el.dataset.flag]; touch(st); el.setAttribute("aria-pressed", String(m[el.dataset.flag])); renderItems(); renderTimeline(); renderChecks(); }
   }
-  else if (act === "meal-remove") { st.meals = st.meals.filter(x => x.id !== el.dataset.meal); touch(st); refreshBuilder(); }
+  else if (act === "meal-remove") { st.meals = st.meals.filter(x => x.id !== el.dataset.meal); closeTlEditor(); touch(st); refreshBuilder(); }
+  else if (act === "fast-add") {
+    st.fasts = st.fasts || [];
+    st.fasts.push(st.fasts.length ? { id: newId(), from: "13:00", to: "17:00" } : { id: newId(), from: "20:00", to: "12:00" });   // first one: an overnight 16:8 window
+    touch(st); refreshBuilder();
+  }
+  else if (act === "fast-remove") { st.fasts = (st.fasts || []).filter(x => x.id !== el.dataset.fast); closeTlEditor(); touch(st); refreshBuilder(); }
+  else if (act === "tl-edit-close") closeTlEditor();
   else if (act === "meal-add") {
     const snack = el.dataset.kind === "snack";
     st.meals.push({ id: newId(), label: snack ? "Snack" : "Meal", time: snack ? "15:30" : "17:00", protein: !snack, fat: !snack, carbs: true });
@@ -233,7 +247,8 @@ document.addEventListener("click", e => {
 });
 
 document.addEventListener("change", e => { if (e.target.id === "approve-ack") { const b = document.getElementById("approve-go"); if (b) b.disabled = !e.target.checked; } });
-// "Reviewed" ticks in step 4: redraw so the approval panel's progress and lock update
+document.addEventListener("change", e => { if (e.target.id === "ack-check") { const b = document.getElementById("ack-go"); if (b) b.disabled = !e.target.checked; } });
+// "Reviewed" ticks in step 3: redraw so the approval panel's progress and lock update
 document.addEventListener("change", e => {
   const k = e.target.dataset && e.target.dataset.review; if (k === undefined) return;
   const set = reviewedSet(active()); e.target.checked ? set.add(k) : set.delete(k);
@@ -245,8 +260,12 @@ document.addEventListener("change", e => {
   if (t.id === "stack-select" || t.id === "t-stack" || t.id === "sim-stack") { App.activeId = t.value; saveState(); render(current, true); }
   else if (t.id === "stack-name") { st.name = t.value.trim() || "Untitled stack"; touch(st); const o = document.querySelector(`#stack-select option[value="${st.id}"]`); if (o) o.textContent = st.name; }
   else if (t.classList.contains("dose-in")) { const i = st.items.find(x => x.id === t.dataset.item); if (i) tryDose(i, +t.value || 0); }
-  else if (t.id === "wake" || t.id === "bed") { if (t.value) { st[t.id] = t.value; touch(st); renderTimeline(); renderChecks(); renderSuggest(); } }
+  else if (t.id === "wake" || t.id === "bed") {
+    const v = mins(t.value), ok = t.value && (t.id === "wake" ? v <= mins(st.bed) - 60 : v >= mins(st.wake) + 60);
+    if (ok) { st[t.id] = t.value; touch(st); } renderTimeline(); renderChecks(); renderSuggest();   // an impossible time snaps back
+  }
   else if (t.classList.contains("meal-time")) { const m = st.meals.find(x => x.id === t.dataset.meal); if (m && t.value) { m.time = t.value; touch(st); renderItems(); renderSuggest(); renderTimeline(); renderChecks(); } }
+  else if (t.classList.contains("fast-time")) { const f = (st.fasts || []).find(x => x.id === t.dataset.fast); if (f && t.value) { f[t.dataset.end] = t.value; touch(st); renderTimeline(); renderChecks(); } }
   else if (t.classList.contains("meal-label")) { const m = st.meals.find(x => x.id === t.dataset.meal); if (m) { m.label = t.value.trim() || "Meal"; touch(st); renderItems(); renderSuggest(); renderTimeline(); renderChecks(); } }
   else if (t.dataset.act === "take") {
     const day = ensureDay(App.trackDate), item = st.items.find(x => x.id === t.dataset.item);
@@ -269,7 +288,27 @@ document.addEventListener("input", e => {
 // Drag doses and meals along the timeline (15-minute snap). Listeners live on
 // window so the timeline can re-render underneath an active drag.
 let drag = null;
-const dragTarget = key => { const [kind, id] = key.split(":"), st = active(); return kind === "meal" ? (st.meals || []).find(m => m.id === id) : st.items.find(i => i.id === id); };
+// Everything draggable exposes a "time": doses, meals, the ends of the day (wake:/bed:) and fasts
+// (fast:<id>:from|to stretch one end, fast:<id>:move slides the whole window).
+const dragTarget = key => {
+  const [kind, id, part] = key.split(":"), st = active();
+  if (kind === "meal") return (st.meals || []).find(m => m.id === id);
+  if (kind === "wake" || kind === "bed") return {
+    get time() { return st[kind]; },
+    set time(v) { const t = mins(v); if (kind === "wake" ? t <= mins(st.bed) - 60 : t >= mins(st.wake) + 60) st[kind] = v; },
+  };
+  if (kind === "fast") {
+    const f = (st.fasts || []).find(x => x.id === id);
+    if (!f) return null;
+    if (part === "move") return {
+      get time() { return f.from; },
+      set time(v) { const d = mins(v) - mins(f.from); f.from = v; f.to = hhmm((mins(f.to) + d + 1440) % 1440); },
+    };
+    return { get time() { return f[part]; }, set time(v) { if (v !== (part === "from" ? f.to : f.from)) f[part] = v; } };
+  }
+  return st.items.find(i => i.id === id);
+};
+const editable = key => /^(meal|fast):/.test(key);
 const clampT = m => Math.max(TL_START, Math.min(24 * 60 - 15, Math.round(m / 15) * 15));
 document.addEventListener("pointerdown", e => {
   const el = e.target.closest("[data-drag]");
@@ -277,7 +316,7 @@ document.addEventListener("pointerdown", e => {
   const obj = dragTarget(el.dataset.drag), track = el.closest(".tl-track");
   if (!obj || !track) return;
   const order = [...active().items].sort((a, b) => mins(a.time) - mins(b.time)).map(i => i.id);
-  drag = { key: el.dataset.drag, obj, x0: e.clientX, m0: mins(obj.time), w: track.getBoundingClientRect().width, moved: false, order };
+  drag = { key: el.dataset.drag, obj, x0: e.clientX, m0: mins(obj.time), w: track.getBoundingClientRect().width, moved: false, order, el };
 });
 window.addEventListener("pointermove", e => {
   if (!drag) return;
@@ -293,6 +332,7 @@ const endDrag = () => {
   const d = drag; drag = null;
   document.body.classList.remove("dragging");
   if (d.moved) { touch(active()); renderOpt(null); refreshBuilder(); }
+  else if (editable(d.key)) openTlEditor(d.key.replace(/:(from|to|move)$/, ""), d.el.closest(".tl-mealchip, .tl-fastblock") || d.el);   // a click (no drag) opens the editor
 };
 window.addEventListener("pointerup", endDrag);
 window.addEventListener("pointercancel", endDrag);
@@ -314,7 +354,9 @@ document.addEventListener("keydown", e => {
   if (e.target.classList && e.target.classList.contains("dose-in") && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
     e.preventDefault(); stepDose(e.target.dataset.item, e.key === "ArrowUp" ? 1 : -1); return;
   }
+  if (e.key === "Escape" && document.getElementById("tl-editor")) { const k = document.getElementById("tl-editor").dataset.key; closeTlEditor(); document.querySelector(`[data-drag^="${k}"]`)?.focus(); return; }
   const el = e.target.closest && e.target.closest("[data-drag]");
+  if (el && editable(el.dataset.drag) && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openTlEditor(el.dataset.drag.replace(/:(from|to|move)$/, ""), el); return; }
   if (el && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
     e.preventDefault();
     const key = el.dataset.drag, obj = dragTarget(key);
