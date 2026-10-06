@@ -15,7 +15,7 @@ const MAP = [
   ["l-tyrosine", "dopamine", "precursor", "moderate", "The raw material for dopamine. Helps most when you're stressed, sleep-deprived, or running on empty."],
   ["n-acetyl-l-tyrosine", "dopamine", "precursor", "limited", "A more soluble form of tyrosine that the body converts poorly. Plain L-Tyrosine is usually better."],
   ["dl-phenylalanine", "dopamine", "precursor", "limited", "One step further back than tyrosine. Your body turns it into tyrosine first, and some into PEA, a short-lived stimulant."],
-  ["mucuna-pruriens", "dopamine", "precursor", "strong", "A bean that contains L-DOPA, which skips the slow step and becomes dopamine directly. Strongest effect, most side effects."],
+  ["mucuna-pruriens", "dopamine", "precursor", "strong", "A bean that contains L-DOPA, which skips the slow step and becomes dopamine directly. Strongest effect, most side effects. Strong evidence it feeds the dopamine pathway, not evidence it helps healthy people."],   // DRAFT: last sentence added (team, October 2026)
   ["rhodiola", "dopamine", "modulator", "limited", "An adaptogen that may help protect dopamine levels under stress rather than adding more."],
   ["citicoline", "dopamine", "modulator", "limited", "Mainly a choline source, but animal studies show it supports dopamine receptors."],
   ["iron", "dopamine", "cofactor", "strong", "Needed for the slowest step in making dopamine. Low iron means low dopamine production."],

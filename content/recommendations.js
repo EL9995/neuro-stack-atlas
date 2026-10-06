@@ -89,7 +89,7 @@ const LOAD_RULES = {
   // Same chemical system: [count, severity] steps, highest count that applies wins.
   systems: [
     { id: "serotonergic", tag: "serotonergic", nt: "serotonin", steps: [[2, "moderate"], [3, "critical"]],
-      always: { "st-johns-wort": "major" },   // EXISTING rule: St. John's Wort with any other serotonin booster is serious
+      always: { "st-johns-wort": "critical" },   // St. John's Wort with any other serotonin booster: critical (was serious; team, October 2026)
       title: "Several serotonin boosters",   // EXISTING
       body: "{names} all raise serotonin activity. Stacking them raises the risk of serotonin syndrome. Most people should pick one." },   // EXISTING
     { id: "dopaminergic", tag: "dopaminergic", nt: "dopamine", steps: [[2, "moderate"], [3, "major"]],

@@ -70,7 +70,7 @@ const BUILDER_TEXT = {
       tabSearch: "Search", tabBrowse: "Browse", tabTemplates: "Templates",   // DRAFT
       templatesNote: "A template starts a new stack, so nothing you've built gets replaced.",   // DRAFT (same as the tour)
       searchLabel: "Search",
-      searchPlaceholder: "Search 65 supplements: try “theanine”, “vitamin D” or “magnesium”",
+      searchPlaceholder: "Search {n} supplements: try “theanine”, “vitamin D” or “magnesium”",   // {n} is counted from the data
       browseLabel: "Browse by neurotransmitter",
       foundationTab: "Foundations + recovery",   // DRAFT
       foundationSub: "Support the whole system",   // DRAFT
@@ -80,7 +80,7 @@ const BUILDER_TEXT = {
       groupFlag: "to check",   // DRAFT: "! 1 to check" on a folded group with a caution tag or food/timing flag inside
       suggestions: "Suggestions",
       suggestAdd: "Add to stack",   // DRAFT
-      suggestionsIntro: "Based on what's in your stack. Each one has been checked so it doesn't add a new conflict, and gets added at its best time.",
+      suggestionsIntro: "Based on what's in your stack. Each one doesn't add a conflict in our data, and gets added at its best time.",   // DRAFT (team wording, October 2026)
       add: "+ Add",
       added: "In stack",
     },

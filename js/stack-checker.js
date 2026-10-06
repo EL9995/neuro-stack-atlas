@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // STACK CHECKER
 // ---------------------------------------------------------------------------
-const CHECK_CATS = ["Interactions", LOAD_RULES.category, "Timing", "Dose", "Tolerance", "Balance", "Food", "Cofactors", "Recovery"];
+const CHECK_CATS = ["Interactions", MED_RULES.category, LOAD_RULES.category, "Timing", "Dose", "Tolerance", "Balance", "Food", "Cofactors", "Recovery"];
 
 // "Serious" or worse: the timeline and the Tracker checklist pause until it's fixed.
 const isStop = f => f.sev === "critical" || f.sev === "major";
@@ -18,6 +18,85 @@ function pastSlowStep(sid, nt) {
   const path = ntById[nt]?.path || [], rl = path.findIndex(p => p.rl);
   const at = path.findIndex(p => (p.from || []).some(f => sameGroup(f, sid)));
   return rl >= 0 && at > rl;
+}
+
+// What the person entered in "About you" (localStorage only; never sent anywhere).
+const ABOUT_KEY = "nsa-about";
+const aboutYou = () => { const a = lsGet(ABOUT_KEY, null) || {}; return { meds: a.meds || [], names: a.names || [], conds: a.conds || [] }; };
+const aboutSets = (a = aboutYou()) => ({
+  meds: new Set([...a.meds, ...a.names.map(n => n.cls)].filter(m => m !== "none" && m !== "pnts")),
+  conds: new Set(a.conds.filter(c => c !== "none" && c !== "pnts")),
+  filled: a.meds.length + a.names.length + a.conds.length > 0,
+});
+const medLabel = id => (MED_CLASSES.find(c => c.id === id) || {}).label || id;
+const condLabel = id => ((CONDITIONS.find(c => c.id === id) || {}).label || id).toLowerCase();
+const seOf = sid => SIDE_EFFECTS[sid] || { common: [], stopSigns: [], avoidIf: [], liver: false, pregnancy: "unknown", source: [], needsSource: true, verified: false };
+
+function medFindings(items, F, uniq, names, tagged, fill) {
+  const R = MED_RULES, cat = R.category, A = aboutSets(), all = uniq(items), covered = new Set();
+  const cover = (sid, key) => covered.add(sid + "|" + key);
+  const push = f => F.push({ cat, ...f });
+  if (!A.filled) push({ sev: "info", rule: "about:empty", about: true, title: R.nothingEntered, body: "" });
+
+  // Team rules
+  R.rules.forEach(r => {
+    const trig = [...(r.meds || []).filter(m => A.meds.has(m)), ...(r.conds || []).filter(c => A.conds.has(c))];
+    if (!trig.length) return;
+    const mem = all.filter(i => (r.ids || []).some(id => sameGroup(id, i.sid)) || (r.tags || []).some(t => byId[i.sid].tags.includes(t)));
+    if (!mem.length) return;
+    mem.forEach(i => trig.forEach(k => cover(i.sid, k)));
+    const v = { names: names(mem), med: listJoin(trig.map(k => MED_CLASSES.some(c => c.id === k) ? medLabel(k) : condLabel(k))) };
+    push({ sev: r.sevIfTwo && mem.length >= 2 ? r.sevIfTwo : r.sev, rule: "med:" + r.id, ids: mem.map(i => i.sid), title: fill(r.title, v), body: fill(r.body, v) });
+  });
+
+  // Life stage
+  if (A.conds.has("pregnant")) {
+    const sitePreg = i => byId[i.sid].ix.some(x => !x[3] && /pregnan/i.test(x[0]) && x[1] === "major");
+    const avoid = all.filter(i => seOf(i.sid).pregnancy === "avoid" || seOf(i.sid).avoidIf.includes("pregnant") || sitePreg(i));
+    const unknown = all.filter(i => !avoid.includes(i) && seOf(i.sid).pregnancy !== "guidance");
+    avoid.forEach(i => cover(i.sid, "pregnant"));
+    if (avoid.length) push({ ...R.pregnantAvoid, rule: "life:pregnant-avoid", ids: avoid.map(i => i.sid), title: fill(R.pregnantAvoid.title, { names: names(avoid) }), body: fill(R.pregnantAvoid.body, { names: names(avoid) }) });
+    if (unknown.length) push({ ...R.pregnantUnknown, rule: "life:pregnant-unknown", ids: unknown.map(i => i.sid), title: fill(R.pregnantUnknown.title, { names: names(unknown) }), body: fill(R.pregnantUnknown.body, { names: names(unknown) }) });
+  }
+  if (A.conds.has("under18") && all.length) push({ ...R.under18, rule: "life:under18", ids: all.map(i => i.sid), body: fill(R.under18.body, { names: names(all) }) });
+
+  // "Avoid if" from side-effects.js
+  A.conds.forEach(c => {
+    if (c === "pregnant") return;
+    const mem = all.filter(i => seOf(i.sid).avoidIf.includes(c) && !covered.has(i.sid + "|" + c));
+    if (!mem.length) return;
+    mem.forEach(i => cover(i.sid, c));
+    const v = { names: names(mem), cond: condLabel(c) };
+    push({ sev: R.avoidIf.sev, rule: "avoid:" + c, ids: mem.map(i => i.sid), title: fill(R.avoidIf.title, v), body: fill(R.avoidIf.body, v) });
+  });
+
+  // "Watch out for" entries in the supplement data that match what's entered (site data)
+  const seen = new Set();
+  all.forEach(i => byId[i.sid].ix.forEach(([label, sev, note, lid]) => {
+    if (lid || sev === "beneficial") return;
+    Object.entries(R.ixMatch).forEach(([k, re]) => {
+      if (!(A.meds.has(k) || A.conds.has(k)) || !re.test(label) || covered.has(i.sid + "|" + k) || seen.has(i.sid + "|" + label)) return;
+      seen.add(i.sid + "|" + label);
+      push({ sev, rule: `ix:${i.sid}:${k}`, ids: [i.sid], title: `${byId[i.sid].name} + ${label}`, body: note });
+    });
+  }));
+
+  // Medicines we can't check
+  const others = aboutYou().names.filter(n => n.cls === "other").map(n => n.name);
+  if (others.length || (A.meds.has("other") && all.some(i => i.sid !== "st-johns-wort"))) {
+    const nm = others.length ? listJoin(others) : medLabel("other").toLowerCase();
+    push({ sev: R.otherMeds.sev, rule: "med:other", title: fill(R.otherMeds.title, { names: nm }), body: fill(R.otherMeds.body, { names: nm }) });
+  }
+
+  // Side effects that add up, and liver
+  Object.entries(R.additive.effects).forEach(([effect, at]) => {
+    const mem = all.filter(i => seOf(i.sid).common.includes(effect));
+    if (mem.length < at) return;
+    const v = { names: names(mem), effect };
+    F.push({ cat: "Interactions", sev: R.additive.sev, rule: "se:" + effect, ids: mem.map(i => i.sid), title: fill(R.additive.title, v), body: fill(R.additive.body, v) });
+  });
+  const liver = all.filter(i => seOf(i.sid).liver || byId[i.sid].tags.includes("liver"));
+  if (liver.length >= R.liver.at) F.push({ cat: "Interactions", sev: R.liver.sev, rule: "se:liver", ids: liver.map(i => i.sid), title: R.liver.title, body: fill(R.liver.body, { names: names(liver) }) });
 }
 
 function analyze(stack) {
@@ -53,10 +132,7 @@ function analyze(stack) {
   const sero = tagged("serotonergic");
   const stim = tagged("stimulant");
   if (stim.length >= 2) F.push({ cat: "Interactions", sev: stim.some(i => byId[i.sid].tags.includes("bp_up")) ? "major" : "moderate",
-    ids: stim.map(i => i.sid), title: "Stimulants stacked", body: `${names(stim)} each raise heart rate and blood pressure, and the effects add up. Try each one alone before combining.` });
-  const liver = tagged("liver");
-  if (liver.length >= 2) F.push({ cat: "Interactions", sev: "moderate",
-    ids: liver.map(i => i.sid), title: "Two liver-risk herbs", body: `${names(liver)} have both been linked to rare liver injury. Avoid combining them long-term.` });
+    ids: stim.map(i => i.sid), rule: "stim", title: "Stimulants stacked", body: `${names(stim)} each raise heart rate and blood pressure, and the effects add up. Try each one alone before combining.` });
   const mao = tagged("mao");
   mao.forEach(m => {
     const others = items.filter(i => i.sid !== m.sid && ["dopaminergic", "serotonergic", "stimulant"].some(t => byId[i.sid].tags.includes(t)) && !pairs[[m.sid, i.sid].sort().join("|")]);
@@ -88,6 +164,9 @@ function analyze(stack) {
   const amino = tagged(L.aminoAcids.tag);
   if (amino.length >= L.aminoAcids.at) F.push({ cat: L.category, sev: L.aminoAcids.sev, rule: "amino", title: L.aminoAcids.title, ids: amino.map(i => i.sid),
     body: fill(L.aminoAcids.body, { names: names(amino) }) });
+
+  // Medications & conditions (About you, content/medications.js + med-rules.js) and side effects (side-effects.js)
+  medFindings(items, F, uniq, names, tagged, fill);
 
   // Timing: spacing rules
   SEP.forEach(([a, b, h, why]) => {

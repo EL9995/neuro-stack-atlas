@@ -160,3 +160,39 @@ a.item-name:hover { text-decoration: underline; }
 .paused-box b { font-family: var(--f-display); font-size: 1.05rem; color: var(--sev-major); }
 .paused-box p { color: var(--muted); font-size: 0.93rem; }
 
+
+/* About you (step 2): optional medications and conditions, kept on this device */
+.about { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.about-head { all: unset; box-sizing: border-box; width: 100%; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 12px 14px; }
+.about-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 12px; }
+.about-head .caret { align-self: center; color: var(--muted); transition: transform .15s; }
+.about.open .about-head .caret { transform: rotate(90deg); }
+.about-opt { font-family: var(--f-mono); font-size: 0.7rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.about-sum { margin-left: auto; font-size: 0.88rem; color: var(--muted); }
+.about-body { display: grid; gap: 14px; padding: 0 14px 14px; }
+.about-privacy { font-size: 0.85rem; font-weight: 600; color: var(--sev-good); }
+.about-group { display: grid; gap: 8px; }
+.about-search { display: flex; gap: 8px; }
+.about-search input { flex: 1; min-width: 0; padding: 8px 10px; }
+.about-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.about-chip[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.about-names { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.about-names li { display: inline-flex; align-items: center; gap: 6px; padding: 2px 4px 2px 10px; border-radius: 999px; border: 1px solid var(--line); font-size: 0.86rem; }
+.about-names li span { color: var(--muted); font-size: 0.78rem; }
+@media (prefers-reduced-motion: reduce) { .about-head .caret { transition: none; } }
+
+/* Side effects, stop signs, avoid if */
+.safety { display: grid; gap: 10px; align-content: start; }
+.safety.compact { gap: 4px; font-size: 0.9rem; }
+.safety.compact .stop b { color: var(--sev-major); }
+.safety .list-card.stop h3 { color: var(--sev-major); }
+.safety-tags { display: flex; gap: 6px; }
+.se-tag { font-family: var(--f-mono); font-size: 0.66rem; letter-spacing: .06em; text-transform: uppercase; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.se-tag.warn { color: var(--sev-moderate); border-color: color-mix(in srgb, var(--sev-moderate) 50%, var(--line)); }
+.safety-src { font-size: 0.8rem; color: var(--muted); }
+
+/* Warning-sign cards in step 4 */
+.emergency { display: grid; gap: 6px; padding: 12px 16px; border-radius: 10px; border: 1.5px solid var(--sev-major); background: color-mix(in srgb, var(--sev-major) 6%, var(--surface)); }
+.emergency b { font-family: var(--f-display); color: var(--sev-major); }
+.emergency ul { margin: 0; padding-left: 1.2em; display: grid; gap: 2px; font-size: 0.92rem; }
+.fold-mini { font-size: 0.85rem; color: var(--muted); }

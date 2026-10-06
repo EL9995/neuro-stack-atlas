@@ -13,6 +13,14 @@ Everything a visitor reads is in this folder, plus the footer in `index.html`.
 | "Take it with" cofactor advice | `cofactors.js` |
 | Hover tooltips | `glossary.js` |
 | Foundations card, swap suggestions, spacing rules, stack templates | `recommendations.js` |
+| Stack builder steps, tours, buttons, evidence key | `stack-builder.js` |
+| Stack check thresholds and wording (load rules, dose ranking, review/approve) | `recommendations.js` (`LOAD_RULES`) |
+| About you: medication classes, name lookup, conditions | `medications.js` |
+| Medication / condition / side-effect rules and warning-sign cards | `med-rules.js` |
+| Side effects, stop signs, "avoid if", sources and review status | `side-effects.js` |
+| Simulator wording, sources and animation numbers | `simulator.js` |
+| Enzyme pages | `enzymes.js` |
+| Safety tag hover text | `tags.js` |
 | Footer disclaimer (every page) | `../index.html`, search for `EDITABLE` |
 
 ## Editing rules

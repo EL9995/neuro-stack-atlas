@@ -115,6 +115,23 @@ document.addEventListener("click", e => {
   else if (act === "sim-play") { SIM.run = !SIM.run; el.textContent = SIM.run ? SIM_TEXT.pause : SIM_TEXT.play; }
   else if (act === "sim-show") simHighlight(el.dataset.ids.split(","));
   else if (act === "add-tab") setAddTab(el.dataset.addTab);
+  // About you (localStorage only)
+  else if (act === "about-fold") { App.aboutOpen = !App.aboutOpen; renderAbout(); }
+  else if (act === "about-open") {
+    App.aboutOpen = true; toggleStep(BSTEPS.indexOf("day") + 1, true); renderAbout();
+    setTimeout(() => document.getElementById("b-about")?.scrollIntoView({ block: "start", behavior: "smooth" }), 50);
+  }
+  else if (act === "about-toggle") {
+    const a = aboutYou(), list = el.dataset.list, id = el.dataset.id, cur = new Set(a[list]);
+    if (cur.has(id)) cur.delete(id);
+    else if (id === "none" || id === "pnts") { cur.clear(); cur.add(id); if (list === "meds") a.names = []; }
+    else { cur.delete("none"); cur.delete("pnts"); cur.add(id); }
+    a[list] = [...cur]; saveAbout(a);
+  }
+  else if (act === "about-add") addAboutMed();
+  else if (act === "about-remove") { const a = aboutYou(); a.names.splice(+el.dataset.k, 1); saveAbout(a); }
+  else if (act === "items-all") { const show = el.dataset.show === "1"; App.itemsOpen = new Set(show ? [...NTS.map(n => n.id), "foundation"] : []); renderItems(); }
+  else if (act === "lanes-all") { const show = el.dataset.show === "1"; App.tlOpen = new Set(show ? [...NTS.map(n => n.id), "foundation"] : []); renderTimeline(); }
   else if (act === "hist") histGo(+el.dataset.dir);
   else if (act === "stack-clear") {
     if (!st.items.length) return;
@@ -355,3 +372,13 @@ document.addEventListener("keydown", e => {
   if (k === "z") { e.preventDefault(); histGo(e.shiftKey ? 1 : -1); }
   else if (k === "y") { e.preventDefault(); histGo(1); }
 });
+
+// About you: add a typed medicine name, filed under its class (or "other").
+function addAboutMed() {
+  const q = document.getElementById("about-q"); if (!q || !q.value.trim()) return;
+  const name = q.value.trim(), cls = medClassFor(name), a = aboutYou();
+  a.names.push({ name, cls }); a.meds = a.meds.filter(m => m !== "none" && m !== "pnts");
+  App.aboutNote = cls === "other" ? ABOUT_TEXT.unknown.replace("{name}", name) : ABOUT_TEXT.matched.replace("{name}", name).replace("{cls}", medLabel(cls));
+  saveAbout(a); document.getElementById("about-q")?.focus();
+}
+document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.id === "about-q") { e.preventDefault(); addAboutMed(); } });

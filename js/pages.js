@@ -122,7 +122,7 @@ function viewSupp(s, ctx) {
 
     <section class="two">
       <div class="list-card"><h3>What it does</h3><ul>${s.fx.map(x => `<li>${gloss(x)}</li>`).join("")}</ul></div>
-      <div class="list-card"><h3>Side effects</h3><ul>${s.se.map(x => `<li>${gloss(x)}</li>`).join("")}</ul></div>
+      ${safetyHtml(s.id)}
     </section>
 
     <section>

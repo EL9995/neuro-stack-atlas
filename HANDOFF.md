@@ -5,7 +5,7 @@ For a new Claude instance picking this up. Read this first, then `README.md` and
 ## The person
 - **Eric**, founder. Doesn't write code; directs and reviews. GitHub: `EL9995`.
 - Explain in plain English. After each piece of work: **3–5 bullets** on what changed and how to check it.
-- **Show screenshots before committing.** Nothing gets committed until he approves.
+- **Review flow (since 2026-10-05):** no before/after screenshot sets for routine work. Verify it yourself, point Eric at the live local copy (http://localhost:8010, see below), and **commit/push only when he says so**. Team specs that say "no screenshot approval needed, build, test, commit" can be committed directly.
 - **Ask before deleting anything or changing how something looks or behaves.**
 - **Never change scientific content or wording unless asked.** New wording goes in `content/` files and is marked `// DRAFT`; list every new factual claim for his review. Check new claims against the site's own data first (e.g. `content/timing-and-safety.js`).
 - **Desktop first.** Mobile pass comes later.
@@ -15,7 +15,7 @@ For a new Claude instance picking this up. Read this first, then `README.md` and
 - Live site: https://el9995.github.io/neuro-stack-atlas/
 - Repo: https://github.com/EL9995/neuro-stack-atlas (public)
 - Local folder: `~/Documents/neuro-stack-atlas`
-- Run locally: `python3 -m http.server 8003` in the folder, open http://localhost:8003. The original one-file prototype is in `baseline/` (serve that folder on 8001 for before/after).
+- Run locally: **`python3 tools/serve.py 8010`** (no-cache server; plain `http.server` on 8003 lets Chrome keep stale JS, which once blanked "In this stack"). Open http://localhost:8010. The original one-file prototype is in `baseline/` (serve that folder on 8001 for before/after). The in-app browser pane can't read ~/Documents from `.claude/launch.json`, so start servers in Eric's Terminal panel.
 - Machine: Python 3.9 and Google Chrome only. **No Node, no Homebrew, no `gh` CLI.** zsh: avoid `echo ====` (zsh treats `=word` specially).
 
 ## Publishing
@@ -24,10 +24,11 @@ For a new Claude instance picking this up. Read this first, then `README.md` and
 - GitHub Pages runs from a **GitHub Actions workflow** (`.github/workflows/pages.yml`) that publishes only the site files (index.html, favicon.svg, og-image.png, css/, js/, content/, food/). `baseline/`, `tools/`, `docs/` and `*.md` are not served. Pages Source must stay set to "GitHub Actions".
 - GitHub Pages caches files for 10 minutes; tell Eric to hard-refresh (Cmd+Shift+R) or use a private window. *Offered, not yet built:* version-stamping asset URLs at deploy time so reviews always see fresh files.
 
-## Current state (as of 2026-10-05)
-- **Two saves are committed but NOT pushed:** "Stack builder: numbered steps, click-through tours, browse by neurotransmitter" and "Stack builder step 6: save after reviewing warnings…". Under them sits a save made by the **Food instance**: "Add food recall check test page at /food/" (adds `food/index.html` and adds `food` to the publish workflow). Pushing publishes all three, including `/food/` going live. Eric was told and decides when to push.
-- **Uncommitted files from the Supplement Transparency instance live in this folder:** `demo/`, `pilot/` (magnesium pilot spreadsheet and data), `tools/pilot_magnesium.py`. Don't commit, move or delete them; ask Eric. Recommendation given: each project in its own repo, plus a hub page (the empty `Eric-Portfolio-` repo could become `EL9995.github.io`).
-- Also uncommitted: this `HANDOFF.md` and an updated `docs/images/stack-builder.jpg`. Commit them when Eric approves.
+## Current state (as of 2026-10-05, evening)
+- Committed and pushed by Eric: "Stack builder safety review, compact steps, and a first Simulator page". The team's medications / side effects / expand-all round is committed on top (see git log); Eric pushes from GitHub Desktop.
+- **Uncommitted files from the Supplement Transparency instance live in this folder:** `demo/`, `pilot/`, `tools/pilot_magnesium.py`. Don't commit, move or delete them; ask Eric. Food instance owns `food/`.
+- Team review page for legal/ethics (extreme doses, approval flow): `docs/stack-builder-review.html` (also published as a private claude.ai artifact).
+- **Known failing test on purpose:** `tools/test_checker.py` "stimulant + breakdown-slowing herb" (caffeine + hordenine only reaches "to review"; the team hasn't decided whether it should pause the stack).
 
 ## How the code is organized
 - Plain static site: `index.html` loads `css/*.css` and then classic `<script>`s in order: `content/*.js` (data and wording), then `js/*.js`. **Everything shares global scope; order in index.html matters.** No build step.
@@ -40,7 +41,12 @@ For a new Claude instance picking this up. Read this first, then `README.md` and
   - **Gotcha:** measure the stage *after* setting `--chrome-h` (it resizes the stage), or HTML labels drift off the SVG.
 - `js/pages.js`: neurotransmitter page (scene, then three supplement blocks: Precursors / Cofactors / Modulators) and supplement pages. `js/enzymes.js` + `content/enzymes.js`: 10 enzyme pages (reached from scene info cards).
 - Safety tags (`js/helpers.js`): "Use caution" (tier `caution`, 5 supplements) and "Serious interactions" (any `major` interaction in data), with hover text from `content/tags.js`. "Deep cut" labels were removed.
-- **Stack builder** (`js/builder.js`, `content/stack-builder.js`, `css/builder-steps.css`, `js/tour.js`): six numbered steps: name, day, add (big search, browse by neurotransmitter, templates, items, suggestions), timeline, check, save. Tours are data-driven (`BUILDER_TEXT.tours`). Step 6 needs "I've read the warnings" when the check has serious or to-review items. Any edit clears `savedAt` (sets `wasSaved`). The **Tracker only shows the dose checklist for saved stacks**.
+- **Stack builder** (`js/builder.js`, `content/stack-builder.js`, `css/builder*.css`, `js/tour.js`): six steps: name, day (+ optional **About you**), **build** (one panel: Search / Browse / Templates on top, "In this stack" grouped by pathway below, Undo / Redo / Clear, folded Suggestions), **check**, timeline (pathway lanes), save. Steps open one at a time (`nsa-builderOpen`) and fold to one-line summaries (`nsa-builderExpanded`). Tours are data-driven and play per step. Any edit clears `savedAt`. The **Tracker only shows the dose checklist for saved stacks that aren't paused**.
+- **Stack check** (`js/stack-checker.js`): interactions, **Medications & conditions**, **Stack load** (`LOAD_RULES` in `content/recommendations.js`: same system, too much at once, too many items, LAT1 amino acids, dose ranking 2× serious / 5× critical), timing, dose, tolerance, food, recovery. Severities: info < minor < moderate ("to review") < major ("serious") < critical. **Serious/critical pause the timeline and the Tracker** until the person presses "Review the warnings", ticks "Reviewed" on every to-review/serious finding, and approves at the bottom (`st.approved` covers exactly those findings; a new or worse one re-pauses). `LOAD_RULES.approve.allowCritical` stays `true` (team decision). Add-time and dose-monitor pop-ups ask before adding conflicts or going above range.
+- **About you** (`content/medications.js`: drug classes + name lookup + conditions; `content/med-rules.js`: rules). Stored only in localStorage `nsa-about`, shared across stacks, never sent anywhere (tested: no network calls). Rules use the existing "Watch out for" entries in the supplement data (`ixMatch`) plus team rules by tag/id; each rule notes its source or NEEDS SOURCE.
+- **Side effects** (`content/side-effects.js`): `common`, `stopSigns`, `avoidIf`, `liver`, `pregnancy`, `source`, `verified`. **Sources allowed: NIH ODS fact sheets, NCCIH, NIH LiverTox, MedlinePlus only.** Entries without one are `needsSource: true` and carry the site's existing side-effect data. Shown on "What is this?" and supplement pages with a "Not yet reviewed" tag. ODS blocks scripted downloads (Cloudflare); read the fact sheets in the browser pane.
+- **Review process for `verified: false`:** a reviewer opens each entry's sources, checks every listed side effect, stop sign and "avoid if" against them, fixes or removes anything not supported, then sets `verified: true` (the "Not yet reviewed" tag disappears). `needsSource` entries need a source added first. Do the same for rules in `med-rules.js` marked NEEDS SOURCE.
+- **Simulator** (`#sim`, `js/simulator.js`, `content/simulator.js`, `css/simulator.css`): six assembly lines, shared LAT1 doorway, slow-step valves, cofactors "from food" vs in stack, PubMed-cited sources. Phase 1 only; time slider and warning visuals are phases 2–3.
 - **Tracker insights** (`js/tracker-insights.js`): descriptive only, no causal wording. "On days you logged X, you rated Y higher (a vs b)". Needs 10+ logged days (ratings + doses), 3+ days with and without. The low-mood safety message (with 988) must stay word for word.
 - Scanner is frozen (basic paste mode off claude.ai). Account sync is paused (data stays in localStorage).
 
@@ -48,7 +54,8 @@ For a new Claude instance picking this up. Read this first, then `README.md` and
 - `shoot.py <url> <dir>`: the fixed screenshot set at desktop and phone, frozen clock, no cache, fresh port each run. Saves `dom.json` for content diffs.
 - `make_compare.py`: builds `screenshots/compare.html` (before | after | changed pixels). Send Eric http://localhost:8003/screenshots/compare.html.
 - `domdiff.py`: content comparison (masks the timer-animated scene).
-- `test_explore.py <nt>`: click-through of a neurotransmitter page. `test_builder.py`: Stack builder tours, browse, add, search, save, Tracker gate.
+- `test_explore.py <nt>`: click-through of a neurotransmitter page. `test_builder.py`: Stack builder tours, browse, add, search, save, Tracker gate. `test_checker.py`: load rules, verdict, pause, review + approval, dose ranking, dose monitor. `test_safety.py`: medications/conditions, side effects, About you stays local, Expand/Collapse all. All take a base URL (default http://localhost:8010).
+- `serve.py [port]`: no-cache local server (default 8010).
 - `readme_images.py`: re-takes `docs/images/*` and the GIF (the GIF is encoded in-browser; no image libraries needed).
 - `screenshots/` is git-ignored. If screenshots look stale, check for a leftover headless Chrome (`ps aux | grep headless`).
 
@@ -56,11 +63,14 @@ For a new Claude instance picking this up. Read this first, then `README.md` and
 1. Version-stamp assets on deploy (cache-busting). Offered.
 2. Mobile pass (scenes cramped, title card wraps).
 3. Logo: concepts A–G in `tools/logo-concepts.html`; Eric hasn't picked one ("not vibing yet"). The favicon is a placeholder.
-4. Tracker walkthrough/tour; Stack builder: collapse finished steps for returning users.
+4. Tracker walkthrough/tour.
+9. Team decision: should stimulant + breakdown-slowing herb (caffeine + hordenine) be serious? (test fails until decided)
+10. Simulator phases 2 (time slider) and 3 (warning visuals); legal/ethics review of the approval flow and dose thresholds.
+11. Review every `verified: false` entry in `content/side-effects.js` and NEEDS SOURCE rules in `content/med-rules.js`.
 5. The header status text "Saved in this browser" may be confused with step 6 "Save stack". Consider "Draft kept in this browser".
 6. Add enzymes to search; maybe make enzyme labels in the scene link to enzyme pages.
 7. Reflex games to measure stack effects (priority 3 originally).
 8. Hub page for Mind · Body · Food.
 
 ## DRAFT wording awaiting Eric's review
-`content/landing-page.js`, `content/scene-captions.js` (incl. PROTOCOL_SCENE, explore labels), `content/enzymes.js` (all 10 pages; key claims listed in the conversation: TH feedback inhibition, TPH not saturated / ~90% gut serotonin, AADC + carbidopa, PKU, GAD + B6 seizures, AChE + huperzine/donepezil, ~half of choline recycled), `content/tags.js`, `content/stack-builder.js` (meal tour lines on fat/protein/carb snack).
+`content/landing-page.js`, `content/scene-captions.js` (incl. PROTOCOL_SCENE, explore labels), `content/enzymes.js` (all 10 pages; key claims listed in the conversation: TH feedback inhibition, TPH not saturated / ~90% gut serotonin, AADC + carbidopa, PKU, GAD + B6 seizures, AChE + huperzine/donepezil, ~half of choline recycled), `content/tags.js`, `content/stack-builder.js` (meal tour lines; step/tour/undo/fold wording; evidence-level definitions, which must match how ratings were assigned), `content/recommendations.js` (`LOAD_RULES`: thresholds, dose wording, review/approve flow), `content/simulator.js` (all; science captions cite PubMed), `content/medications.js`, `content/med-rules.js`, `content/side-effects.js`, and the Mucuna evidence sentence added in `content/supplement-links.js`.

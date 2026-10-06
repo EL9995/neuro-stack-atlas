@@ -40,6 +40,61 @@ function renderHistBtns() {
   set("hist-undo", !h.past.length); set("hist-redo", !h.future.length); set("stack-clear", !active().items.length);
 }
 
+// ---- About you: medications and conditions (localStorage only, never sent anywhere) ----
+function saveAbout(a) { lsSet(ABOUT_KEY, a); renderAbout(); renderChecks(); renderSave(); renderSuggest(); renderTimeline(); }
+// Find a medication class from a typed name: exact name first, then the longest name contained in it.
+function medClassFor(name) {
+  const q = name.trim().toLowerCase(); if (!q) return null;
+  let best = null;
+  MED_CLASSES.forEach(c => c.names.forEach(n => { if ((q === n || q.includes(n) || (n.length > 4 && n.includes(q))) && (!best || n.length > best.n.length)) best = { cls: c.id, n }; }));
+  return best ? best.cls : "other";
+}
+function renderAbout() {
+  const el = document.getElementById("b-about"); if (!el) return;
+  const T = ABOUT_TEXT, a = aboutYou(), open = !!App.aboutOpen;
+  const medsCount = new Set([...a.meds, ...a.names.map(n => n.cls)].filter(m => m !== "none" && m !== "pnts")).size, condCount = a.conds.filter(c => c !== "none" && c !== "pnts").length;
+  const summary = !a.meds.length && !a.names.length && !a.conds.length ? T.summaryEmpty
+    : T.summary.replace("{meds}", a.meds.includes("pnts") ? T.summaryPnts : a.meds.includes("none") ? T.summaryNone : medsCount).replace("{conds}", a.conds.includes("pnts") ? T.summaryPnts : a.conds.includes("none") ? T.summaryNone : condCount);
+  const chip = (list, id, label) => `<button class="pill chip about-chip" data-act="about-toggle" data-list="${list}" data-id="${id}" aria-pressed="${a[list].includes(id)}">${esc(label)}</button>`;
+  el.innerHTML = `<div class="about${open ? " open" : ""}">
+    <button class="about-head" data-act="about-fold" aria-expanded="${open}" aria-controls="about-body">
+      <svg class="caret" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M3 1.5 7 5 3 8.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <b>${esc(T.heading)}</b><span class="about-opt">${esc(T.optional)}</span><span class="about-sum">${esc(summary)}</span>
+    </button>
+    ${open ? `<div class="about-body" id="about-body">
+      <p class="hint">${esc(T.intro)}</p>
+      <p class="about-privacy">🔒 ${esc(T.privacy)}</p>
+      <div class="about-group"><span class="field-label">${esc(T.medsLabel)}</span>
+        <div class="about-search"><label for="about-q" class="sr">${esc(T.medsSearchLabel)}</label>
+          <input id="about-q" type="search" placeholder="${esc(T.medsSearch)}" autocomplete="off">
+          <button class="btn small" data-act="about-add">${esc(T.medsAdd)}</button></div>
+        <p class="hint" id="about-match" aria-live="polite">${App.aboutNote ? esc(App.aboutNote) : ""}</p>
+        ${a.names.length ? `<ul class="about-names">${a.names.map((n, k) => `<li><b>${esc(n.name)}</b> <span>${esc(medLabel(n.cls))}</span><button class="x" data-act="about-remove" data-k="${k}" aria-label="${esc(T.remove)} ${esc(n.name)}">×</button></li>`).join("")}</ul>` : ""}
+        <div class="about-chips">${MED_CLASSES.map(c => chip("meds", c.id, c.label)).join("")}${chip("meds", "none", T.none)}${chip("meds", "pnts", T.pnts)}</div>
+      </div>
+      <div class="about-group"><span class="field-label">${esc(T.condLabel)}</span>
+        <div class="about-chips">${CONDITIONS.map(c => chip("conds", c.id, c.label)).join("")}${chip("conds", "none", T.none)}${chip("conds", "pnts", T.pnts)}</div>
+      </div>
+    </div>` : ""}
+  </div>`;
+}
+
+// ---- Side effects on "What is this?" and supplement pages (content/side-effects.js) ----
+function safetyHtml(sid, compact) {
+  const e = seOf(sid), D = MED_RULES.display;
+  const srcs = e.source.map(k => SE_SOURCES[k]).filter(Boolean);
+  const tag = `<span class="se-tag">${esc(D.notReviewed)}</span>${e.needsSource ? `<span class="se-tag warn">${esc(D.needsSource)}</span>` : ""}`;
+  const list = (h, arr, cls = "") => arr.length ? (compact ? `<p class="${cls}"><b>${esc(h)}:</b> ${arr.map(esc).join("; ")}.</p>` : `<div class="list-card ${cls}"><h3>${esc(h)}</h3><ul>${arr.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`) : "";
+  const common = e.needsSource && !compact ? byId[sid].se : e.common;
+  return `<div class="safety${compact ? " compact" : ""}">
+    ${compact ? `<div class="safety-tags">${tag}</div>` : ""}
+    ${list(D.sideEffects, common)}
+    ${list(D.stopSigns, e.stopSigns, "stop")}
+    ${list(D.avoidIf, e.avoidIf.map(c => (CONDITIONS.find(x => x.id === c) || {}).label || c))}
+    <p class="safety-src">${compact ? "" : tag + " "}${srcs.length ? `${esc(D.sources)}: ${srcs.map(x => `<a href="${x.url}" target="_blank" rel="noopener">${esc(x.label)}</a>`).join(", ")}` : ""}</p>
+  </div>`;
+}
+
 // Step 3's add panel: Search, Browse or Templates, one at a time (remembered for this visit).
 const addTab = () => App.addTab || "search";
 function setAddTab(k) {
@@ -107,7 +162,8 @@ function viewBuilder() {
             <div class="field"><label for="bed">Bed</label><input id="bed" type="time" value="${esc(st.bed)}"></div>
             <div class="field grow"><span class="field-label">Meals</span><div id="b-meals"></div></div>
           </div>
-          <div><button class="linkish tour-link" id="tour-meals" data-act="tour" data-tour="meals">${esc(P.day.mealsTour)} →</button></div>`)}
+          <div><button class="linkish tour-link" id="tour-meals" data-act="tour" data-tour="meals">${esc(P.day.mealsTour)} →</button></div>
+          <div id="b-about"></div>`)}
       ${step(3, "bs-add", P.add.heading, `
           <p class="pr-intro">${esc(P.add.intro)}</p>
           <div class="stack-panel">
@@ -119,7 +175,7 @@ function viewBuilder() {
           <div class="sp-pane" id="add-pane-search" role="tabpanel" aria-labelledby="add-tab-search"${addTab() === "search" ? "" : " hidden"}>
           <div class="adder big">
             <label for="add-q" class="sr">${esc(P.add.searchLabel)}</label>
-            <input id="add-q" type="search" placeholder="${esc(P.add.searchPlaceholder)}" autocomplete="off">
+            <input id="add-q" type="search" placeholder="${esc(P.add.searchPlaceholder.replace("{n}", S.length))}" autocomplete="off">
             <div id="add-results" class="results"></div>
           </div>
           </div>
@@ -138,6 +194,7 @@ function viewBuilder() {
           </div>
           <div class="sp-list">
             <div class="sp-list-head"><h3 class="sub-h">${esc(P.add.inStack)}</h3><span class="sp-count" id="sp-count"></span>
+              <span class="fold-mini"><button class="linkish" data-act="items-all" data-show="1">${esc(T.fold.expandAll)}</button> · <button class="linkish" data-act="items-all" data-show="0">${esc(T.fold.collapseAll)}</button></span>
               <span class="sp-hist">
                 <button class="btn small ghost" id="hist-undo" data-act="hist" data-dir="-1" title="${esc(P.add.undoKey)}">↶ ${esc(P.add.undo)}</button>
                 <button class="btn small ghost" id="hist-redo" data-act="hist" data-dir="1" title="${esc(P.add.redoKey)}">↷ ${esc(P.add.redo)}</button>
@@ -148,12 +205,12 @@ function viewBuilder() {
           </div>
           <div id="b-suggest"></div>`)}
       ${step(4, "bs-check", P.check.heading, `
-          <p class="pr-intro">${esc(P.check.intro)}</p>
+          <p class="pr-intro">${esc(P.check.intro)} <button class="linkish" data-act="about-open">${esc(ABOUT_TEXT.fromCheck)}</button></p>
           <div id="b-checks"></div>`)}
       ${step(5, "bs-timeline", P.timeline.heading, `
           <div class="tl-bar-row">
             <p class="sec-intro">${esc(P.timeline.intro)} <b>Drag any bar or meal to move it</b> (arrow keys work too). Light = kicking in, solid = working, fade = wearing off, dashed = builds over weeks. Faded bars mean food is cutting absorption. The red line is the current time.</p>
-            <div class="tl-actions"><button class="btn" data-act="optimize">Optimize timing</button><a href="#sim" data-go="sim" class="sim-link">${esc(SIM_TEXT.open)}</a></div>
+            <div class="tl-actions"><span class="fold-mini"><button class="linkish" data-act="lanes-all" data-show="1">${esc(T.fold.expandAll)}</button> · <button class="linkish" data-act="lanes-all" data-show="0">${esc(T.fold.collapseAll)}</button></span><button class="btn" data-act="optimize">Optimize timing</button><a href="#sim" data-go="sim" class="sim-link">${esc(SIM_TEXT.open)}</a></div>
           </div>
           <div id="b-opt"></div>
           <div id="b-timeline"></div>`)}
@@ -499,6 +556,17 @@ const revKey = f => `${f.rule || f.cat + ":" + f.title}:${f.sev}`;
 const needsReview = f => SEV_ORDER[f.sev] <= SEV_ORDER.moderate;
 const reviewedSet = st => (App.reviewed || (App.reviewed = {}))[st.id] || (App.reviewed[st.id] = new Set());
 
+// Warning-sign cards: serotonin (any serotonin finding at "to review" or above) and stimulants.
+function emergencyCards(F) {
+  const E = MED_RULES.emergency, bad = f => SEV_ORDER[f.sev] <= SEV_ORDER.moderate;
+  const isSero = id => byId[id]?.tags.includes("serotonergic");
+  const sero = F.some(f => bad(f) && (f.system === "serotonergic" || f.rule === "med:sero-meds" || (f.cat === "Interactions" && (f.ids || []).filter(isSero).length >= 2)));
+  const stim = F.some(f => bad(f) && (f.rule === "stim" || f.rule === "med:adhd"));
+  const card = c => { const src = SE_SOURCES[c.source]; return `<div class="emergency" role="note"><b>${esc(c.title)}</b><p>${esc(c.intro)}</p>
+    <ul>${c.signs.map(x => `<li>${esc(x)}</li>`).join("")}</ul>${src ? `<p class="safety-src">Source: <a href="${src.url}" target="_blank" rel="noopener">${esc(src.label)}</a></p>` : ""}</div>`; };
+  return (sero ? card(E.serotonin) : "") + (stim ? card(E.stimulant) : "");
+}
+
 function approvePanel(F) {
   const st = active(), A = LOAD_RULES.approve, R = LOAD_RULES.review, todo = F.filter(needsReview), done = todo.filter(f => reviewedSet(st).has(revKey(f))).length;
   if (!canApprove(F)) return `<div class="approve-box"><p class="hint">${esc(A.criticalBlocked)}</p></div>`;
@@ -535,7 +603,7 @@ function renderChecks() {
   const sum = [
     [count("critical"), "critical", "critical"], [count("major"), "serious", "major"], [count("moderate"), "to review", "moderate"], [count("minor"), "minor", "minor"], [count("info"), "tips", "info"]
   ].filter(x => x[0]).map(([n, l, c]) => `<span class="sum-chip sev-${c}"><b>${n}</b> ${l}</span>`).join("");
-  let html = verdict + (sum ? `<div class="sum-row">${sum}</div>` : "");
+  let html = verdict + emergencyCards(F) + (sum ? `<div class="sum-row">${sum}</div>` : "");
   if (gated && !reviewing) { el.innerHTML = html + `<p class="hint">${esc(R.folded)}</p>`; return; }
   const seen = reviewedSet(st);
   CHECK_CATS.forEach(cat => {
@@ -546,6 +614,7 @@ function renderChecks() {
         <span class="sev sev-${f.sev === "good" ? "beneficial" : f.sev}">${f.sev === "good" ? "Good" : f.sev === "info" ? "Tip" : f.sev}</span>
         <div><div class="check-title">${esc(f.title)}</div><p>${gloss(f.body)}</p>
         ${f.adds && f.adds.length ? `<div class="check-adds">${f.adds.map(id => `<button class="pill chip" data-act="add-supp" data-sid="${id}" data-stay="1">+ Add ${esc(byId[id].name)}</button>`).join("")}</div>` : ""}
+        ${f.about ? `<div class="check-adds"><button class="pill chip" data-act="about-open">${esc(ABOUT_TEXT.open)} →</button></div>` : ""}
         ${f.move ? `<div class="check-adds"><button class="pill chip" data-act="move" data-item="${f.move.item}" data-time="${f.move.time}">Move to ${fmt12(f.move.time)}</button></div>` : ""}
         ${reviewing && needsReview(f) ? `<label class="review-tick"><input type="checkbox" data-review="${esc(revKey(f))}"${seen.has(revKey(f)) ? " checked" : ""}> ${esc(R.tick)}</label>` : ""}
         </div>
@@ -563,6 +632,7 @@ function itemInfo(s) {
     ${where.length ? `<div class="where small">${where.map(([, nt, role]) => `<a href="#${nt}" data-go="${nt}" style="--wc:${ntColor(nt)}"><b>${esc(ntById[nt].name)}</b><span>${ROLE[role]}</span></a>`).join("")}</div>` : ""}
     <p><b>What it does:</b> ${s.fx.slice(0, 3).map(esc).join("; ")}.</p>
     ${serious.length ? `<p class="warn-line"><b>Don't combine with:</b> ${serious.map(gloss).join("; ")}.</p>` : ""}
+    ${safetyHtml(s.id, true)}
     <a href="#${s.id}" data-go="${s.id}" class="more-link">Full details, dosing and interactions →</a>
   </div>`;
 }
@@ -572,6 +642,7 @@ function itemInfo(s) {
 function renderSuggest() {
   const el = document.getElementById("b-suggest");
   if (!el) return;
+  if (stackBlocked(active())) { el.innerHTML = ""; return; }   // don't suggest adding more to a stack with a serious warning
   const P = BUILDER_TEXT.steps.add, list = suggest(active()), open = !!App.suggOpen;
   const label = o => {
     const f = listJoin(o.fors.map(id => byId[id].name));
@@ -596,7 +667,7 @@ function renderSuggest() {
     ${open ? body : ""}`;
 }
 
-function refreshBuilder() { renderItems(); renderBrowse(); renderSuggest(); renderMeals(); renderTimeline(); renderChecks(); renderSave(); renderStepGate(); renderHistBtns(); }
+function refreshBuilder() { renderItems(); renderBrowse(); renderSuggest(); renderMeals(); renderTimeline(); renderChecks(); renderSave(); renderStepGate(); renderHistBtns(); renderAbout(); }
 
 // Fold or unfold one step; unfolding scrolls it into view so it works as a jump.
 function toggleStep(n, show) {
