@@ -1,4 +1,4 @@
-"""Games page: Sequence, Reaction and Sweet Spot (scope: docs/games/*.md).
+"""Games page: Sequence, Reaction and Threshold (scope: docs/games/*.md).
 Usage: python3 tools/test_games.py [base-url]      (default http://localhost:8010)
 """
 import json, os, subprocess, sys, tempfile, time, urllib.request
@@ -126,9 +126,9 @@ try:
     check("Clear my scores clears only Reaction", ev("RT.runs.length") == 0 and ev("SEQ.runs.length") == 1)
     check("no page errors", not ev("window.__e || []"), ev("window.__e"))
 
-    print("Sweet Spot:")
+    print("Threshold:")
     ev("document.querySelector('[data-game=timing]').click()"); time.sleep(.3)
-    check("switcher shows Sweet Spot", ev("document.querySelector('h1').textContent") == "Sweet Spot")
+    check("switcher shows Threshold", ev("document.querySelector('h1').textContent") == "Threshold")
     z = ev("""(() => { const r = seqRng(3), out = []; for (let k = 0; k < 4000; k++) out.push(ssMakeTry(k % 20, r));
       const d = SS_CONFIG.drawScale;
       return { inBar: out.every(t => t.center - d * t.good / t.sweep / 2 >= 0 && t.center + d * t.good / t.sweep / 2 <= 1),

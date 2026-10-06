@@ -77,7 +77,7 @@ const GAMES_TEXT = {
 // ---------------------------------------------------------------------------
 const RT_CONFIG = { trials: 10, waitMin: 1500, waitMax: 4000, tooFast: 100, slow: 500, pause: 900, recentRuns: 5 };
 
-const GAMES_PICK = { sequence: "Sequence", reaction: "Reaction", timing: "Sweet Spot" };
+const GAMES_PICK = { sequence: "Sequence", reaction: "Reaction", timing: "Threshold" };
 
 const RT_TEXT = {
   title: "Reaction",
@@ -106,7 +106,7 @@ const RT_TEXT = {
 };
 
 // ---------------------------------------------------------------------------
-// SWEET SPOT: a marker sweeps across a bar; press when it's in the glowing zone.
+// THRESHOLD: a marker sweeps across a bar; press when it's in the glowing zone.
 //   Smart ramp: difficulty is a ladder of "ladder.steps" levels. Every step shrinks the zone
 //   and speeds up the sweep a little (smoothly from the Start to the End numbers).
 //     - A hit (inside the zone) climbs 1 level; from "streakBoost" hits in a row, each hit climbs 2.
@@ -141,7 +141,7 @@ const SS_CONFIG = {
 };
 
 const SS_TEXT = {
-  title: "Sweet Spot",
+  title: "Threshold",
   lede: "A marker sweeps across the bar. Press Space or click when it's in the glowing zone. Hit it and it gets faster and tighter; miss and it eases off. 21 tries.",
   rules: [
     "Points depend only on how close you are to the centre. Early and late count the same.",

@@ -92,7 +92,7 @@ kbd { font-family: var(--f-mono); font-size: 0.78rem; padding: 0 5px; border: 1p
 .rt-trial.slow span { background: var(--sev-moderate); }
 .rt-trial i { position: absolute; bottom: -18px; left: 0; right: 0; text-align: center; font-style: normal; font-family: var(--f-mono); font-size: 0.7rem; color: var(--muted); }
 
-/* Sweet Spot: a bar, a glowing zone (bright centre fading to dim edges), a sweeping marker. */
+/* Threshold: a bar, a glowing zone (bright centre fading to dim edges), a sweeping marker. */
 .ss-count { position: static; color: var(--muted); }
 .ss-area { display: grid; gap: 22px; padding: 56px 4px 28px; cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .ss-bar { position: relative; height: 30px; border-radius: 8px; background: var(--soft); border: 1px solid var(--line); }
@@ -119,7 +119,7 @@ kbd { font-family: var(--f-mono); font-size: 0.78rem; padding: 0 5px; border: 1p
 .ss-streak b { color: var(--hue); font-size: 1.2rem; }
 .ss-streak.hot b { text-shadow: 0 0 12px var(--hue); }
 
-/* Sweet Spot results */
+/* Threshold results */
 .ss-closest { padding: 10px 14px; border-left: 3px solid var(--hue); background: color-mix(in srgb, var(--hue) 8%, var(--surface)); border-radius: 0 8px 8px 0; }
 .ss-ladder { display: flex; align-items: flex-end; gap: 4px; height: 110px; padding-top: 4px; border-bottom: 1px solid var(--line); }
 .ss-rung { flex: 1; min-height: 4px; border-radius: 3px 3px 0 0; background: var(--hue); }

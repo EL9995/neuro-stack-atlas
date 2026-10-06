@@ -1,6 +1,7 @@
-# Sweet Spot: scope (proof of concept)
+# Threshold: scope (proof of concept)
 
-Agreed with Eric, 2026-10-05. A timing game (inspired by the timed-reload mechanic in Gears of War; mechanic
+Agreed with Eric, 2026-10-05; renamed from "Sweet Spot" 2026-10-06 (it plays like braking to a mark; *threshold*
+braking, the timing threshold the smart ramp finds, and a neuron's firing threshold). A timing game (inspired by the timed-reload mechanic in Gears of War; mechanic
 only, own name and look). Measures *anticipation timing*: predicting when a moving marker reaches a target,
 which Reaction (responding to a change) and Sequence (keyboard speed) don't.
 

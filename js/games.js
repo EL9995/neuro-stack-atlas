@@ -2,7 +2,7 @@
 // VIEWS: GAMES (#games)
 // One page, a switcher between games (GAMES.which). Each game draws into #game-stage
 // and keeps its runs in one "games" document: { v, sequence: [...], reaction: [...], timing: [...] }.
-// Each game registers in gameDefs(); Reaction lives in js/game-reaction.js, Sweet Spot in js/game-timing.js.
+// Each game registers in gameDefs(); Reaction lives in js/game-reaction.js, Threshold in js/game-timing.js.
 //
 // Sequence: arrows appear, type them with the arrow keys or WASD. A wrong key
 // clears the input for that sequence. Lengths ramp up by SEQ_CONFIG.levels, then

@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// GAMES: SWEET SPOT (#games, "Sweet Spot")
+// GAMES: THRESHOLD (#games, "Threshold")
 // A marker sweeps left to right across a bar; press Space or click when it's in
 // the zone. The zone's centre is a target time (centre × sweep); a try scores by
 // how close the press lands to it, early or late alike:
@@ -13,7 +13,7 @@
 // Timing: the sweep starts at its first animation frame; a press is the input
 // event's timeStamp. The marker is drawn one frame ahead, so what's on screen
 // matches the clock, and it freezes where it is the moment you press.
-// Wording and tuning: content/games.js. Scope: docs/games/sweet-spot-game.md
+// Wording and tuning: content/games.js. Scope: docs/games/threshold-game.md
 // ---------------------------------------------------------------------------
 const SS = { phase: "ready", k: 0, step: 0, streak: 0, perfectRun: 0, tries: [], cur: null, state: "idle", t0: 0, frame: 16.7, prevFrame: 0, bestStreak: 0, barW: 0, timers: [], raf: 0, runs: null };
 
@@ -263,7 +263,7 @@ function ssCloseChart(run) {
   </div>`;
 }
 
-// Keys while Sweet Spot is on screen.
+// Keys while Threshold is on screen.
 function ssKey(e) {
   const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
   if (SS.phase === "play") {
