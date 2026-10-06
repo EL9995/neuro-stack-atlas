@@ -45,8 +45,9 @@ function renderTrackDay() {
   el.innerHTML = `<div class="track-grid">
     <div class="panel">
       <div class="panel-head"><h3>Checklist</h3><span class="hint">${takenCount} of ${items.length} taken</span></div>
-      ${!active().savedAt ? `<div class="empty small save-gate">“${esc(active().name)}” isn't saved yet. Review its warnings and save it in the Stack builder (step 6) before tracking it. <button class="linkish" data-go="stack">Go to step 6 →</button></div>`
-      : items.length ? `<div class="checklist">${items.map(i => {
+      ${active().savedAt && stackPaused(active()) ? `<div class="empty small save-gate load-gate">${esc(LOAD_RULES.paused.tracker.replace("{name}", active().name))} <button class="linkish" data-go="stack">${esc(LOAD_RULES.paused.goToCheck)} →</button></div>`
+      : !active().savedAt ? `<div class="empty small save-gate">“${esc(active().name)}” isn't saved yet. Review its warnings and save it in the Stack builder (step 6) before tracking it. <button class="linkish" data-go="stack">Go to step 6 →</button></div>`
+      : items.length ? `${approvalValid(active()) && stackBlocked(active()) ? `<p class="approved-note">${esc(LOAD_RULES.approve.trackerNote)}</p>` : ""}<div class="checklist">${items.map(i => {
         const s = byId[i.sid], t = day.taken[i.id];
         return `<label class="tick${t ? " done" : ""}">
           <input type="checkbox" data-act="take" data-item="${i.id}"${t ? " checked" : ""}>

@@ -1,9 +1,26 @@
 // ---------------------------------------------------------------------------
 // EVENTS
 // ---------------------------------------------------------------------------
-function addToStack(sid, stay) {
+// Conflicts that adding this supplement would newly trigger or make worse: interactions and
+// stack-load rules (content/recommendations.js) at "to review" or above.
+function loadCrossings(st, sid) {
+  const before = analyze(st), after = analyze({ ...st, items: [...st.items, { id: "_probe", sid, dose: byId[sid].dose[0], time: placeFor(sid, st) }] });
+  const key = f => f.rule || f.cat + ":" + f.title;
+  const worst = (F, k) => Math.min(...F.filter(f => key(f) === k).map(f => SEV_ORDER[f.sev]), 99);
+  return after.filter(f => (f.rule || f.cat === "Interactions") && SEV_ORDER[f.sev] <= SEV_ORDER.moderate && SEV_ORDER[f.sev] < worst(before, key(f)));
+}
+
+// anchor: the "+ Add" button that was pressed; the warning pops up next to it.
+function addToStack(sid, stay, force, anchor) {
   const st = active(), s = byId[sid];
+  const cross = force ? [] : loadCrossings(st, sid);
+  if (cross.length && current === "stack") {   // ask first, right where they clicked
+    App.pendingAdd = { sid, cross, stackId: st.id };
+    showAddWarn(anchor); return;
+  }
+  closeAddWarn();
   st.items.push({ id: newId(), sid, dose: s.dose[0], time: placeFor(sid, st) });
+  (App.itemsOpen || (App.itemsOpen = new Set())).add(laneOf(sid));   // show where it landed in "In this stack"
   touch(st);
   if (current === "stack") {
     const q = document.getElementById("add-q"); if (q) { q.value = ""; renderAddResults(""); }
@@ -11,8 +28,29 @@ function addToStack(sid, stay) {
     toast(`Added ${esc(s.name)}.`);
   } else {
     render(current, true);
-    toast(`Added ${esc(s.name)} to “${esc(st.name)}”. <button data-go="stack">Open stack builder</button>`);
+    toast(`Added ${esc(s.name)} to “${esc(st.name)}”.${cross.length ? ` <b>! ${esc(cross[0].title)}</b>` : ""} <button data-go="stack">Open stack builder</button>`);
   }
+}
+
+// Dose edits, from typing or the +/- buttons.
+function setDose(i, d) {
+  i.dose = +d.toPrecision(6); touch(active());
+  const inp = document.querySelector(`.dose-in[data-item="${i.id}"]`); if (inp) inp.value = i.dose;
+  renderTimeline(); renderChecks(); renderSuggest();
+}
+// Dose monitor: going above the typical range (higher than anything already confirmed for this item)
+// asks first, next to the dose box. The new dose only applies on "Keep".
+function tryDose(i, d) {
+  const max = byId[i.sid].dose[1];
+  d = +Math.max(0, d).toPrecision(6);
+  if (d > max && d > Math.max(max, i.okDose || 0) && d > (+i.dose || 0)) { showDoseWarn(i, d); return; }
+  closeDoseWarn(); setDose(i, d);
+}
+// +/- jump to the next round step: 94 mg with a 25 mg step goes to 100 or 75.
+function stepDose(id, dir) {
+  const i = active().items.find(x => x.id === id); if (!i) return;
+  const step = doseStep(byId[i.sid]), d = +i.dose || 0;
+  tryDose(i, dir > 0 ? Math.floor(d / step + 1e-9) * step + step : Math.ceil(d / step - 1e-9) * step - step);
 }
 
 document.addEventListener("click", e => {
@@ -27,15 +65,75 @@ document.addEventListener("click", e => {
   if (!el) return;
   const act = el.dataset.act, st = active();
   if (act === "toggle-deep") { App.showDeep = !App.showDeep; lsSet("nsa-showDeep", App.showDeep); render(current, true); }
-  else if (act === "add-supp") addToStack(el.dataset.sid, el.dataset.stay);
+  else if (act === "add-supp") addToStack(el.dataset.sid, el.dataset.stay, false, el);
+  else if (act === "in-stack") showInStackMenu(el, el.dataset.sid);
+  else if (act === "instack-remove") {
+    const sid = el.dataset.sid; closeAddWarn();
+    st.items = st.items.filter(i => i.sid !== sid); touch(st); refreshBuilder();
+    const q = document.getElementById("add-q"); if (q?.value) renderAddResults(q.value);
+    toast(`${esc(BUILDER_TEXT.steps.add.removed.replace("{name}", byId[sid].name))} <button data-act="hist" data-dir="-1">${esc(BUILDER_TEXT.steps.add.undo)}</button>`);
+  }
+  else if (act === "instack-again") { const sid = el.dataset.sid; closeAddWarn(); addToStack(sid, true); }
+  else if (act === "tour" && el.dataset.tour === "page") { builderTouring = true; lsSet("nsa-tourSeen", true); openSteps(1); }
   else if (act === "tour") startTour(el.dataset.tour);
+  else if (act === "tour-skip") skipTour();
+  else if (act === "tl-lane") { const o = App.tlOpen || (App.tlOpen = new Set()), l = el.dataset.lane; o.has(l) ? o.delete(l) : o.add(l); renderTimeline(); document.querySelector(`.tl-lane-btn[data-lane="${l}"]`)?.focus({ preventScroll: true }); }
+  else if (act === "items-group") { const o = App.itemsOpen || (App.itemsOpen = new Set()), g = el.dataset.group; o.has(g) ? o.delete(g) : o.add(g); renderItems(); document.querySelector(`.group-head[data-group="${g}"]`)?.focus({ preventScroll: true }); }
+  else if (act === "check-review") {
+    App.checkReview = st.id; renderChecks();
+    document.querySelector("#b-checks .check-group")?.scrollIntoView({ block: "start", behavior: "smooth" });
+  }
+  else if (act === "approve-go") {
+    const F = analyze(st);
+    if (!document.getElementById("approve-ack")?.checked || !canApprove(F) || !F.filter(needsReview).every(f => reviewedSet(st).has(revKey(f)))) return;
+    App.checkReview = null; st.approved = { at: new Date().toISOString(), keys: analyze(st).filter(isStop).map(stopKey) }; saveState(); refreshBuilder();
+  }
+  else if (act === "approve-withdraw") { st.approved = null; saveState(); refreshBuilder(); }
+  else if (act === "trim-systems") {
+    const plan = trimPlan(st); if (!plan.remove.length) return;
+    App.undoTrim = { stackId: st.id, items: st.items.map(i => ({ ...i })) };
+    st.items = st.items.filter(i => !plan.remove.includes(i.sid)); touch(st); refreshBuilder();
+    toast(`${esc(LOAD_RULES.verdict.trimDone.replace("{names}", listJoin(plan.remove.map(id => byId[id].name))))} <button data-act="undo-trim">Undo</button>`);
+  }
+  else if (act === "undo-trim") {
+    const u = App.undoTrim; if (!u || u.stackId !== st.id) return;
+    st.items = u.items; App.undoTrim = null; touch(st); refreshBuilder();
+  }
+  else if (act === "addwarn-anyway") { const p = App.pendingAdd; if (p) addToStack(p.sid, true, true); }
+  else if (act === "addwarn-swap") {
+    const p = App.pendingAdd; if (!p) return;
+    st.items = st.items.filter(i => i.sid !== el.dataset.from);
+    addToStack(p.sid, true, true); toast(`Swapped ${esc(byId[el.dataset.from].name)} for ${esc(byId[p.sid].name)}.`);
+  }
+  else if (act === "addwarn-cancel") closeAddWarn();
+  else if (act === "dosewarn") {
+    const p = App.pendingDose, i = p && st.items.find(x => x.id === p.id); closeDoseWarn(); if (!i) return;
+    if (el.dataset.choice === "keep") { i.okDose = p.dose; setDose(i, p.dose); }
+    else if (el.dataset.choice === "max") setDose(i, byId[i.sid].dose[1]);
+    else { const inp = document.querySelector(`.dose-in[data-item="${i.id}"]`); if (inp) { inp.value = i.dose; inp.focus(); inp.select(); } }
+  }
+  else if (act === "sim-play") { SIM.run = !SIM.run; el.textContent = SIM.run ? SIM_TEXT.pause : SIM_TEXT.play; }
+  else if (act === "sim-show") simHighlight(el.dataset.ids.split(","));
+  else if (act === "add-tab") setAddTab(el.dataset.addTab);
+  else if (act === "hist") histGo(+el.dataset.dir);
+  else if (act === "stack-clear") {
+    if (!st.items.length) return;
+    const n = st.items.length; st.items = []; touch(st); closeAddWarn(); closeDoseWarn(); refreshBuilder();
+    toast(`${esc(BUILDER_TEXT.steps.add.cleared.replace("{n}", n))} <button data-act="hist" data-dir="-1">${esc(BUILDER_TEXT.steps.add.undo)}</button>`);
+  }
+  else if (act === "dose-step") stepDose(el.dataset.item, +el.dataset.dir);
+  else if (act === "step-toggle") toggleStep(+el.dataset.step, el.dataset.open ? true : undefined);
+  else if (act === "steps-all") {
+    const show = el.dataset.show === "1", all = [1, 2, 3, 4, 5, 6].filter(n => n <= builderOpen());
+    setExpanded(new Set(show ? all : [])); render("stack", true);
+  }
+  else if (act === "step-next") { if (!el.disabled) openSteps(builderOpen() + 1); }
   else if (act === "save-stack") {
     const ack = document.getElementById("save-ack");
     if (el.disabled || (ack && !ack.checked)) return;
     st.savedAt = new Date().toISOString(); st.wasSaved = false; saveState(); renderSave();
     toast(`Saved “${esc(st.name)}”. <button data-go="track">Open the Tracker</button>`);
   }
-  else if (act === "tour-dismiss") { lsSet("nsa-tourSeen", true); el.closest(".tour-prompt")?.remove(); }
   else if (act === "browse-nt") { App.browseNT = App.browseNT === el.dataset.nt ? null : el.dataset.nt; renderBrowse(); }
   else if (act === "sup-tab") {
     const i = el.dataset.i, tab = document.getElementById("sup-tab-" + i), open = tab.getAttribute("aria-selected") !== "true";
@@ -64,10 +162,11 @@ document.addEventListener("click", e => {
     toast(`Deleted “${esc(st.name)}”.`);
   }
   else if (act === "info") { const id = el.dataset.sid; App.openInfo.has(id) ? App.openInfo.delete(id) : App.openInfo.add(id); renderItems(); }
-  else if (act === "more-sugg") { App.showAllSugg = !App.showAllSugg; renderSuggest(); }
+  else if (act === "sugg-toggle") { App.suggOpen = !App.suggOpen; renderSuggest(); document.querySelector(".sugg-toggle")?.focus({ preventScroll: true }); }
   else if (act === "sugg-add") {
     const s = byId[el.dataset.sid];
     st.items.push({ id: newId(), sid: s.id, dose: s.dose[0], time: el.dataset.time });
+    (App.itemsOpen || (App.itemsOpen = new Set())).add(laneOf(s.id));
     touch(st); refreshBuilder(); toast(`Added ${esc(s.name)} at ${fmt12(el.dataset.time)}.`);
   }
   else if (act === "swap") {
@@ -76,6 +175,7 @@ document.addEventListener("click", e => {
     touch(st); refreshBuilder(); toast(`Swapped in ${esc(to.name)}.`);
   }
   else if (act === "optimize") {
+    if (stackPaused(st)) return;
     const res = optimize(st);
     lastOpt = { stackId: st.id, times: Object.fromEntries(st.items.map(i => [i.id, i.time])) };
     res.changes.forEach(c => { const i = st.items.find(x => x.id === c.id); if (i) i.time = c.to; });
@@ -115,13 +215,19 @@ document.addEventListener("click", e => {
   }
 });
 
+document.addEventListener("change", e => { if (e.target.id === "approve-ack") { const b = document.getElementById("approve-go"); if (b) b.disabled = !e.target.checked; } });
+// "Reviewed" ticks in step 4: redraw so the approval panel's progress and lock update
+document.addEventListener("change", e => {
+  const k = e.target.dataset && e.target.dataset.review; if (k === undefined) return;
+  const set = reviewedSet(active()); e.target.checked ? set.add(k) : set.delete(k);
+  const y = scrollY; renderChecks(); scrollTo(0, y);
+});
 document.addEventListener("change", e => { if (e.target.id === "save-ack") { const b = document.getElementById("save-btn"); if (b) b.disabled = !e.target.checked; } });
 document.addEventListener("change", e => {
   const t = e.target, st = active();
-  if (t.id === "stack-select" || t.id === "t-stack") { App.activeId = t.value; saveState(); render(current, true); }
+  if (t.id === "stack-select" || t.id === "t-stack" || t.id === "sim-stack") { App.activeId = t.value; saveState(); render(current, true); }
   else if (t.id === "stack-name") { st.name = t.value.trim() || "Untitled stack"; touch(st); const o = document.querySelector(`#stack-select option[value="${st.id}"]`); if (o) o.textContent = st.name; }
-  else if (t.classList.contains("dose-in")) { const i = st.items.find(x => x.id === t.dataset.item); if (i) { i.dose = Math.max(0, +t.value || 0); touch(st); renderTimeline(); renderChecks(); renderSuggest(); } }
-  else if (t.classList.contains("time-in")) { const i = st.items.find(x => x.id === t.dataset.item); if (i && t.value) { i.time = t.value; touch(st); renderTimeline(); renderChecks(); renderSuggest(); } }
+  else if (t.classList.contains("dose-in")) { const i = st.items.find(x => x.id === t.dataset.item); if (i) tryDose(i, +t.value || 0); }
   else if (t.id === "wake" || t.id === "bed") { if (t.value) { st[t.id] = t.value; touch(st); renderTimeline(); renderChecks(); renderSuggest(); } }
   else if (t.classList.contains("meal-time")) { const m = st.meals.find(x => x.id === t.dataset.meal); if (m && t.value) { m.time = t.value; touch(st); renderItems(); renderSuggest(); renderTimeline(); renderChecks(); } }
   else if (t.classList.contains("meal-label")) { const m = st.meals.find(x => x.id === t.dataset.meal); if (m) { m.label = t.value.trim() || "Meal"; touch(st); renderItems(); renderSuggest(); renderTimeline(); renderChecks(); } }
@@ -188,6 +294,9 @@ document.addEventListener("keydown", e => {
     (sib || (e.key === "ArrowUp" ? document.getElementById("q") : null))?.focus();
     return;
   }
+  if (e.target.classList && e.target.classList.contains("dose-in") && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+    e.preventDefault(); stepDose(e.target.dataset.item, e.key === "ArrowUp" ? 1 : -1); return;
+  }
   const el = e.target.closest && e.target.closest("[data-drag]");
   if (el && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
     e.preventDefault();
@@ -237,3 +346,12 @@ document.addEventListener("click", e => {
 document.addEventListener("change", e => { if (e.target.id === "jr-nocof") { jrClear(); jrSet(Math.max(JR.n, 2)); } });
 window.addEventListener("hashchange", () => render(decodeURIComponent(location.hash.slice(1))));
 
+
+// Cmd/Ctrl+Z to undo, Shift+Cmd/Ctrl+Z (or Ctrl+Y) to redo, in the Stack builder when not typing in a field.
+document.addEventListener("keydown", e => {
+  if (current !== "stack" || !(e.metaKey || e.ctrlKey) || e.altKey) return;
+  if (e.target.closest && e.target.closest("input, textarea, select, [contenteditable]")) return;
+  const k = e.key.toLowerCase();
+  if (k === "z") { e.preventDefault(); histGo(e.shiftKey ? 1 : -1); }
+  else if (k === "y") { e.preventDefault(); histGo(1); }
+});

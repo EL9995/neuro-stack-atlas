@@ -12,10 +12,39 @@
 const BUILDER_TEXT = {
   eyebrow: "Stack builder",
   title: "Build a stack. See how the day plays out.",
-  lede: "Six steps: name it, set your day, add supplements, see when everything works, check for warnings, then save.",
+  lede: "Six steps: name it, set your day, add supplements, check for warnings, see when everything works, then save.",
   tourPrompt: "New here? The 1-minute tour shows you around.",
   tourButton: "Take the tour",
-  dismiss: "Not now",
+  skipButton: "Skip the tour",   // DRAFT: opens all six steps at once
+
+  // Open steps fold down to one line. Shown under the heading while folded. DRAFT.
+  fold: {
+    expandAll: "Expand all", collapseAll: "Collapse all",
+    wake: "Wake", bed: "bed", meal: "meal", meals: "meals",
+    supp: "supplement", supps: "supplements", noSupps: "Nothing added yet",
+    doses: "Doses from",
+    serious: "serious", review: "to review", minor: "minor", noIssues: "No issues found",
+    saved: "Saved", changed: "Changed since your last save", notSaved: "Not saved yet",
+  },
+
+  // Steps open one at a time until "Skip the tour" is pressed. DRAFT.
+  gate: {
+    next: "Next:",
+    locked: "Finish step {n} to open this one.",
+    needItem: "Add at least one supplement to continue.",
+  },
+
+  // "What do the dots mean?" key for the evidence ratings in Browse.
+  // DRAFT: these definitions are new. Check they match how the ratings in supplement-links.js were assigned.
+  evidence: {
+    summary: "What do the dots mean?",
+    intro: "How much research backs the link between a supplement and that brain chemical. It's about how sure we can be, not how strong the effect is.",
+    strong: "Several good human trials point the same way.",
+    moderate: "Some human studies support it, but they're fewer, smaller or mixed.",
+    limited: "Early or small human studies, or mostly animal and lab research.",
+    theoretical: "Makes sense from how the body works, but hasn't really been shown in people.",
+    note: "Lists are sorted strongest first. A weaker rating doesn't mean it does nothing, only that we know less.",
+  },
 
   steps: {
     name: {
@@ -29,21 +58,37 @@ const BUILDER_TEXT = {
       mealsTour: "How meals work",
     },
     add: {
-      heading: "Add supplements",
+      heading: "Build your stack",   // DRAFT (was "Add supplements")
       intro: "Search by ingredient, browse by what you want to change, or start from a template.",
+      addLabel: "Add",   // DRAFT: the Search / Browse / Templates switch
+      undo: "Undo", redo: "Redo", clear: "Clear stack",   // DRAFT
+      inStack1: "In your stack.", inStackN: "In your stack {n} times.",   // DRAFT
+      remove: "Remove from stack", removeAll: "Remove all doses", addAgain: "Add another dose",   // DRAFT
+      removed: "Removed {name}.",   // DRAFT
+      undoKey: "Undo (Cmd/Ctrl+Z)", redoKey: "Redo (Shift+Cmd/Ctrl+Z)",   // DRAFT
+      cleared: "Removed all {n} supplements.",   // DRAFT
+      tabSearch: "Search", tabBrowse: "Browse", tabTemplates: "Templates",   // DRAFT
+      templatesNote: "A template starts a new stack, so nothing you've built gets replaced.",   // DRAFT (same as the tour)
       searchLabel: "Search",
       searchPlaceholder: "Search 65 supplements: try “theanine”, “vitamin D” or “magnesium”",
       browseLabel: "Browse by neurotransmitter",
-      browseHint: "Pick one to see the supplements that act on it, strongest evidence first.",
+      foundationTab: "Foundations + recovery",   // DRAFT
+      foundationSub: "Support the whole system",   // DRAFT
+      browseHint: "Pick one to see the supplements that act on it, strongest evidence first. The dots show how strong the research is.",   // DRAFT: second sentence added
       templatesLabel: "Or start from a template",
       inStack: "In this stack",
+      groupFlag: "to check",   // DRAFT: "! 1 to check" on a folded group with a caution tag or food/timing flag inside
       suggestions: "Suggestions",
+      suggestAdd: "Add to stack",   // DRAFT
       suggestionsIntro: "Based on what's in your stack. Each one has been checked so it doesn't add a new conflict, and gets added at its best time.",
       add: "+ Add",
       added: "In stack",
     },
     timeline: {
       heading: "See your day",
+      intro: "Your stack, grouped by the pathway each supplement mainly acts on. Click a pathway to see its supplements.",   // DRAFT
+      foundationLane: "Foundations + recovery",   // DRAFT
+      one: "supplement", many: "supplements", from: "from",   // DRAFT: "from Caffeine" when a pathway is only reached by supplements filed under another one
     },
     check: {
       heading: "Check your stack",
@@ -53,11 +98,11 @@ const BUILDER_TEXT = {
       heading: "Save your stack",
       intro: "Saving confirms you've reviewed the check above, and makes the stack available in the Tracker. Your edits are always kept as a draft in the meantime.",
       empty: "Add at least one supplement first.",
-      ack: "I've read the warnings in step 5.",
+      ack: "I've read the warnings in step 4.",
       reminder: "Saving doesn't mean a stack is right for you. Check with a doctor or pharmacist first, especially if you take medication.",
       button: "Save stack",
       saved: "Saved",
-      changed: "You've made changes since your last save. Review step 5 and save again.",
+      changed: "You've made changes since your last save. Review step 4 and save again.",
       openTracker: "Open the Tracker →",
     },
   },
@@ -69,11 +114,11 @@ const BUILDER_TEXT = {
       { target: "#bs-day", title: "2. Set up your day", text: "Enter when you wake, sleep and eat. The builder uses these times to judge absorption and spacing." },
       { target: "#tour-meals", title: "Meals have their own tour", text: "Press this any time for a quick walkthrough of meals and snacks." },
       { target: "#add-q", title: "3. Search", text: "Type an ingredient (not a brand) and press Enter or pick a result to add it." },
-      { target: "#bs-browse", title: "Browse by neurotransmitter", text: "Don't remember what does what? Pick a neurotransmitter to see its supplements, strongest evidence first, and add one with a tap." },
-      { target: "#bs-templates", title: "Templates", text: "A ready-made starting point. It creates a new stack, so nothing you've built gets replaced." },
-      { target: "#b-items", title: "Your supplements", text: "Change a dose or time here. “What is this?” gives a quick summary without leaving the page." },
-      { target: "#bs-timeline", title: "4. See your day", text: "Each bar shows when a supplement kicks in, works and wears off. Drag a bar or a meal to move it, or let Optimize timing do it." },
-      { target: "#bs-check", title: "5. Check your stack", text: "Conflicts, timing problems and missing cofactors show up here, with one-tap fixes where possible." },
+      { target: "#add-tab-browse", title: "Browse", text: "Don't remember what does what? Open Browse and pick a neurotransmitter, or Foundations, to see its supplements, strongest evidence first." },   // DRAFT wording tweak
+      { target: "#add-tab-templates", title: "Templates", text: "A ready-made starting point. It creates a new stack, so nothing you've built gets replaced." },
+      { target: "#b-items", title: "Your supplements", text: "Grouped by pathway. Open a group to change a dose; “What is this?” gives a quick summary without leaving the page." },   // DRAFT wording tweak
+      { target: "#bs-check", title: "4. Check your stack", text: "Conflicts, timing problems and missing cofactors show up here, with one-tap fixes where possible." },
+      { target: "#bs-timeline", title: "5. See your day", text: "Each bar shows when a supplement kicks in, works and wears off. Drag a bar or a meal to move it, or let Optimize timing do it." },
       { target: "#bs-save", title: "6. Save your stack", text: "Once you've read the check, save. Only saved stacks show up as a checklist in the Tracker, and any later change asks you to review and save again." },
     ],
     meals: [

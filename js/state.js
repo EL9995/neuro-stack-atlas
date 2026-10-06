@@ -134,7 +134,7 @@ const App = {
   trackDate: todayKey(),
   confirmDelete: false,
   openInfo: new Set(),
-  showAllSugg: false
+  suggOpen: false
 };
 App.activeId = App.stacks[0].id;
 const active = () => App.stacks.find(s => s.id === App.activeId) || App.stacks[0];
@@ -203,7 +203,7 @@ function saveState() {
   App.dirty = true;
   Persist.save("state", () => ({ v: 1, stacks: App.stacks, activeId: App.activeId }));
 }
-function touch(stack) { if (stack.example) stack.example = false; if (stack.savedAt) { stack.savedAt = null; stack.wasSaved = true; } saveState(); renderSave(); }
+function touch(stack) { if (typeof recordHistory === "function") recordHistory(stack); if (stack.example) stack.example = false; if (stack.savedAt) { stack.savedAt = null; stack.wasSaved = true; } saveState(); renderSave(); }
 
 const monthOf = key => key.slice(0, 7);
 function loadMonth(month) {

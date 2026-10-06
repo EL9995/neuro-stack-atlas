@@ -1,0 +1,78 @@
+/* Simulator (#sim): six assembly lines on one dark stage, like the pathway scenes. */
+.sim { display: grid; gap: 18px; }
+.sim-disclaimer { max-width: 70ch; font-size: 0.9rem; color: var(--muted); padding: 8px 12px; border-left: 3px solid var(--sev-moderate); background: color-mix(in srgb, var(--sev-moderate) 6%, var(--surface)); border-radius: 0 8px 8px 0; }
+.sim-bar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: flex-end; }
+.sim-bar .field { min-width: 220px; }
+.sim-edit, .sim-link { font-size: 0.9rem; }
+.tl-actions { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.sim-note { font-size: 0.9rem; color: var(--muted); min-height: 1em; }
+.sim-note:empty { display: none; }
+
+/* The stage keeps the scenes' dark look in both themes */
+.sim-stage { --sw: min(1240px, calc(100vw - 56px)); width: var(--sw); margin-left: calc((100% - var(--sw)) / 2); border-radius: 14px; overflow-x: auto; background: #070c1a; border: 1px solid #1a2540; }
+.sim-stage svg { display: block; width: 100%; min-width: 900px; height: auto; font-family: var(--f-body); }
+.sim-bg { fill: #070c1a; }
+.sim-zone { fill: #8794b0; font-family: var(--f-mono); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; }
+.sim-wall { fill: #121b33; stroke: #22305a; }
+.sim-wall-label { fill: #55627c; font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+.sim-door rect { fill: #070c1a; stroke: #2a3a63; stroke-width: 1.5; }
+.sim-door.on rect { stroke: #7fe6ff; }
+.sim-door-label { fill: #e9fbff; font-family: var(--f-mono); font-size: 14px; font-weight: 500; }
+.sim-door-note { fill: #8794b0; font-size: 12px; }
+
+.sim-pill rect { fill: #0d1424; stroke: #2a3a63; }
+.sim-pill-name { fill: #e8edf7; font-size: 14px; font-weight: 600; }
+.sim-pill-dose { fill: #8794b0; font-family: var(--f-mono); font-size: 11.5px; }
+.sim-pill.above rect { stroke: #ff6b6b; }
+.sim-pill.above .sim-pill-dose { fill: #ff8f8f; }
+.sim-pill.protein rect { stroke-dasharray: 4 3; }
+.sim-pill.hl rect { stroke: #7fe6ff; stroke-width: 2.5; }
+
+.sim-line { opacity: .42; }
+.sim-line.live { opacity: 1; }
+.sim-line-name { fill: var(--hue); font-family: var(--f-display); font-size: 18px; font-weight: 700; }
+.sim-line-empty { fill: #6a7792; font-size: 13px; }
+.sim-mods { fill: #b8c7e6; font-size: 12.5px; }
+.sim-track { stroke: #22305a; stroke-width: 3; stroke-linecap: round; }
+.sim-rail { fill: none; stroke: color-mix(in srgb, var(--hue) 45%, #22305a); stroke-width: 1.5; stroke-dasharray: 3 4; }
+.sim-entry-label { fill: #e8edf7; font-size: 13px; font-weight: 600; }
+.sim-mol circle { fill: #0d1424; stroke: var(--hue); stroke-width: 2; }
+.sim-mol.final circle { fill: color-mix(in srgb, var(--hue) 35%, #0d1424); stroke-width: 2.5; transition: r .4s ease; }
+.sim-mol.final.over circle { stroke: #ff6b6b; stroke-width: 3; }
+.sim-mol.after { opacity: .45; }
+.sim-mol-label { fill: #c9d4ea; font-size: 13px; }
+.sim-mol.final .sim-mol-label { fill: var(--hue); font-weight: 700; font-size: 14px; }
+.sim-enz rect { fill: #0d1424; stroke: #2a3a63; }
+.sim-enz.rl rect { stroke: #7fe6ff; stroke-width: 1.5; }
+.sim-enz.after { opacity: .45; }
+.sim-valve { fill: none; stroke: #7fe6ff; stroke-width: 2; }
+.sim-enz-label { fill: #8794b0; font-family: var(--f-mono); font-size: 10.5px; }
+.sim-rl-label { fill: #7fe6ff; font-family: var(--f-mono); font-size: 11px; }
+.sim-co rect { fill: transparent; stroke: #2a3a63; stroke-dasharray: 3 3; }
+.sim-co text { fill: #6a7792; font-family: var(--f-mono); font-size: 10.5px; }
+.sim-co.on rect { fill: rgba(127, 230, 255, .14); stroke: #7fe6ff; stroke-dasharray: none; }
+.sim-co.on text { fill: #e9fbff; }
+.sim-wait { fill: #f0a24a; font-family: var(--f-mono); font-size: 12px; }
+.sim-overflow { fill: #ff8f8f; font-size: 12px; font-weight: 600; }
+#sim-dots .dot { filter: drop-shadow(0 0 3px currentColor); }
+#sim-dots .dot.protein { opacity: .7; }
+
+/* Panels under the stage */
+.sim-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; align-items: start; }
+.sim-panel { display: grid; gap: 10px; padding: 16px 18px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); min-width: 0; }
+.sim-panel h2 { font-size: 1.1rem; }
+.sim-warnlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.sim-warnlist li { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 4px 12px; }
+.sim-warnlist p { color: var(--muted); font-size: 0.9rem; }
+.sim-legend { margin: 0; display: grid; gap: 10px; }
+.sim-legend div { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; align-items: start; }
+.sim-legend dd { margin: 0; font-size: 0.9rem; color: var(--muted); }
+.sim-key { display: block; width: 22px; height: 16px; margin-top: 2px; border-radius: 4px; }
+.sim-key-dot { width: 10px; height: 10px; margin: 5px 6px; border-radius: 50%; background: #f0a24a; box-shadow: 0 0 6px #f0a24a; }
+.sim-key-door { border: 2px solid #7fe6ff; background: #070c1a; }
+.sim-key-valve { border: 1.5px solid #7fe6ff; background: linear-gradient(90deg, transparent 40%, #7fe6ff 40% 60%, transparent 60%); }
+.sim-key-bypass { border-top: 2px dashed #f0a24a; height: 0; margin-top: 9px; border-radius: 0; }
+.sim-key-cofactor { border: 1px dashed #8794b0; border-radius: 999px; }
+.sim-sources ol { margin: 0; padding-left: 1.2em; display: grid; gap: 8px; font-size: 0.9rem; }
+.sim-sources .cite { display: block; color: var(--muted); font-size: 0.82rem; }
+@media (prefers-reduced-motion: reduce) { .sim-mol.final circle { transition: none; } }

@@ -1,7 +1,24 @@
 // ---------------------------------------------------------------------------
 // STACK CHECKER
 // ---------------------------------------------------------------------------
-const CHECK_CATS = ["Interactions", "Timing", "Dose", "Tolerance", "Balance", "Food", "Cofactors", "Recovery"];
+const CHECK_CATS = ["Interactions", LOAD_RULES.category, "Timing", "Dose", "Tolerance", "Balance", "Food", "Cofactors", "Recovery"];
+
+// "Serious" or worse: the timeline and the Tracker checklist pause until it's fixed.
+const isStop = f => f.sev === "critical" || f.sev === "major";
+const stackBlocked = stack => analyze(stack).some(isStop);
+// An approval only counts if critical findings are allowed to be approved (content/recommendations.js).
+const canApprove = F => LOAD_RULES.approve.allowCritical || !F.some(f => f.sev === "critical");
+// The approval covers the exact serious findings that were confirmed; a new or worse one needs approving again.
+const stopKey = f => `${f.rule || f.title}:${f.sev}`;
+const approvalValid = (stack, F = analyze(stack)) => !!stack.approved && canApprove(F) && F.filter(isStop).every(f => stack.approved.keys.includes(stopKey(f)));
+const stackPaused = stack => { const F = analyze(stack); return F.some(isStop) && !approvalValid(stack, F); };
+
+// True when a supplement joins a neurotransmitter's pathway after its slow (rate-limiting) step.
+function pastSlowStep(sid, nt) {
+  const path = ntById[nt]?.path || [], rl = path.findIndex(p => p.rl);
+  const at = path.findIndex(p => (p.from || []).some(f => sameGroup(f, sid)));
+  return rl >= 0 && at > rl;
+}
 
 function analyze(stack) {
   const F = [];
@@ -34,29 +51,43 @@ function analyze(stack) {
 
   // Class-level stacking
   const sero = tagged("serotonergic");
-  if (sero.length >= 2) F.push({ cat: "Interactions", sev: sero.length >= 3 || sero.some(i => i.sid === "st-johns-wort") ? "major" : "moderate",
-    title: "Several serotonin boosters", body: `${names(sero)} all raise serotonin activity. Stacking them raises the risk of serotonin syndrome. Most people should pick one.` });
   const stim = tagged("stimulant");
   if (stim.length >= 2) F.push({ cat: "Interactions", sev: stim.some(i => byId[i.sid].tags.includes("bp_up")) ? "major" : "moderate",
-    title: "Stimulants stacked", body: `${names(stim)} each raise heart rate and blood pressure, and the effects add up. Try each one alone before combining.` });
-  const sed = tagged("sedative");
-  if (sed.length >= 2) F.push({ cat: "Interactions", sev: "moderate",
-    title: "Sedatives stacked", body: `${names(sed)} all calm the nervous system, and together they're stronger than either. No driving after, and no alcohol.` });
+    ids: stim.map(i => i.sid), title: "Stimulants stacked", body: `${names(stim)} each raise heart rate and blood pressure, and the effects add up. Try each one alone before combining.` });
   const liver = tagged("liver");
   if (liver.length >= 2) F.push({ cat: "Interactions", sev: "moderate",
-    title: "Two liver-risk herbs", body: `${names(liver)} have both been linked to rare liver injury. Avoid combining them long-term.` });
-  const chol = tagged("cholinergic");
-  if (chol.length >= 3) F.push({ cat: "Interactions", sev: "minor",
-    title: "Lots of acetylcholine support", body: `${names(chol)} all push acetylcholine. Headaches, muscle tension or low mood are signs of too much; drop one if they show up.` });
+    ids: liver.map(i => i.sid), title: "Two liver-risk herbs", body: `${names(liver)} have both been linked to rare liver injury. Avoid combining them long-term.` });
   const mao = tagged("mao");
   mao.forEach(m => {
     const others = items.filter(i => i.sid !== m.sid && ["dopaminergic", "serotonergic", "stimulant"].some(t => byId[i.sid].tags.includes(t)) && !pairs[[m.sid, i.sid].sort().join("|")]);
-    if (others.length) F.push({ cat: "Interactions", sev: "moderate", title: `${byId[m.sid].name} slows breakdown`,
+    if (others.length) F.push({ cat: "Interactions", sev: "moderate", ids: [m.sid, ...others.map(i => i.sid)], title: `${byId[m.sid].name} slows breakdown`,
       body: `It slows the enzyme that clears ${names(others)}, so their effects last longer and blood pressure can climb.` });
   });
   const da = tagged("dopaminergic");
-  if (da.length >= 3) F.push({ cat: "Interactions", sev: "minor", title: "Several dopamine precursors",
-    body: `${names(da)} compete for the same transporter and enzymes. Adding more isn't proportionally stronger.` });
+
+  // Stack load (content/recommendations.js, LOAD_RULES): same chemical system, too many acting on
+  // brain chemicals, too many overall, and amino acids sharing one transporter.
+  const L = LOAD_RULES, fill = (t, v) => t.replace(/\{(\w+)\}/g, (m, k) => v[k] ?? m);
+  const stepSev = (steps, n) => steps.filter(([at]) => n >= at).map(([, sev]) => sev).pop();
+  L.systems.forEach(sys => {
+    const mem = tagged(sys.tag);
+    let sev = stepSev(sys.steps, mem.length);
+    if (!sev) return;
+    Object.entries(sys.always || {}).forEach(([id, s]) => { if (mem.some(i => i.sid === id) && SEV_ORDER[s] < SEV_ORDER[sev]) sev = s; });
+    const fast = mem.filter(i => pastSlowStep(i.sid, sys.nt));
+    F.push({ cat: L.category, sev, rule: "sys:" + sys.id, system: sys.id, title: sys.title, ids: mem.map(i => i.sid),
+      body: fill(sys.body, { names: names(mem) }) + (fast.length ? " " + fill(L.fastNote, { fast: names(fast) }) : "") });
+  });
+  // Foundations (omega-3, magnesium, D3…) support the whole system, so they don't count toward "too much at once".
+  const brain = uniq(items.filter(i => MAP.some(r => r[0] === i.sid && ROLE_WEIGHT[r[2]] > 0) && !FOUNDATIONS.some(f => sameGroup(f[0], i.sid))));
+  if (brain.length >= L.brainTotal.at) F.push({ cat: L.category, sev: L.brainTotal.sev, rule: "brainTotal", title: L.brainTotal.title, ids: brain.map(i => i.sid),
+    body: fill(L.brainTotal.body, { n: brain.length, names: names(brain) }) });
+  const all = uniq(items);
+  if (all.length >= L.itemTotal.at) F.push({ cat: L.category, sev: L.itemTotal.sev, rule: "itemTotal", title: L.itemTotal.title,
+    body: fill(L.itemTotal.body, { n: all.length }) });
+  const amino = tagged(L.aminoAcids.tag);
+  if (amino.length >= L.aminoAcids.at) F.push({ cat: L.category, sev: L.aminoAcids.sev, rule: "amino", title: L.aminoAcids.title, ids: amino.map(i => i.sid),
+    body: fill(L.aminoAcids.body, { names: names(amino) }) });
 
   // Timing: spacing rules
   SEP.forEach(([a, b, h, why]) => {
@@ -88,14 +119,24 @@ function analyze(stack) {
   });
 
   // Dose
+  // Doses above the typical range are ranked by how far above they are (LOAD_RULES.dose).
+  const D = LOAD_RULES.dose, xOf = (a, b) => +(a / b).toFixed(a / b < 10 ? 1 : 0);
   items.forEach(i => {
     const s = byId[i.sid], [mn, mx, unit] = s.dose, d = +i.dose || 0;
-    if (d > mx) F.push({ cat: "Dose", sev: "moderate", title: `${s.name}: ${num(d)} ${unit}`, body: `Above the typical ${range(mn, mx)} ${unit} per dose.` });
+    if (d > mx) {
+      const st = D.steps.filter(t => t.times === 1 || d >= mx * t.times).pop(), amt = `${num(d)} ${unit}`;
+      F.push({ cat: "Dose", sev: st.sev, rule: `dose:${i.id}:${d}`, ids: [i.sid], title: `${st.title}: ${s.name} ${amt}`,
+        body: fill(st.body, { dose: amt, range: `${range(mn, mx)} ${unit}`, x: xOf(d, mx) }) });
+    }
     else if (d < mn) F.push({ cat: "Dose", sev: "info", title: `${s.name}: ${num(d)} ${unit}`, body: `Below the typical ${range(mn, mx)} ${unit}. You may not notice much.` });
   });
   uniq(items).forEach(i => {
     const s = byId[i.sid], tot = total(i.sid);
-    if (s.ul && !s.group && tot > s.ul) F.push({ cat: "Dose", sev: "major", title: `${s.name} over the daily limit`, body: `${num(tot)} ${s.dose[2]} a day in total is above the ${num(s.ul)} ${s.dose[2]} upper limit.` });
+    if (s.ul && !s.group && tot > s.ul) {
+      const crit = tot >= s.ul * D.ulCriticalTimes;
+      F.push({ cat: "Dose", sev: crit ? "critical" : "major", ids: [i.sid], title: `${s.name} over the daily limit`,
+        body: crit ? fill(D.ulCriticalBody, { total: `${num(tot)} ${s.dose[2]}`, ul: `${num(s.ul)} ${s.dose[2]}`, x: xOf(tot, s.ul) }) : `${num(tot)} ${s.dose[2]} a day in total is above the ${num(s.ul)} ${s.dose[2]} upper limit.` });
+    }
   });
   // Groups (e.g. magnesium forms) share one limit, counted as elemental mg
   Object.keys(GROUP_UL).forEach(g => {
@@ -138,7 +179,7 @@ function analyze(stack) {
   if (pushers.length) F.push({ cat: "Recovery", sev: "info", title: "Protect your baseline",
     body: `${names(pushers)} act on your system directly, which is where tolerance comes from. Breaks, sleep and exercise do more for recovery than any supplement.` });
 
-  if (!F.some(f => f.sev === "major" || f.sev === "moderate")) F.unshift({ cat: "Interactions", sev: "good", title: "No conflicts found", body: "Nothing in this stack is known to clash. Still introduce one new supplement at a time so you can tell what's doing what." });
+  if (!F.some(f => isStop(f) || f.sev === "moderate")) F.unshift({ cat: "Interactions", sev: "good", title: "No known conflicts in our data", body: "Nothing in this stack is known to clash. Still introduce one new supplement at a time so you can tell what's doing what." });
   return F.sort((a, b) => CHECK_CATS.indexOf(a.cat) - CHECK_CATS.indexOf(b.cat) || SEV_ORDER[a.sev] - SEV_ORDER[b.sev]);
 }
 
@@ -150,7 +191,7 @@ function analyze(stack) {
 // ---------------------------------------------------------------------------
 const KIND_RANK = { swap: 0, pair: 1, cofactor: 2, foundation: 3 };
 const isCofactor = id => MAP.some(r => r[0] === id && r[2] === "cofactor") || ["vitamin", "mineral"].includes(byId[id].cat);
-const badCount = F => F.filter(f => f.cat === "Interactions" && (f.sev === "major" || f.sev === "moderate")).length;
+const badCount = F => F.filter(f => (f.cat === "Interactions" || f.cat === LOAD_RULES.category) && (isStop(f) || f.sev === "moderate")).length;
 
 // Best time for a new dose. With a partner ("take together"), prefer the
 // partner's time unless that slot is clearly worse than the best one.

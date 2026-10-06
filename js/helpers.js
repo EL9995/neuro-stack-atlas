@@ -7,7 +7,7 @@ const CAT = { amino_acid: "Amino acid", amino_acid_derivative: "Amino acid deriv
 const ROLE = { precursor: "Precursor", cofactor: "Cofactor", enzyme_inhibitor: "Enzyme blocker", modulator: "Modulator", releaser: "Releaser", reuptake_inhibitor: "Reuptake blocker", receptor_agonist: "Receptor activator", receptor_antagonist: "Receptor blocker" };
 const ROLE_WEIGHT = { precursor: 1, releaser: 1, reuptake_inhibitor: 1, receptor_agonist: 1, receptor_antagonist: 1, enzyme_inhibitor: 1, modulator: 0.6, cofactor: 0 };
 const EV = { strong: 3, moderate: 2, limited: 1, theoretical: 0 };
-const SEV_ORDER = { major: 0, moderate: 1, minor: 2, beneficial: 3, info: 4, good: 5 };
+const SEV_ORDER = { critical: -1, major: 0, moderate: 1, minor: 2, beneficial: 3, info: 4, good: 5 };
 const TIER = { core: "Foundational", deep: "Deep cut", caution: "Use caution" };
 const FOOD = { empty: "Empty stomach", with_food: "With food", with_fat: "With a meal with fat", carbs: "With carbs, away from protein", any: "With or without food" };
 const WHEN = { am: "Morning", pm: "Evening", any: "Any time" };
@@ -30,6 +30,8 @@ const dateKey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDat
 const todayKey = () => dateKey(new Date());
 const addDays = (key, n) => { const d = new Date(key + "T12:00:00"); d.setDate(d.getDate() + n); return dateKey(d); };
 const fmtDate = (key, opts = { weekday: "short", month: "short", day: "numeric" }) => new Date(key + "T12:00:00").toLocaleDateString(undefined, opts);
+// +/- step size in the supplement's own unit: about an eighth of the top of the typical range, rounded to 1-2-5.
+const doseStep = s => [5000, 2500, 1000, 500, 250, 100, 50, 25, 10, 5, 2, 1].find(n => n <= s.dose[1] / 8) || 1;
 const elementalMg = i => { const s = byId[i.sid], d = +i.dose || 0; return /elemental/.test(s.dose[2]) ? d : d * (s.elemental || 1); };
 const sameGroup = (a, b) => a === b || (!!byId[a]?.group && byId[a].group === byId[b]?.group);
 const primaryNT = sid => (MAP.find(r => r[0] === sid && r[2] !== "cofactor") || MAP.find(r => r[0] === sid) || [])[1];

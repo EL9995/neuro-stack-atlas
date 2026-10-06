@@ -1,4 +1,4 @@
-"""Click-through test of the Stack builder: tours, browse-by-neurotransmitter, search, step 6 save and the Tracker gate.
+"""Click-through test of the Stack builder: step-by-step opening, tours, browse-by-neurotransmitter, search, step 6 save and the Tracker gate.
 Usage: python3 tools/test_builder.py [base-url]   (screenshots go to /tmp/nsa-builder-*.png)
 """
 import base64, json, os, subprocess, sys, tempfile, time, urllib.request
@@ -24,20 +24,49 @@ try:
     print("steps:", ev("[...document.querySelectorAll('.bstep .pr-h')].map(h=>h.textContent).join(' | ')"))
     print("tour prompt shown:", ev("!!document.querySelector('.tour-prompt')"))
     shot("top")
-    for tour in ("page", "meals"):
-        ev(f"document.querySelector('[data-tour=\"{tour}\"]').click()"); time.sleep(.5)
+    # Fresh visitor: only step 1 is open, the rest are locked
+    open_steps = "[...document.querySelectorAll('.bstep:not(.locked) .pr-h')].map(h=>h.textContent).join(' | ')"
+    print("open at start:", ev(open_steps), "| locked:", ev("document.querySelectorAll('.bstep.locked').length"))
+    print("header buttons:", ev("[...document.querySelectorAll('.page-head button')].map(b=>b.textContent).join(' | ')"))
+    # Take the tour: step 1 plus its tour; each Next opens one more step and plays its part
+    ev("document.querySelector('[data-tour=\"page\"]').click()"); time.sleep(.6)
+    for k in range(6):
         n = ev("TOUR.steps ? TOUR.steps.length : 0"); seen = []
         for i in range(n):
             seen.append(ev("document.querySelector('.tour-pop h3').textContent"))
-            if i == 2: shot(f"tour-{tour}")
-            ev("document.querySelector('.tour-pop [data-tour-act=next], .tour-pop [data-tour-act=end]:not(.linkish)').click()"); time.sleep(.35)
-        print(f"{tour} tour ({n} stops):", " / ".join(seen), "| closed:", ev("!TOUR.steps"))
+            if k == 2 and i == 0: shot("tour-page")
+            ev("document.querySelector('.tour-pop [data-tour-act=next], .tour-pop [data-tour-act=end]:not(.linkish)').click()"); time.sleep(.3)
+        print(f"step {k+1} open, tour stops:", " / ".join(seen) or "(none)", "| locked left:", ev("document.querySelectorAll('.bstep.locked').length"))
+        if k == 0: shot("gated")
+        if not ev("!!document.getElementById('step-next')"): break
+        ev("document.getElementById('step-next').click()"); time.sleep(.6)
+    # Step 3 gate: Next waits for a supplement
+    ev("localStorage.setItem('nsa-builderOpen','3'); active().items=[]; render('stack',true)"); time.sleep(.3)
+    print("step 3 next with empty stack disabled:", ev("document.getElementById('step-next').disabled"), "|", ev("document.getElementById('step-next-hint').textContent"))
+    ev("document.querySelector('[data-act=tpl]').click()"); time.sleep(.4)
+    print("after template, next enabled:", ev("!document.getElementById('step-next')?.disabled"))
+    # Skip the tour opens everything and hides itself
+    ev("localStorage.setItem('nsa-builderOpen','1'); render('stack',true)"); time.sleep(.3)
+    ev("document.querySelector('[data-act=tour-skip]').click()"); time.sleep(.5)
+    print("after skip, locked:", ev("document.querySelectorAll('.bstep.locked').length"), "| skip button gone:", ev("!document.querySelector('[data-act=tour-skip]')"))
+    # Popup's own Skip also opens everything
+    ev("document.querySelector('[data-tour=\"page\"]').click()"); time.sleep(.5)
+    ev("document.querySelector('.tour-pop [data-tour-act=skip]').click()"); time.sleep(.5)
+    print("popup skip -> locked:", ev("document.querySelectorAll('.bstep.locked').length"), "| tour closed:", ev("!TOUR.steps"))
+    # Meals tour still works on its own
+    ev("document.querySelector('[data-tour=\"meals\"]').click()"); time.sleep(.4)
+    print("meals tour stops:", ev("TOUR.steps ? TOUR.steps.length : 0")); ev("tourEnd()")
+    # Back to the example stack with every step open for the rest of the test
+    ev("localStorage.clear(); localStorage.setItem('nsa-builderOpen','6'); localStorage.setItem('nsa-tourSeen','true'); location.reload()"); time.sleep(2)
+    ev("window.__e=[];addEventListener('error',e=>__e.push(e.message))")
     # Browse by neurotransmitter, then add from it
     ev("document.querySelector('[data-act=browse-nt][data-nt=dopamine]').click()"); time.sleep(.3)
     print("browse groups:", ev("[...document.querySelectorAll('.browse-group h4')].map(h=>h.textContent+' '+h.parentElement.querySelectorAll('.browse-item').length).join(', ')"))
     before = ev("active().items.length")
     ev("document.querySelector('.browse-item:not(.has) [data-act=add-supp]').click()"); time.sleep(.4)
-    print("items before/after add:", before, ev("active().items.length"), "| button now:", ev("document.querySelector('.browse-item.has [data-act=add-supp]')?.textContent"))
+    warned = ev("document.querySelector('.addwarn .check-title')?.textContent")   # a 2nd dopamine booster asks first
+    if warned: print("add-time warning:", warned); ev("document.querySelector('[data-act=addwarn-anyway]').click()"); time.sleep(.4)
+    print("items before/after add:", before, ev("active().items.length"), "| button now:", ev("document.querySelector('.browse-item.has [data-act=in-stack]')?.textContent"))
     ev("document.getElementById('bs-browse').scrollIntoView({block:'start'}); scrollBy(0,-150)"); time.sleep(.3); shot("browse")
     # Search
     ev("const q=document.getElementById('add-q'); q.value='theanine'; q.dispatchEvent(new Event('input',{bubbles:true}))"); time.sleep(.3)

@@ -1,0 +1,101 @@
+"""Stack checker safety cases: the verdict, the timeline pause, the Tracker gate, add-time warnings and "Keep one per system".
+Usage: python3 tools/test_checker.py [base-url]
+Cases (from the team's stack checker spec): an every-precursor stack, a serotonin triple, and a stimulant +
+breakdown-slowing herb. Each should show "Warning: Stack needs review", pause the timeline and hold the Tracker gate.
+"""
+import json, os, subprocess, sys, tempfile, time, urllib.request
+HERE = os.path.dirname(os.path.abspath(__file__))
+exec(open(os.path.join(HERE, "shoot.py")).read().replace('if __name__ == "__main__":', "if False:"))
+BASE = sys.argv[1].rstrip("/") if len(sys.argv) > 1 else "http://localhost:8010"
+CASES = {
+    "every precursor": "S.filter(s => MAP.some(r => r[0] === s.id && r[2] === 'precursor')).map(s => s.id)",
+    "serotonin triple": "['5-htp', 'l-tryptophan', 'saffron']",
+    "stimulant + breakdown-slowing herb": "['caffeine', 'hordenine']",
+}
+prof = tempfile.mkdtemp()
+proc = subprocess.Popen([CHROME, "--headless=new", f"--remote-debugging-port={PORT}", f"--user-data-dir={prof}", "--hide-scrollbars", "about:blank"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+fails = []
+try:
+    for _ in range(80):
+        try: tabs = json.load(urllib.request.urlopen(f"http://127.0.0.1:{PORT}/json")); break
+        except Exception: time.sleep(.5)
+    c = CDP([t for t in tabs if t["type"] == "page"][0]["webSocketDebuggerUrl"])
+    c.call("Page.enable"); c.call("Runtime.enable"); c.call("Network.enable"); c.call("Network.setCacheDisabled", cacheDisabled=True)
+    c.call("Emulation.setDeviceMetricsOverride", width=1280, height=860, deviceScaleFactor=1, mobile=False)
+    def ev(e):
+        r = c.call("Runtime.evaluate", expression=e, awaitPromise=True, returnByValue=True)
+        if "exceptionDetails" in r: print("  JS error:", r["exceptionDetails"].get("exception", {}).get("description", "")[:200])
+        return r["result"].get("value")
+    def check(name, ok, detail=""):
+        print(f"  {'PASS' if ok else 'FAIL'}  {name}{(' (' + str(detail) + ')') if detail else ''}")
+        if not ok: fails.append(name)
+    c.call("Page.navigate", url=f"{BASE}/#stack"); time.sleep(2)
+    ev("localStorage.clear(); localStorage.setItem('nsa-builderOpen','6'); localStorage.setItem('nsa-tourSeen','true'); location.reload()"); time.sleep(2)
+    ev("window.__e=[]; addEventListener('error', e => __e.push(e.message))")
+    print("Example stack and templates stay runnable:")
+    ok = ev("[EXAMPLE_STACK, ...TEMPLATES].map(t => ({ n: t.name, b: stackBlocked({ ...active(), items: t.items.map(([sid, d, tm], k) => ({ id: 'x' + k, sid, dose: d, time: tm })) }) })).filter(x => x.b).map(x => x.n)")
+    check("no example or template is blocked", ok == [], ok)
+    for name, ids in CASES.items():
+        print(f"{name}:")
+        ev(f"(() => {{ const st = active(); st.savedAt = null; st.items = ({ids}).map(sid => ({{ id: newId(), sid, dose: byId[sid].dose[0], time: placeFor(sid, st) }})); touch(st); render('stack', true); }})()"); time.sleep(.4)
+        check("verdict is red", ev("document.querySelector('.verdict-h')?.textContent") == "Warning: Stack needs review", ev("document.querySelector('.verdict-h')?.textContent"))
+        check("timeline paused", ev("!!document.querySelector('#b-timeline .paused-box')") and ev("document.querySelector('[data-act=optimize]').hidden"))
+        # Save it (ack the warnings), then the Tracker must still show no checklist
+        ev("(() => { const a = document.getElementById('save-ack'); if (a) { a.checked = true; a.dispatchEvent(new Event('change', { bubbles: true })); } document.getElementById('save-btn')?.click(); })()"); time.sleep(.3)
+        ev("location.hash = 'track'"); time.sleep(.7)
+        check("Tracker gate holds after saving", ev("!!document.querySelector('.load-gate') && !document.querySelector('.checklist')"))
+        ev("location.hash = 'stack'"); time.sleep(.6)
+    print("Add-time warning and trim:")
+    ev("(() => { const st = active(); st.items = ['l-tyrosine'].map(sid => ({ id: newId(), sid, dose: byId[sid].dose[0], time: '08:00' })); touch(st); render('stack', true); })()"); time.sleep(.3)
+    ev("addToStack('dl-phenylalanine', true)"); time.sleep(.3)
+    check("adding a 2nd dopamine booster asks first", ev("!!document.querySelector('.addwarn') && active().items.length === 1"))
+    check("offers Swap and Add anyway", ev("!!document.querySelector('[data-act=addwarn-swap]') && !!document.querySelector('[data-act=addwarn-anyway]')"))
+    ev("document.querySelector('[data-act=addwarn-swap]').click()"); time.sleep(.3)
+    check("swap replaces it", ev("active().items.map(i => i.sid).join()") == "dl-phenylalanine", ev("active().items.map(i => i.sid).join()"))
+    ev("(() => { const st = active(); st.items = ['l-tyrosine', 'mucuna-pruriens', 'dl-phenylalanine'].map(sid => ({ id: newId(), sid, dose: byId[sid].dose[0], time: placeFor(sid, st) })); touch(st); render('stack', true); })()"); time.sleep(.3)
+    ev("document.querySelector('[data-act=trim-systems]').click()"); time.sleep(.3)
+    check("Keep one per system keeps the gentlest", ev("active().items.map(i => i.sid).join()") == "l-tyrosine", ev("active().items.map(i => i.sid).join()"))
+    check("timeline back after trimming", ev("!document.querySelector('#b-timeline .paused-box')"))
+    print("Approve anyway:")
+    ev("(() => { const st = active(); st.approved = null; st.items = ['l-tyrosine', 'mucuna-pruriens', 'dl-phenylalanine'].map(sid => ({ id: newId(), sid, dose: byId[sid].dose[0], time: placeFor(sid, st) })); touch(st); render('stack', true); })()"); time.sleep(.3)
+    check("paused before approval", ev("!!document.querySelector('#b-timeline .paused-box')"))
+    check("list folded until Review is chosen", ev("!document.querySelector('#b-checks .check-group') && !!document.querySelector('[data-act=check-review]')"))
+    check("banner says it needs review", ev("document.querySelector('.verdict-h').textContent") == "Warning: Stack needs review", ev("document.querySelector('.verdict-h').textContent"))
+    ev("document.querySelector('[data-act=check-review]').click()"); time.sleep(.3)
+    n_todo = ev("document.querySelectorAll('.review-tick input').length")
+    check("every serious / to-review warning has a Reviewed tick", n_todo == ev("analyze(active()).filter(needsReview).length"), n_todo)
+    check("approval locked before reviewing", ev("document.getElementById('approve-ack').disabled && document.getElementById('approve-go').disabled"))
+    ev("[...document.querySelectorAll('.review-tick input')].forEach(() => { const i = document.querySelector('.review-tick input:not(:checked)'); if (i) { i.checked = true; i.dispatchEvent(new Event('change', { bubbles: true })); } })"); time.sleep(.3)
+    check("approval unlocks after every tick", ev("!document.getElementById('approve-ack').disabled"))
+    ev("(() => { const a = document.getElementById('approve-ack'); a.checked = true; a.dispatchEvent(new Event('change', { bubbles: true })); document.getElementById('approve-go').click(); })()"); time.sleep(.3)
+    check("timeline back after approving", ev("!document.querySelector('#b-timeline .paused-box') && !!document.querySelector('#b-timeline .approved-note')"))
+    ev("(() => { const i = active().items[0]; i.time = '09:00'; touch(active()); refreshBuilder(); })()"); time.sleep(.2)
+    check("moving a dose keeps the approval", ev("!stackPaused(active())"))
+    ev("(() => { const a = document.getElementById('save-ack'); if (a) { a.checked = true; a.dispatchEvent(new Event('change', { bubbles: true })); } document.getElementById('save-btn')?.click(); })()"); time.sleep(.3)
+    ev("location.hash = 'track'"); time.sleep(.7)
+    check("Tracker shows the checklist with a note", ev("!!document.querySelector('.checklist') && !!document.querySelector('.approved-note')"))
+    ev("location.hash = 'stack'"); time.sleep(.6)
+    ev("(() => { const st = active(); ['5-htp', 'l-tryptophan', 'saffron'].forEach(sid => st.items.push({ id: newId(), sid, dose: byId[sid].dose[0], time: placeFor(sid, st) })); touch(st); refreshBuilder(); })()"); time.sleep(.3)
+    check("a new serious warning pauses it again", ev("stackPaused(active()) && !!document.querySelector('#b-timeline .paused-box')"))
+    print("Dose ranking:")
+    sev = lambda sid, d: ev(f"analyze({{ ...active(), items: [{{ id: 'dr', sid: '{sid}', dose: {d}, time: '07:00' }}] }}).filter(f => f.cat === 'Dose').map(f => f.sev).join()")
+    check("3,000 mg tyrosine is to review", sev("l-tyrosine", 3000) == "moderate", sev("l-tyrosine", 3000))
+    check("5,000 mg tyrosine is serious", sev("l-tyrosine", 5000) == "major", sev("l-tyrosine", 5000))
+    check("20,000 mg tyrosine is critical", sev("l-tyrosine", 20000) == "critical", sev("l-tyrosine", 20000))
+    ev("(() => { const st = active(); st.approved = null; App.checkReview = null; st.items = [{ id: 'dr1', sid: 'l-tyrosine', dose: 20000, time: '07:00' }]; touch(st); render('stack', true); })()"); time.sleep(.3)
+    check("20,000 mg pauses the timeline and needs review", ev("!!document.querySelector('#b-timeline .paused-box') && !!document.querySelector('[data-act=check-review]')"))
+    print("Dose monitor:")
+    ev("(() => { const st = active(); st.items = [{ id: 'dm1', sid: 'l-tyrosine', dose: 500, time: '07:00' }]; touch(st); App.itemsOpen = new Set(['dopamine']); render('stack', true); })()"); time.sleep(.3)
+    ev("(() => { const i = document.querySelector('.dose-in[data-item=dm1]'); i.value = '10000'; i.dispatchEvent(new Event('change', { bubbles: true })); })()"); time.sleep(.2)
+    check("typing 10,000 mg asks first", ev("!!document.getElementById('dosewarn-pop') && active().items[0].dose === 500"))
+    ev("document.querySelector('[data-choice=keep]').click()"); time.sleep(.2)
+    check("Keep applies it", ev("active().items[0].dose") == 10000, ev("active().items[0].dose"))
+    ev("(() => { const i = document.querySelector('.dose-in[data-item=dm1]'); i.value = '600'; i.dispatchEvent(new Event('change', { bubbles: true })); })()"); time.sleep(.2)
+    check("going down never asks", ev("!document.getElementById('dosewarn-pop') && active().items[0].dose === 600"))
+    ev("(() => { const i = document.querySelector('.dose-in[data-item=dm1]'); i.value = '30000'; i.dispatchEvent(new Event('change', { bubbles: true })); })()"); time.sleep(.2)
+    ev("document.querySelector('[data-choice=max]').click()"); time.sleep(.2)
+    check("Use max sets the top of the range", ev("active().items[0].dose") == 2000, ev("active().items[0].dose"))
+    check("no JS errors", ev("__e") == [], ev("__e"))
+finally:
+    proc.terminate()
+print("\nAll passed." if not fails else f"\n{len(fails)} failed: " + "; ".join(fails))

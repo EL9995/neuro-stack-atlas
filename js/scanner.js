@@ -205,7 +205,7 @@ function renderScanResult() {
 
   const st = active(), time = bottleTime(r.items, st);
   const asItems = r.items.map((it, k) => ({ id: "_scan" + k, sid: it.sid, dose: it.dose != null ? +it.dose.toFixed(2) : byId[it.sid].dose[0], time }));
-  const serious = f => (f.sev === "major" || f.sev === "moderate") && (f.cat === "Interactions" || f.cat === "Dose");
+  const serious = f => (f.sev === "critical" || f.sev === "major" || f.sev === "moderate") && (f.cat === "Interactions" || f.cat === "Dose");
   // Absorption-spacing pairs can't be spaced inside one pill, so they aren't "conflicts in the bottle".
   const spacingPair = f => f.ids && SEP.some(r => r.includes(f.ids[0]) && r.includes(f.ids[1]));
   const bottleAll = analyze({ ...st, items: asItems }).filter(serious);

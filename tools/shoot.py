@@ -38,12 +38,13 @@ SHOTS = [
     ("36-enzyme-aadc", "enzyme:aadc", "", True),
     ("40-supp-l-tyrosine", "dopamine.l-tyrosine", "", True),
     ("41-supp-magnesium", "magnesium-glycinate", "", True),
-    ("50-stack-builder", "stack", "", True),
+    ("50-stack-builder", "stack", "", True),   # a first visit: only step 1 is open
+    ("51-stack-builder-open", "stack", "localStorage.setItem('nsa-builderOpen','6');render('stack',true)", True),
     ("60-tracker", "track", "", True),
     ("70-scanner", "scan", "", True),
     ("80-dark-home", "", "document.documentElement.dataset.theme='dark'", False),
     ("81-dark-nt", "serotonin", "document.documentElement.dataset.theme='dark'", True),
-    ("82-dark-stack", "stack", "document.documentElement.dataset.theme='dark'", True),
+    ("82-dark-stack", "stack", "document.documentElement.dataset.theme='dark';localStorage.setItem('nsa-builderOpen','6');render('stack',true)", True),
 ]
 FREEZE = """(() => {
   const RealDate = Date, off = new RealDate("2026-10-04T10:00:00").getTime() - RealDate.now();

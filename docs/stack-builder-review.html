@@ -1,0 +1,148 @@
+<title>Stack Builder Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;600;700&display=swap">
+<style>
+/* Layout: one reading column, a decision block that stands apart, severity chips borrowed from the site's checker. */
+:root {
+  --bg: #f6f8fb; --surface: #ffffff; --ink: #0a1226; --muted: #55627c; --line: #d8dfea; --soft: #e9eef6;
+  --accent: #2e55e6; --sev-major: #c0262d; --sev-moderate: #a35f00; --sev-minor: #5f6b75; --sev-good: #1f8a4c;
+  --c-dopamine: #b86200; --c-foundation: #5f7d1f;
+  --f-display: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #060a14; --surface: #0d1424; --ink: #e8edf7; --muted: #8f9cb8; --line: #1f2b47; --soft: #121b30;
+  --accent: #7d9dff; --sev-major: #ff6b6b; --sev-moderate: #f0a24a; --sev-minor: #a3b1bb; --sev-good: #5fd38f;
+  --c-dopamine: #f0a24a; --c-foundation: #a9cf5f; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #060a14; --surface: #0d1424; --ink: #e8edf7; --muted: #8f9cb8; --line: #1f2b47; --soft: #121b30;
+  --accent: #7d9dff; --sev-major: #ff6b6b; --sev-moderate: #f0a24a; --sev-minor: #a3b1bb; --sev-good: #5fd38f;
+  --c-dopamine: #f0a24a; --c-foundation: #a9cf5f; color-scheme: dark; }
+
+body { background: var(--bg); color: var(--ink); font: 16px/1.6 var(--f-body); }
+.page { max-width: 760px; margin: 0 auto; padding-inline: 20px; padding-block: 48px 72px; display: grid; gap: 40px; }
+h1, h2, h3 { font-family: var(--f-display); line-height: 1.2; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(1.9rem, 5vw, 2.6rem); letter-spacing: -0.01em; }
+h2 { font-size: 1.35rem; }
+h3 { font-size: 1.05rem; }
+p, ul, ol { margin: 0; }
+ul, ol { padding-left: 1.2em; display: grid; gap: 8px; }
+.eyebrow { font-family: var(--f-mono); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+header { display: grid; gap: 12px; }
+header .meta { font-family: var(--f-mono); font-size: 0.8rem; color: var(--muted); }
+section { display: grid; gap: 14px; }
+.muted { color: var(--muted); }
+code, .mono { font-family: var(--f-mono); font-size: 0.88em; }
+.note { font-size: 0.92rem; color: var(--muted); }
+
+.callout { padding: 14px 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-size: 0.95rem; }
+.callout b { color: var(--sev-moderate); }
+
+/* The decision block is the one element set apart from the page */
+.decision { display: grid; gap: 18px; padding: 24px; border-radius: 14px; background: var(--surface); border: 1.5px solid var(--sev-moderate); }
+.decision h2 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; }
+.tag { font-family: var(--f-mono); font-size: 0.7rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; }
+.tag.moderate { color: var(--sev-moderate); } .tag.major { color: var(--sev-major); } .tag.minor { color: var(--sev-minor); } .tag.good { color: var(--sev-good); }
+
+.facts { display: grid; gap: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.fact { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: 4px 16px; padding: 10px 14px; border-top: 1px solid var(--line); font-size: 0.93rem; }
+.fact:first-child { border-top: 0; }
+.fact dt { font-family: var(--f-mono); font-size: 0.8rem; color: var(--muted); padding-top: 2px; }
+.fact dd { margin: 0; min-width: 0; }
+@media (max-width: 560px) { .fact { grid-template-columns: 1fr; } }
+
+.options { display: grid; gap: 10px; }
+.opt { display: grid; grid-template-columns: 2.2rem minmax(0, 1fr); gap: 4px 12px; padding: 12px 14px; border-radius: 10px; background: var(--soft); }
+.opt .key { font-family: var(--f-mono); font-weight: 500; color: var(--accent); font-size: 1rem; }
+.opt h3 { font-size: 1rem; }
+.opt p { font-size: 0.92rem; color: var(--muted); grid-column: 2; }
+.opt.rec { outline: 1.5px solid var(--accent); background: var(--surface); }
+.opt.rec h3::after { content: "Recommended"; margin-left: 8px; font-family: var(--f-mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+
+.qs { counter-reset: q; list-style: none; padding: 0; }
+.qs li { counter-increment: q; display: grid; grid-template-columns: 2rem minmax(0, 1fr); gap: 10px; }
+.qs li::before { content: "Q" counter(q); font-family: var(--f-mono); font-size: 0.8rem; color: var(--sev-moderate); padding-top: 3px; }
+
+.changes { list-style: none; padding: 0; display: grid; gap: 0; border-top: 1px solid var(--line); }
+.changes li { display: grid; grid-template-columns: 2.4rem minmax(0, 1fr); gap: 2px 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.changes .n { font-family: var(--f-mono); color: var(--muted); font-size: 0.85rem; padding-top: 2px; }
+.changes b { font-family: var(--f-display); }
+.changes p { grid-column: 2; font-size: 0.93rem; color: var(--muted); }
+
+.claims { display: grid; gap: 10px; }
+.claim { padding: 12px 14px; border-left: 3px solid var(--c-dopamine); background: var(--surface); border-radius: 0 8px 8px 0; font-size: 0.95rem; }
+.claim .where { display: block; font-family: var(--f-mono); font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+footer { font-size: 0.85rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+</style>
+
+<div class="page">
+  <header>
+    <span class="eyebrow">Neuro Stack Atlas · Mind</span>
+    <h1>Stack Builder review</h1>
+    <p>A round of changes to the Stack builder is ready but not published. Before it goes live, we need a decision from legal and ethics on one question: what the builder should do when someone enters a dose far above the normal range.</p>
+    <p class="meta">October 5, 2026 · Status: built and tested on Eric's machine, not pushed to the live site</p>
+  </header>
+
+  <section class="decision" id="decision">
+    <h2>Decision needed: extreme doses <span class="tag moderate">Legal + ethics</span></h2>
+    <p>Example: someone adds <b>L-Tyrosine at 10,000 mg</b>. The typical range on the site is 500–2,000 mg per dose. Should the builder allow it, warn harder, or stop it?</p>
+
+    <h3>What happens today</h3>
+    <dl class="facts">
+      <div class="fact"><dt>Dose box</dt><dd>No upper limit. Any number can be typed in.</dd></div>
+      <div class="fact"><dt>Above typical range</dt><dd>Flagged <span class="tag moderate">To review</span> “Above the typical 500–2,000 mg per dose.” 10,000 mg gets exactly the same flag as 3,000 mg.</dd></div>
+      <div class="fact"><dt>Above upper limit</dt><dd>Only 6 supplements have one in our data (caffeine 400 mg, vitamin C 2,000 mg, B6 100 mg, D3 4,000 IU, omega-3 5,000 mg, copper 10 mg), plus magnesium, zinc and iron as groups. Going over it is flagged <span class="tag major">Serious</span>.</dd></div>
+      <div class="fact"><dt>Saving</dt><dd>Any “to review” or “serious” flag means the person must tick “I've read the warnings” before saving. Nothing is ever blocked.</dd></div>
+      <div class="fact"><dt>Tracker</dt><dd>A saved stack becomes a daily checklist, so a 10,000 mg dose would show up there as part of the plan.</dd></div>
+      <div class="fact"><dt>Disclaimers</dt><dd>“For learning only, not medical advice” in the footer and at the top of the home page; the save step adds “Check with a doctor or pharmacist first, especially if you take medication.”</dd></div>
+    </dl>
+
+    <h3>Options</h3>
+    <div class="options">
+      <div class="opt"><span class="key">A</span><h3>Keep as is: warn, allow</h3><p>Least friction. But 10,000 mg looks no different from 3,000 mg, and the Tracker then presents the dose as a plan.</p></div>
+      <div class="opt"><span class="key">B</span><h3>Warn harder as the dose climbs</h3><p>Above the typical range: “to review” (as now). Far above it (for example more than 2× the top of the range) or above an upper limit: “serious”, with a plain message and the doctor reminder. Still saveable after acknowledging.</p></div>
+      <div class="opt rec"><span class="key">C</span><h3>B, plus block saving above a hard ceiling</h3><p>Same tiers as B, but a stack can't be saved or tracked while any dose is over a hard ceiling. The person can still type it and see the warning, so we teach instead of silently refusing; they just can't turn it into a plan. Only works where we have a sourced ceiling.</p></div>
+      <div class="opt"><span class="key">D</span><h3>Cap the dose box</h3><p>The input refuses numbers over a ceiling. Simplest to explain, but it hides the reason from the person, and they may just take the dose without the tool.</p></div>
+    </div>
+    <p class="note">Why C: it keeps the harm-reduction value (people see why the dose is a problem) without the site ever presenting an unsafe amount as a saved plan or a daily checklist item.</p>
+
+    <h3>Questions for legal and ethics</h3>
+    <ol class="qs">
+      <li>Is it acceptable for a saved stack, or the Tracker checklist, to show a dose above a published upper limit?</li>
+      <li>Is ticking “I've read the warnings” enough of an acknowledgement for “serious” items, or should some items block saving?</li>
+      <li>Where would hard ceilings come from? Our data has typical ranges for all 65 supplements but upper limits for only 6 (plus 3 mineral groups). Each new ceiling is a factual claim that needs a source.</li>
+      <li>What may a blocking message say without reading as medical advice? For example: “This is above the [source] upper limit. The builder won't save it.”</li>
+    </ol>
+  </section>
+
+  <section id="changes">
+    <h2>What changed in this round</h2>
+    <p class="muted">All in the Stack builder. Nothing else on the site changed.</p>
+    <ol class="changes">
+      <li><span class="n">01</span><b>Steps open one at a time</b><p>New visitors see step 1; each step ends with “Next”. “Take the tour” walks through step by step; “Skip the tour” opens everything.</p></li>
+      <li><span class="n">02</span><b>Every step folds to one line</b><p>Click a step to fold it to a summary (“8 supplements…”, “2 to review · 1 minor”, “Not saved yet”). Expand all / Collapse all at the top.</p></li>
+      <li><span class="n">03</span><b>Check comes before the timeline</b><p>New order: name, day, add, <b>check</b>, timeline, save. Nobody reaches the schedule without passing the warnings.</p></li>
+      <li><span class="n">04</span><b>New “Overlap” checks</b><p>Several raw materials for one neurotransmitter, raw materials that skip the body's slow step (Mucuna, 5-HTP), and 4+ supplements piled on one pathway. Phenylalanine + Tyrosine + Mucuna now gets a “to review” alert.</p></li>
+      <li><span class="n">05</span><b>Foundations + recovery</b><p>A browse tab above the neurotransmitters in step 3, a matching row in the timeline, and its own color (lime). Built from the site's existing Foundations list.</p></li>
+      <li><span class="n">06</span><b>Compact lists</b><p>“In this stack” is grouped by pathway and folds; folded groups still show “! 1 to check”. Suggestions are folded behind one heading and shown as rows, so nothing is pushed at people.</p></li>
+      <li><span class="n">07</span><b>Timeline grouped by pathway</b><p>Pathway rows are the main view; click one to see and drag its supplements.</p></li>
+      <li><span class="n">08</span><b>Simpler dose and time entry</b><p>Times are set automatically and moved on the timeline only. Doses have − / + buttons that step in round amounts sized to each supplement.</p></li>
+    </ol>
+  </section>
+
+  <section id="claims">
+    <h2>New wording that makes a claim</h2>
+    <p class="muted">Marked DRAFT in the code. Everything else new is interface text (“Next”, “Expand all”, “Add to stack”).</p>
+    <div class="claims">
+      <div class="claim">Raw materials for one neurotransmitter “add up to more of the same, not a different effect, so most people pick one and adjust its dose.”<span class="where">Overlap check · minor</span></div>
+      <div class="claim">A raw material that skips the slow step “can't be paced by your body the way it paces the others, and stacking more on top adds to that.” Matches the site's existing explanation of Mucuna and 5-HTP.<span class="where">Overlap check · to review</span></div>
+      <div class="claim">Several supplements on one pathway: “their effects can add up in ways none of them shows alone.”<span class="where">Overlap check · minor at 4, to review at 5+</span></div>
+    </div>
+  </section>
+
+  <footer>
+    Prepared for the Neuro Stack Atlas team. The changes are not on the live site yet; they publish when Eric pushes from GitHub Desktop.
+  </footer>
+</div>

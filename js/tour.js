@@ -3,12 +3,15 @@
 // Highlights one part of the page at a time with a short explanation.
 // Never blocks the page: Skip, Escape, or clicking outside ends it.
 // Steps live in content/stack-builder.js (BUILDER_TEXT.tours).
+// opts.within: only the tour steps inside this element (one builder step at a time).
+// opts.onSkip: what the popup's Skip button does instead of just closing.
 // ---------------------------------------------------------------------------
-const TOUR = { steps: null, i: 0, spot: null, pop: null };
+const TOUR = { steps: null, i: 0, spot: null, pop: null, onSkip: null };
 
-function startTour(name) {
+function startTour(name, opts = {}) {
   const all = (BUILDER_TEXT.tours || {})[name] || [];
-  TOUR.steps = all.filter(s => document.querySelector(s.target));   // skip parts that aren't on the page right now
+  TOUR.steps = all.filter(s => { const el = document.querySelector(s.target); return el && el.getClientRects().length && (!opts.within || opts.within.contains(el)); });   // skip parts that aren't on the page (or are folded away) right now
+  TOUR.onSkip = opts.onSkip || null;
   if (!TOUR.steps.length) return;
   lsSet("nsa-tourSeen", true);
   document.querySelector(".tour-prompt")?.remove();
@@ -29,7 +32,7 @@ function tourShow() {
   TOUR.pop.innerHTML = `<span class="tour-count">${TOUR.i + 1} ${esc(N.of)} ${TOUR.steps.length}</span>
     <h3>${esc(st.title)}</h3><p>${esc(st.text)}</p>
     <div class="tour-btns">
-      <button class="linkish" data-tour-act="end">${esc(N.skip)}</button>
+      <button class="linkish" data-tour-act="${TOUR.onSkip ? "skip" : "end"}">${esc(N.skip)}</button>
       <span>${TOUR.i ? `<button class="btn ghost small" data-tour-act="back">${esc(N.back)}</button>` : ""}
       <button class="btn small" data-tour-act="${last ? "end" : "next"}">${esc(last ? N.done : N.next)}</button></span>
     </div>`;
@@ -60,10 +63,11 @@ document.addEventListener("click", e => {
   const b = e.target.closest("[data-tour-act]");
   if (b) {
     const a = b.dataset.tourAct;
-    if (a === "next") { TOUR.i++; tourShow(); } else if (a === "back") { TOUR.i--; tourShow(); } else tourEnd();
+    if (a === "next") { TOUR.i++; tourShow(); } else if (a === "back") { TOUR.i--; tourShow(); }
+    else if (a === "skip") TOUR.onSkip(); else tourEnd();
     return;
   }
-  if (!e.target.closest(".tour-pop") && !e.target.closest("[data-act='tour']")) tourEnd();   // clicking the page ends the tour
+  if (!e.target.closest(".tour-pop") && !e.target.closest("[data-act='tour'],[data-act='step-next'],[data-act='tour-skip']")) tourEnd();   // clicking the page ends the tour
 });
 document.addEventListener("keydown", e => {
   if (!TOUR.steps) return;

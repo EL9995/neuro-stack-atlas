@@ -77,14 +77,21 @@ details.explainer > p { padding-inline: 18px; margin-top: 8px; }
 .warn-line b { color: var(--sev-major); }
 .more-link { font-weight: 700; text-decoration-color: var(--muted); text-underline-offset: 3px; justify-self: start; }
 
-.sugg-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-@media (max-width: 640px) { .sugg-grid { grid-template-columns: 1fr; } }
-.sugg { display: grid; gap: 6px; align-content: start; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; min-width: 0; }
-.sugg p { font-size: 0.9rem; color: var(--muted); }
-.sugg-top { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+#b-suggest { display: grid; gap: 10px; }
+.sugg-toggle { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; border-radius: 6px; }
+.sugg-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.sugg-toggle .caret { color: var(--muted); transition: transform .15s; }
+.sugg-toggle[aria-expanded="true"] .caret { transform: rotate(90deg); }
+.sugg-count { font-family: var(--f-mono); font-size: 0.75rem; font-weight: 500; color: var(--muted); padding: 1px 8px; border: 1px solid var(--line); border-radius: 999px; }
+.sugg-list { display: grid; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.sugg-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 4px 14px; align-items: center; padding: 10px 14px; border-top: 1px solid var(--line); }
+.sugg-row:first-child { border-top: 0; }
+.sugg-row .item-name { font-weight: 700; }
+.sugg-dose { font-family: var(--f-mono); font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+@media (max-width: 600px) { .sugg-row { grid-template-columns: minmax(0, 1fr) auto; } .sugg-dose { grid-column: 1; } }
+@media (prefers-reduced-motion: reduce) { .sugg-toggle .caret { transition: none; } }
 .sugg-kind { font-family: var(--f-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: .06em; color: var(--sev-info); }
 .sugg-kind.kind-swap { color: var(--sev-moderate); }
 .sugg-kind.kind-foundation { color: var(--muted); }
-.sugg-act { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 4px; }
 .result-sum { flex-basis: 100%; font-size: 0.82rem; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
