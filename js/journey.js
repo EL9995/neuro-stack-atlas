@@ -207,7 +207,7 @@ function jyStart() {
     ring: pill.querySelector(".jy-ring"), grains: [...pill.querySelectorAll(".jy-g")], heroG: pill.querySelector(".jy-hero"),
     molG: pill.querySelector(".jy-mols"), mols: [...pill.querySelectorAll(".jy-mols circle")] };
   jyMeasure();
-  jyActor({ rot: JOURNEY.swallowChoreo.hoverTilt });
+  jyActor({ rot: JOURNEY.swallowChoreo.hoverTilt, zoom: jyPillStart() });   // shrinks during the flight
   if (!rm) {   // play the flight from where the pill was (the centre of a box doesn't move when it rotates or scales)
     const r1 = pill.getBoundingClientRect();
     const dx = r0.left + r0.width / 2 - (r1.left + r1.width / 2), dy = r0.top + r0.height / 2 - (r1.top + r1.height / 2);

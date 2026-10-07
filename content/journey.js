@@ -42,10 +42,10 @@ const JOURNEY = {
     { at: 0.55, kicker: "02 / Stomach", title: "The shell gives way.", body: "On an empty stomach, capsule shells usually break open within about 15 minutes, and the granules spill out.",
       note: "Some capsules have an acid-resistant coating, so they open later, in the intestine." },                                                                                              // DRAFT  source: Tuleu 2007 (gelatin 3-13 min, HPMC 6-11 min, fasted)
     { at: 0.78, kicker: "02 / Stomach", title: "Meet your granule.",   body: "From here, we follow just one. Each granule is a packed clump of the supplement, still far too big to enter your blood." },   // DRAFT
-    { at: 0.93, kicker: "02 / Stomach", title: "Next: the small intestine.", body: "The stomach lets its contents out a little at a time, through a muscle valve called the pylorus. Very little is absorbed in the stomach itself." },   // DRAFT  claim: textbook physiology
+    { at: 0.93, kicker: "02 / Stomach", title: "Next: the small intestine.", body: "The stomach lets it's contents out a little at a time, through a muscle valve called the pylorus. Very little is absorbed in the stomach itself." },   // DRAFT  claim: textbook physiology
   ],
   intestine: [
-    { at: 0,    kicker: "03 / Small intestine", title: "Through the pylorus.", body: "A ring of muscle at the stomach's exit opens briefly to let fluid and small particles through, a little at a time." },   // DRAFT  claim: textbook physiology
+    { at: 0,    kicker: "03 / Small intestine", title: "The Pylorus ", body: "A ring of muscle at the stomach's exit that opens briefly to let fluid and small particles through to the small intestine." },   // DRAFT  claim: textbook physiology
     { at: 0.38, kicker: "03 / Small intestine", title: "A way through.",       body: "The small intestine is lined with tiny finger-like folds called villi. This is where most absorption happens." },   // DRAFT  claim: textbook physiology
     { at: 0.46, kicker: "03 / Small intestine", title: "Down to molecules.",   body: "The granule dissolves. Only single molecules are small enough to be absorbed, so from here we follow one." },        // DRAFT
     { at: 0.62, kicker: "03 / Small intestine", title: "Some continue. Some cross.", body: "Molecules pass through the cells of the lining into tiny blood vessels. Whatever isn't absorbed moves on." },  // DRAFT  claim: textbook physiology
@@ -82,10 +82,9 @@ const JOURNEY = {
   swallowChoreo: {
     screens: 7,          // how many screen-heights of scrolling chapter 1 takes
     headEnd: 0.34,       // the pill is down the throat and the head has faded out by here (0 to 1 of the chapter)
-    headScale: [2.3, 3.4, 4.8, 5.4], // camera scale on the head (px per drawing unit): above the face, at the lips, in the throat, down the neck.
-                         // The pill never changes size, so these keep the mouth and throat wider than it.
+    headScale: [1.1, 1.4, 2.1, 3], // camera zoom on the head (x screen size): above the face, at the lips, in the throat, down the neck
+    pillStart: 0.28,     // pill size after Start (1 = full size): small enough for the mouth; it grows back with the camera
     tubeStart: 0.26,     // the esophagus fades in here (the head fades out from here to headEnd)
-    tubeZoom: 1.4,       // the walls start this much closer, then settle
     hoverTilt: -49,      // pill angle above the face: lined up with the open mouth (degrees)
     throatTilt: -84,     // pill angle going down the throat (nearly upright)
     tubeTilt: -64,       // pill angle travelling down the tube

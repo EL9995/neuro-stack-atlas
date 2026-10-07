@@ -6,7 +6,7 @@
 const JY_SW = { walls: [] };
 
 // The head: a profile tilted back, mouth open toward the upper right (silhouette from Eric / ChatGPT,
-// source in docs/journey/head-mouth-open.svg, 640 x 800 units), restyled in the scene's skin tones. Added on
+// source in docs/journey/head-mouth-open.svg, 640 x 800 units), restyled in the scene's skin tones. Drawn with a viewBox camera (jyHeadCamera) so it stays sharp at any zoom. Added on
 // top: the inside of the open mouth, a cutaway channel down the throat into the neck, a closed eye and an ear.
 const JY_HEAD = {
   skin: "M 286.70,541.48 C 247.65,541.35 209.37,541.86 178.06,524.73 C 147.76,511.05 122.85,494.07 96.06,463.76 C 69.47,451.89 52.15,424.30 50.45,396.77 C 21.19,378.74 25.03,341.50 43.43,316.46 C 38.54,284.95 61.80,258.78 85.93,242.47 C 104.47,211.04 141.03,190.81 174.97,189.26 C 196.74,186.64 219.88,199.52 234.80,215.96 C 250.24,230.23 265.96,239.50 284.65,242.12 C 305.14,241.04 324.98,240.73 342.65,239.89 C 353.28,239.67 355.95,245.82 352.59,256.06 L 347.42,269.99 C 353.79,277.95 360.07,276.69 368.28,273.14 C 373.79,271.24 376.33,275.98 374.78,282.51 C 369.21,300.03 357.00,314.58 352.84,331.98 C 351.41,339.92 356.89,345.82 366.75,344.96 C 380.08,343.09 392.78,334.17 403.83,322.55 C 409.74,317.07 416.26,318.63 418.41,326.96 C 419.80,334.64 416.83,341.29 424.61,349.13 C 438.40,360.70 442.42,382.35 434.29,402.94 C 424.47,428.64 411.34,448.95 417.66,472.53 C 438,535 455,589 474,634 C 491,676 545,707 566,780 L 162,780 C 182,715 244,677 270,621 C 285,590 293,562 286.70,541.48 Z",
@@ -29,7 +29,7 @@ function jyThroatPath() {
 // the throat channel. The face itself is drawn in front of the pill (jyMouthFrontSvg).
 function jyMouthSvg() {
   const H = JY_HEAD, throat = jyThroatPath();
-  return `<svg class="jy-layer" id="jy-mouth" width="640" height="800" viewBox="0 0 640 800">
+  return `<svg class="jy-head" id="jy-mouth" viewBox="0 0 640 800">
     <defs>
       <linearGradient id="jy-skin" gradientUnits="userSpaceOnUse" x1="0" y1="190" x2="0" y2="800"><stop offset="0" stop-color="#d4847d"/><stop offset=".55" stop-color="#b0605f"/><stop offset=".74" stop-color="#94505a"/><stop offset="1" stop-color="#7e3843" stop-opacity="0"/></linearGradient>
       <linearGradient id="jy-gullet" gradientUnits="userSpaceOnUse" x1="0" y1="640" x2="0" y2="800"><stop offset="0" stop-color="#4a1a27"/><stop offset="1" stop-color="#4a1a27" stop-opacity="0"/></linearGradient>
@@ -47,7 +47,7 @@ function jyMouthSvg() {
 // the shoulders. Reuses the defs from jyMouthSvg.
 function jyMouthFrontSvg() {
   const H = JY_HEAD, throat = jyThroatPath();
-  return `<svg class="jy-layer" id="jy-mouth-front" width="640" height="800" viewBox="0 0 640 800">
+  return `<svg class="jy-head" id="jy-mouth-front" viewBox="0 0 640 800">
     <g clip-path="url(#jy-skin-clip)">
       <path d="M-100 -100 H740 V900 H-100 Z ${throat}" fill-rule="evenodd" fill="url(#jy-skin)"/>
       <g fill="none" stroke-linejoin="round" opacity=".9">
@@ -60,6 +60,16 @@ function jyMouthFrontSvg() {
       <path d="M150 352 C164 344 178 356 174 372 C171 384 160 388 152 382"/>
     </g>
   </svg>`;
+}
+
+// Pill size right after Start: pillStart, adjusted for the screen so the pill and head keep the same proportion.
+const jyPillStart = () => Math.min(1, JOURNEY.swallowChoreo.pillStart * jyClamp(innerHeight / 820, 0.7, 1.3));
+
+// The head's camera: instead of scaling a picture (which blurs), set the viewBox so the vectors are
+// redrawn sharp. (px, py) in drawing units lands at the screen centre, at `unit` px per drawing unit.
+function jyHeadCamera(el, px, py, unit) {
+  const W = innerWidth, H = innerHeight;
+  el.setAttribute("viewBox", `${(px - W / 2 / unit).toFixed(2)} ${(py - H / 2 / unit).toFixed(2)} ${(W / unit).toFixed(2)} ${(H / unit).toFixed(2)}`);
 }
 
 // The esophagus, cut open lengthwise: layered walls around a dark channel that opens into the
@@ -109,16 +119,23 @@ function jyFrameSwallow(q, v, own) {
   let j = 0; while (j < P.length - 2 && q > P[j + 1][0]) j++;
   const t = jySmooth(jyClamp((q - P[j][0]) / (P[j + 1][0] - P[j][0])));
   const px = jyLerp(P[j][1], P[j + 1][1], t), py = jyLerp(P[j][2], P[j + 1][2], t);
-  const unit = rm ? C.headScale[0] : P[j][3] * Math.pow(P[j + 1][3] / P[j][3], t);   // zoom eases evenly (log scale)
+  const hs = rm ? C.headScale[0] : P[j][3] * Math.pow(P[j + 1][3] / P[j][3], t);   // zoom eases evenly (log scale)
+  const unit = hs * s;   // px per drawing unit
+  // The pill starts small (it shrank on Start so the head can be in proportion) and grows with the camera,
+  // back to full size by the esophagus.
+  // ...and is always back to full size by the time the head has faded into the esophagus, whatever pillStart is.
+  const pillZoom = jyLerp(jyPillStart() * Math.min(1 / jyPillStart(), hs / C.headScale[0]), 1, jySmooth(jyClamp((q - C.tubeStart) / (C.headEnd - C.tubeStart))));
   const headRot = jyLerp(P[j][4], P[j + 1][4], t);
-  mouth.style.transform = `translate(${cx}px, ${cy}px) scale(${unit}) translate(${-px}px, ${-py}px)`;
+  jyHeadCamera(mouth, px, py, unit);
   mouth.style.opacity = 1 - jySmooth(jyClamp((q - C.tubeStart) / (C.headEnd - C.tubeStart)));
   const front = document.getElementById("jy-mouth-front");
-  front.style.transform = mouth.style.transform;
+  jyHeadCamera(front, px, py, unit);
   if (own) document.getElementById("jy-front-swallow").style.opacity = mouth.style.opacity;
   // 2. Down the esophagus: the walls close in, then the body slides up past the pill.
   const b = jyClamp((q - C.tubeStart) / (1 - C.tubeStart));
-  const k = rm ? 1 : 1 + (C.tubeZoom - 1) * (1 - jySmooth(jyClamp(b / 0.18))) ** 2;
+  // The tube starts at the throat's width (so the handoff lines up), then settles to its own scale.
+  const k0 = 19 * C.headScale[3] / 92;   // the throat's half-width (19) at the head's last zoom, over the tube's (92)
+  const k = rm ? 1 : 1 + (k0 - 1) * (1 - jySmooth(jyClamp(b / 0.18))) ** 2;
   const y = JY_TUBE.y0 + (JY_TUBE.y1 - JY_TUBE.y0) * b;
   tube.style.transform = `translate(${cx}px, ${cy}px) scale(${s * k}) translate(-500px, ${-y}px)`;
   tube.style.opacity = jyClamp((q - C.tubeStart) / 0.04);
@@ -127,7 +144,7 @@ function jyFrameSwallow(q, v, own) {
   call.classList.toggle("on", own && q > JOURNEY.swallow[1].at && q < 0.8);   // after the caption leaves the right side
   if (!own) return;
   // The pill turns lengthwise as it enters the tube; the Esophagus label rides the right-hand wall.
-  jyActor({ rot: q < C.tubeStart ? headRot : C.throatTilt + (C.tubeTilt - C.throatTilt) * jySmooth(jyClamp(b / 0.3)) });
+  jyActor({ rot: q < C.tubeStart ? headRot : C.throatTilt + (C.tubeTilt - C.throatTilt) * jySmooth(jyClamp(b / 0.3)), zoom: pillZoom });
   const ly = -150;
   call.style.left = (cx + (jyHalf(y + ly, y) + 24) * s * k) + "px";
   call.style.top = (cy + ly * s * k) + "px";

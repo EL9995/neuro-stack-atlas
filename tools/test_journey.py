@@ -54,6 +54,7 @@ try:
     time.sleep(2.2)
     centre = "(() => { const r = document.querySelector('.jy-actor').getBoundingClientRect(); return [Math.round(r.left + r.width / 2 - innerWidth / 2), Math.round(r.top + r.height / 2 - innerHeight / 2)] })()"
     check("pill flies to the centre of the screen", ev(centre) == [0, 0], ev(centre))
+    check("pill shrinks on Start so the head can be in proportion", abs(float(ev("document.querySelector('.jy-actor').style.getPropertyValue('--zoom')")) - ev("jyPillStart() * JY.base")) < 0.01)
     check("pill loses its label (blank puppet)", ev("getComputedStyle(document.querySelector('.jy-actor .jy-label')).opacity") == "0")
     check("page now scrolls", ev("document.documentElement.scrollHeight > innerHeight * 3"))
     check("mouth is drawn, first caption shows", ev("getComputedStyle(document.querySelector('.jy-world')).opacity") == "1" and ev("document.querySelector('.jy-t').textContent") == ev("JOURNEY.swallow[0].title"))
@@ -70,6 +71,7 @@ try:
     check("esophagus is drawn, mouth has faded", ev("+getComputedStyle(document.getElementById('jy-tube')).opacity") == 1 and ev("+getComputedStyle(document.getElementById('jy-mouth')).opacity") == 0)
     check("Esophagus label shows mid-way", ev("document.getElementById('jy-call').classList.contains('on')"))
     rot = lambda: float(ev("document.querySelector('.jy-actor').style.getPropertyValue('--rot')").replace("deg", ""))
+    check("pill is back to full size in the esophagus", abs(float(ev("document.querySelector('.jy-actor').style.getPropertyValue('--zoom')")) - ev("JY.base")) < 0.01)
     check("pill has turned lengthwise", abs(rot() - ev("JOURNEY.swallowChoreo.tubeTilt")) < 0.01, rot())
     check("each drawing is its own small SVG", ev("[...document.querySelectorAll('.jy svg')].every(s => s.querySelectorAll('*').length < 300)"), ev("[...document.querySelectorAll('.jy svg')].map(s => s.querySelectorAll('*').length)"))
 
@@ -158,7 +160,7 @@ try:
     ev("document.querySelector('[data-journey=start]').click()"); time.sleep(.3)
     check("Start jumps straight to the scene, no flight", ev("document.getElementById('jy').classList.contains('jy-inscene')"))
     ev("scrollTo(0, .1 * (document.documentElement.scrollHeight - innerHeight))"); time.sleep(.4)
-    check("no zoom: the head holds one scale", ev("Math.abs(+document.getElementById('jy-mouth').style.transform.match(/scale\\(([\\d.]+)\\)/)[1] - JOURNEY.swallowChoreo.headScale[0]) < 1e-6"))
+    check("no zoom: the head holds one scale", ev("Math.abs(innerWidth / document.getElementById('jy-mouth').viewBox.baseVal.width - JOURNEY.swallowChoreo.headScale[0] * Math.min(1.3, Math.max(.7, innerHeight / 820))) < 1e-2"))
     c.call("Emulation.setEmulatedMedia", features=[])
 
     check("no page errors", ev("__e.length") == 0, ev("__e"))
