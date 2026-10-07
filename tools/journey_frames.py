@@ -1,7 +1,7 @@
 """Journey frames: screenshots of one tour chapter at evenly spaced scroll points, plus a contact sheet
 (all frames on one labelled image) for quick review.
 
-Usage:  python3 tools/journey_frames.py <chapter> [frames] [--phone] [--base URL]
+Usage:  python3 tools/journey_frames.py <chapter> [frames] [--phone | --ipad] [--at 0.1,0.25,...] [--base URL]
         python3 tools/journey_frames.py stomach          (9 frames, desktop 1280x800)
         python3 tools/journey_frames.py swallow 6 --phone
 Chapter keys are the ones in content/journey.js (swallow, stomach, ...). "start" captures the
@@ -13,20 +13,22 @@ import base64, html, json, os, subprocess, sys, tempfile, time, urllib.request
 HERE = os.path.dirname(os.path.abspath(__file__))
 args = [a for a in sys.argv[1:]]
 phone = "--phone" in args
+ipad = "--ipad" in args   # portrait iPad (820x1180), Eric's review device
 base = args[args.index("--base") + 1].rstrip("/") if "--base" in args else "http://localhost:8010"
-pos = [a for i, a in enumerate(args) if not a.startswith("--") and (i == 0 or args[i - 1] != "--base")]
+at = [float(x) for x in args[args.index("--at") + 1].split(",")] if "--at" in args else None   # exact points instead of evenly spaced
+pos = [a for i, a in enumerate(args) if not a.startswith("--") and (i == 0 or args[i - 1] not in ("--base", "--at"))]
 if not pos: sys.exit(__doc__)
 chapter, count = pos[0], int(pos[1]) if len(pos) > 1 else 9
 sys.argv = sys.argv[:1]
 exec(open(os.path.join(HERE, "shoot.py")).read().replace('if __name__ == "__main__":', "if False:"))
 
 ROOT = os.path.dirname(HERE)
-name = chapter + ("-phone" if phone else "")
+name = chapter + ("-phone" if phone else "-ipad" if ipad else "")
 out = os.path.join(ROOT, "screenshots", "journey", name)
 os.makedirs(out, exist_ok=True)
 for f in os.listdir(out):
     if f.endswith(".png"): os.remove(os.path.join(out, f))
-W, H, DPR = (390, 844, 2) if phone else (1280, 800, 1)
+W, H, DPR = (390, 844, 2) if phone else (820, 1180, 1) if ipad else (1280, 800, 1)
 
 proc = subprocess.Popen([CHROME, "--headless=new", f"--remote-debugging-port={PORT}", f"--user-data-dir={tempfile.mkdtemp()}", "--hide-scrollbars", "about:blank"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 try:
@@ -50,16 +52,16 @@ try:
     else:
         if not ev(f"!!JOURNEY.{chapter}Choreo"): sys.exit(f"Unknown chapter '{chapter}'. Keys: " + ev("JY_CHAPTERS.map(c => c.key).join(', ')"))
         ev("document.querySelector('[data-journey=start]').click()"); time.sleep(2.5)
-        for i in range(count):
-            q = round(i / (count - 1), 3) if count > 1 else 0
+        points = at or [round(i / (count - 1), 3) if count > 1 else 0 for i in range(count)]
+        for i, q in enumerate(points):
             ev(f"jyGoto('{chapter}', {q})"); time.sleep(0.8)
             f = f"{i:02d}-{q:.2f}.png"; shot(f)
             frames.append((f, f"{q:.2f} · " + (ev("document.querySelector('.jy-t').textContent") or "")))
     errors = ev("__e")
 
     # Contact sheet: an HTML page of the frames (served by the local server), screenshotted whole.
-    cols = 3 if not phone else 5
-    tile = 420 if not phone else 220
+    cols = 5 if phone else 4 if ipad else 3
+    tile = 220 if phone else 300 if ipad else 420
     cells = "".join(f'<figure><img src="{name}/{f}"><figcaption>{html.escape(label)}</figcaption></figure>' for f, label in frames)
     page = f"""<!doctype html><meta charset="utf-8"><style>
       body {{ margin: 0; padding: 16px; background: #111; color: #ccc; font: 13px -apple-system, sans-serif; }}

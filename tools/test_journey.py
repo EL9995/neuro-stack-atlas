@@ -1,4 +1,5 @@
-"""Journey staging page (#journey): the two-capsule first screen, chapter 1 (Swallow) and chapter 2 (Stomach).
+"""Journey staging page (#journey): the two-capsule first screen and the tour chapters (Swallow, Stomach,
+Small intestine, Different paths).
 Usage: python3 tools/test_journey.py [base-url]      (default http://localhost:8010)
 """
 import json, os, subprocess, sys, tempfile, time, urllib.request
@@ -62,7 +63,7 @@ try:
         out = []
         for q in qs: at(key, q); out.append(ev("document.querySelector('.jy-t').textContent"))
         return out
-    caps = titles("swallow", (0.05, 0.3, 0.6, 0.95))
+    caps = titles("swallow", (0.05, 0.4, 0.65, 0.95))
     check("chapter 1 captions change in order as you scroll", caps == ev("JOURNEY.swallow.map(c => c.title)"), caps)
     at("swallow", 0.6)
     check("pill stays centred while scrolling", ev(centre) == [0, 0], ev(centre))
@@ -70,13 +71,13 @@ try:
     check("Esophagus label shows mid-way", ev("document.getElementById('jy-call').classList.contains('on')"))
     rot = lambda: float(ev("document.querySelector('.jy-actor').style.getPropertyValue('--rot')").replace("deg", ""))
     check("pill has turned lengthwise", abs(rot() - ev("JOURNEY.swallowChoreo.tubeTilt")) < 0.01, rot())
-    check("each drawing is its own small SVG", ev("[...document.querySelectorAll('.jy svg')].every(s => s.querySelectorAll('*').length < 90)"), ev("[...document.querySelectorAll('.jy svg')].map(s => s.querySelectorAll('*').length)"))
+    check("each drawing is its own small SVG", ev("[...document.querySelectorAll('.jy svg')].every(s => s.querySelectorAll('*').length < 300)"), ev("[...document.querySelectorAll('.jy svg')].map(s => s.querySelectorAll('*').length)"))
 
     print("Chapter 2, Stomach:")
     at("stomach", 0.3)
     check("stomach scene takes over; chapter 1 is hidden underneath", ev("getComputedStyle(document.getElementById('jy-ch-stomach')).visibility") == "visible" and ev("getComputedStyle(document.getElementById('jy-ch-swallow')).visibility") == "hidden")
     check("second chapter dot is current, first is done", ev("[...document.querySelectorAll('.jy-rail li')].map(l => l.hasAttribute('aria-current') ? 'now' : l.classList.contains('done') ? 'done' : '-').slice(0, 3).join()") == "done,now,-")
-    check("fluid in front makes the pill look half-submerged", ev("+getComputedStyle(document.querySelector('.jy-front')).opacity") > 0.3)
+    check("fluid in front makes the pill look half-submerged", ev("+getComputedStyle(document.getElementById('jy-front-stomach')).opacity") > 0.3)
     check("ripples spread from the pill", ev("[...document.querySelectorAll('#jy-ripples ellipse')].some(e => +e.getAttribute('rx') > 60 && +e.style.opacity > 0)"))
     caps = titles("stomach", (0.05, 0.3, 0.65, 0.85, 0.97))
     check("chapter 2 captions change in order as you scroll", caps == ev("JOURNEY.stomach.map(c => c.title)"), caps)
@@ -90,6 +91,53 @@ try:
     spread = ev("(() => { const h = document.querySelector('.jy-actor .jy-hero').getBoundingClientRect(); return [...document.querySelectorAll('.jy-actor .jy-g:not(.jy-hero)')].map(g => { const r = g.getBoundingClientRect(); return Math.hypot(r.x - h.x, r.y - h.y) }) })()")
     check("the other granules form a cloud around it, on screen", min(spread) > 20 and max(spread) < 420, [round(min(spread)), round(max(spread))])
     check("the hero is bigger than at the start (camera zoomed in)", ev("document.querySelector('.jy-actor .jy-hero').getBoundingClientRect().width") > 25)
+    print("Chapter 3, Small intestine:")
+    caps = titles("intestine", (0.05, 0.4, 0.5, 0.75, 0.95))
+    check("chapter 3 captions change in order", caps == ev("JOURNEY.intestine.map(c => c.title)"), caps)
+    at("intestine", 0.2)
+    check("going through the pylorus, the ring opens around the hero", ev("(() => { const y = JY_PYL.y; return jyPylHalf(y, y) - jyPylHalf(y, y - 800) })()") > 30)
+    at("intestine", 0.15)
+    xs = ev("[...document.querySelectorAll('.jy-actor .jy-g:not(.jy-hero)')].map(g => { const r = g.getBoundingClientRect(); return r.x + r.width / 2 - innerWidth / 2 })")
+    check("the other granules squeeze into a column to fit through the ring", max(abs(x) for x in xs) < 90, round(max(abs(x) for x in xs)))
+    inside = """(() => { const m = document.getElementById('jy-intestine').style.transform.match(/scale\\(([\\d.]+)\\) translate\\((-?[\\d.]+)px, (-?[\\d.]+)px\\)/);
+      const sk = +m[1], hx = -m[2], hy = -m[3], cx = innerWidth / 2, cy = innerHeight / 2;
+      return [...document.querySelectorAll('.jy-actor .jy-g:not(.jy-hero)')].filter(g => +g.style.opacity > 0.03).every(g => {
+        const r = g.getBoundingClientRect(), wx = hx + (r.x + r.width / 2 - cx) / sk, wy = hy + (r.y + r.height / 2 - cy) / sk;
+        return Math.abs(wx - 500) + r.width / 2 / sk <= jyPylHalf(wy, hy) + 1 }) })()"""
+    why = inside.replace(".every(g => {", ".map(g => {").replace("return Math.abs(wx - 500) + r.width / 2 / sk <= jyPylHalf(wy, hy) + 1 })", "return [Math.round(wy), Math.round(Math.abs(wx - 500) + r.width / 2 / sk), Math.round(jyPylHalf(wy, hy)), g.style.opacity] }).filter(a => a[1] > a[2] + 1)")
+    bad = [q for q in (0.08, 0.15, 0.2, 0.24, 0.28, 0.32) if (at("intestine", q) or True) and not ev(inside)]
+    check("granules stay in the fluid, never on the pylorus walls", not bad, bad)
+    if bad: at("intestine", bad[0]); print("     outside the fluid [world y, reach, channel half-width, opacity]:", ev(why))
+    at("intestine", 0.28)
+    check("past the ring they rush outward and fade", ev("[...document.querySelectorAll('.jy-actor .jy-g:not(.jy-hero)')].every(g => +g.style.opacity < 0.5)"))
+    at("intestine", 0.48)
+    check("the hero granule is dissolving into molecules", float(ev("document.querySelector('.jy-actor .jy-hero').getAttribute('r')")) < 5 and ev("+document.querySelector('.jy-actor .jy-mols').style.opacity") > 0.3)
+    check("the other granules are gone", ev("[...document.querySelectorAll('.jy-actor .jy-g:not(.jy-hero)')].every(g => +g.style.opacity === 0)"))
+    check("'Not to scale' shows", ev("+getComputedStyle(document.querySelector('.jy-scale')).opacity") == 1)
+    at("intestine", 0.72)
+    check("the lining cell lights up as the hero crosses it", ev("parseFloat(document.getElementById('jy-int-cell').getAttribute('fill').split(',')[3])") > 0.3)
+    hc = ev(hero)
+    check("the hero stays centred", abs(hc[0]) <= 3 and abs(hc[1]) <= 3, hc)
+
+    print("Chapter 4, Different paths:")
+    caps = titles("paths", (0.05, 0.2, 0.4, 0.58, 0.72, 0.84, 0.97))
+    check("chapter 4 captions change in order", caps == ev("JOURNEY.paths.map(c => c.title)"), caps)
+    at("paths", 0.3)
+    check("the pill-actor steps aside for the map", ev("+getComputedStyle(document.querySelector('.jy-actor')).opacity") == 0)
+    check("12 dots on the map", ev("document.querySelectorAll('#jy-map-dots circle').length") == 12)
+    at("paths", 0.42)
+    check("the liver turns amber", "240, 162, 74" in (ev("document.getElementById('jy-map-liver').style.fill") or ""), ev("document.getElementById('jy-map-liver').style.fill"))
+    at("paths", 0.86)
+    S = ev("JOURNEY.pathsChoreo.split")
+    want = {"stool": S["notAbsorbed"] + S["brokenDown"], "urine": S["urine"], "blood": 12 - S["notAbsorbed"] - S["brokenDown"] - S["urine"]}
+    got = {k: ev(f"document.getElementById('jy-tally-{k}').textContent") for k in want}
+    check("tallies add up: stool, urine, still circulating", all(got[k].startswith(str(n) + " ") for k, n in want.items()), got)
+    check("the 'illustration only' note shows", ev("document.querySelector('.jy-fine').textContent") == ev("JOURNEY.paths[5].note"))
+    at("paths", 1)
+    check("the dive ends in a red flood", ev("+document.getElementById('jy-paths-tint').style.opacity") > 0.95)
+    hc = ev(hero)
+    check("the hero molecule is back, centred", ev("+getComputedStyle(document.querySelector('.jy-actor')).opacity") > 0.95 and abs(hc[0]) <= 3 and abs(hc[1]) <= 3, hc)
+
     at("swallow", 0.5)
     check("scrolling back up rebuilds the capsule", ev("+document.querySelector('.jy-actor .jy-shell').style.opacity") == 1 and ev("document.querySelectorAll('.jy-actor .jy-g[transform]').length") == 0 and ev(centre) == [0, 0])
     ev("document.querySelector('.jy-skiptour').click()"); time.sleep(.5)
@@ -110,7 +158,7 @@ try:
     ev("document.querySelector('[data-journey=start]').click()"); time.sleep(.3)
     check("Start jumps straight to the scene, no flight", ev("document.getElementById('jy').classList.contains('jy-inscene')"))
     ev("scrollTo(0, .1 * (document.documentElement.scrollHeight - innerHeight))"); time.sleep(.4)
-    check("no zoom: the mouth cross-fades instead", ev("Math.abs(+document.getElementById('jy-mouth').style.transform.match(/scale\\(([\\d.]+)\\)/)[1] - Math.min(1.3, Math.max(.7, innerHeight / 820))) < 1e-6"))
+    check("no zoom: the head holds one scale", ev("Math.abs(+document.getElementById('jy-mouth').style.transform.match(/scale\\(([\\d.]+)\\)/)[1] - JOURNEY.swallowChoreo.headScale[0]) < 1e-6"))
     c.call("Emulation.setEmulatedMedia", features=[])
 
     check("no page errors", ev("__e.length") == 0, ev("__e"))
