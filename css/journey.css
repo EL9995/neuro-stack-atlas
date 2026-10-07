@@ -71,6 +71,7 @@ html:has(body.is-journey)::-webkit-scrollbar { display: none; }
 #jy-ch-swallow ~ .jy-ch { visibility: hidden; opacity: 0; }   /* later chapters start hidden; js/journey.js fades them in */
 #jy-ch-stomach { background: #2e0b18; }
 #jy-ch-intestine { background: #d5852f; }
+#jy-ch-blood { background: #8e1a2c; }
 #jy-ch-paths { background: #2a0c16; }
 .jy-tint { position: absolute; inset: 0; pointer-events: none; opacity: 0; }
 /* Chapter 4 assembly line: tracks always faintly visible, stations light up (--on, 0..1) while active. */

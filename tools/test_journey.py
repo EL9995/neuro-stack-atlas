@@ -1,5 +1,5 @@
 """Journey staging page (#journey): the two-capsule first screen and the tour chapters (Swallow, Stomach,
-Small intestine, Different paths).
+Small intestine, Different paths, Bloodstream).
 Usage: python3 tools/test_journey.py [base-url]      (default http://localhost:8010)
 """
 import json, os, subprocess, sys, tempfile, time, urllib.request
@@ -146,6 +146,18 @@ try:
     check("no number tallies on screen", not ev("/\\d+ ·/.test(document.getElementById('jy-paths').textContent)"))
     at("paths", 1)
     check("the dive ends in a red flood", float(ev("document.getElementById('jy-paths-tint').style.opacity")) > 0.95)
+
+    print("Chapter 5, Bloodstream:")
+    caps = titles("blood", (0.1, 0.4, 0.7, 0.95))
+    check("chapter 5 captions change in order", caps == ev("JOURNEY.blood.map(c => c.title)"), caps)
+    for qq in (0.1, 0.5, 0.9):
+        at("blood", qq); hc = ev(hero)
+        if not (abs(hc[0]) <= 3 and abs(hc[1]) <= 3): break
+    check("the hero stays centred in the bloodstream", abs(hc[0]) <= 3 and abs(hc[1]) <= 3, [qq, hc])
+    at("blood", 0.4)
+    check("red cells drift past; no brain blue yet", ev("document.querySelectorAll('.jy-bl-cell').length") == 18 and float(ev("document.getElementById('jy-bl-brain').getAttribute('opacity')")) == 0)
+    at("blood", 0.95)
+    check("in the capillary: single file, brain blue beyond the wall", ev("[...document.querySelectorAll('.jy-bl-cell')].filter(g => +g.getAttribute('opacity') > 0.5).length") <= 5 and float(ev("document.getElementById('jy-bl-brain').getAttribute('opacity')")) > 0.9)
 
     at("swallow", 0.5)
     check("scrolling back up rebuilds the capsule", ev("+document.querySelector('.jy-actor .jy-shell').style.opacity") == 1 and ev("document.querySelectorAll('.jy-actor .jy-g[transform]').length") == 0 and ev(centre) == [0, 0])

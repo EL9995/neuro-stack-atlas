@@ -62,6 +62,13 @@ const JOURNEY = {
       note: "Illustration only. The split is different for every supplement, dose and person." },                                                                                                    // DRAFT
     { at: 0.92, kicker: "04 / Different paths", title: "Next: the bloodstream.",     body: "Our molecule heads for the brain's blood vessels. Being there isn't the same as getting in." },   // DRAFT
   ],
+  blood: [
+    { at: 0,    kicker: "05 / Bloodstream", title: "Carried by the current.",   body: "Our molecule rides in plasma, the liquid part of the blood. The red cells around it carry oxygen, not supplements." },   // DRAFT  claim: textbook physiology
+    { at: 0.24, kicker: "05 / Bloodstream", title: "A tiny traveller. A vast network.", body: "About 5 litres of blood go round your body roughly once a minute, so one dose spreads out fast.",
+      note: "A red blood cell is thousands of times bigger than a molecule like ours." },                                                                                        // DRAFT  claim: adult blood volume ~5 L, cardiac output ~5 L/min (textbook; NHLBI blood flow)
+    { at: 0.55, kicker: "05 / Bloodstream", title: "Arrival is not access.",    body: "The brain's tiniest blood vessels are so narrow that red cells pass in single file. Being here still isn't the same as getting in." },   // DRAFT  claim: capillary ~5-10 um, red cells ~7.5 um, single file (textbook)
+    { at: 0.82, kicker: "05 / Bloodstream", title: "What gets through?",        body: "Between the blood and the brain sits a wall of tightly sealed cells: the blood-brain barrier." },   // DRAFT  claim: textbook
+  ],
   labels: {                                                   // DRAFT
     esophagus: "Esophagus",
     map: { small: "Small intestine", arteries: "Arteries", large: "Large intestine", stool: "Stool", liver: "Liver", heart: "Heart", lungs: "Lungs", kidney: "Kidneys", bladder: "Bladder", urine: "Urine", brain: "Toward the brain" },
@@ -107,6 +114,13 @@ const JOURNEY = {
     pylorusZoom: 1.25,   // camera zoom going through the pylorus
     zoomStart: 0.55,     // camera zoom at the start (wide view of the villi)
     zoomCell: 2.4,       // camera zoom while crossing the lining
+  },
+  bloodChoreo: {
+    screens: 6,
+    dive: [0, 0.2],        // rushing down the vessel (red cells stream out of the vanishing point), easing into the side view
+    approach: [0.5, 0.8],  // the vessel narrows to a brain capillary; brain blue appears beyond the wall
+    boundary: [0.8, 1],    // close in on the wall
+    flow: 2.2,             // how fast the red cells drift past (screens per chapter)
   },
   pathsChoreo: {
     screens: 7,
