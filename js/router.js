@@ -19,7 +19,7 @@ function render(token, force) {
   const nt = ntById[a];
   const s = nt ? (b ? byId[b] : null) : byId[a];
   const ez = token.startsWith("enzyme:") ? enzymeById[token.slice(7)] : null;
-  const tab = ["stack", "track", "scan", "sim", "games"].includes(token) ? token : token === "journey" ? "" : "explore";
+  const tab = ["stack", "track", "scan", "sim", "games", "journey"].includes(token) ? token : "explore";
   document.body.classList.toggle("is-home", !(["stack", "track", "scan", "sim", "games", "journey"].includes(token) || s || nt || ez));
   document.body.classList.toggle("is-journey", token === "journey");
   document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-current", t.dataset.tab === tab ? "page" : "false"));
