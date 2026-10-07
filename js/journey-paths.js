@@ -1,146 +1,132 @@
 // ---------------------------------------------------------------------------
-// JOURNEY chapter 4, Different paths: the camera pulls back to a body map. Twelve dots (each a share of
-// the dose, illustration only) split up: some are never absorbed (stool), the rest go up the portal
-// vein to the liver (amber), which breaks some down (bile, stool); the rest enter the blood, where the
-// kidneys filter some out (urine). Our hero stays in circulation, and the camera dives into its vessel.
-// Core and chapter system: js/journey.js. Wording, split and knobs: JOURNEY.paths / pathsChoreo.
+// JOURNEY chapter 4, Different paths, drawn as an assembly line (like the Simulator): stations joined by
+// tracks. The hero molecule stays at the screen centre (the actor) while the camera pulls back from the
+// villi into the Small intestine station and then follows it along the line. Small groups of the other
+// molecules peel off one track at a time: never absorbed -> Large intestine -> Stool; everyone else ->
+// Liver (some stay, processed) -> Heart <-> Lungs -> Arteries; a group branches to Kidneys -> Bladder ->
+// Urine; the hero's group heads on toward the brain, and the camera dives into its vessel. A track lights
+// up behind its group, and station labels show only while their track is active. The order follows the
+// blood (kidneys only see what has passed the liver). Spec: HANDOFF.md.
+// Core and chapter system: js/journey.js. Wording, groups and beats: JOURNEY.paths / pathsChoreo.
 // ---------------------------------------------------------------------------
 
-// Map geometry in world units (torso about 700 wide, centred on x = 500).
-const JY_MAP = {
-  colon: [[300, 880], [300, 470], [700, 470], [700, 900], [640, 1000], [560, 1060], [560, 1210]],
-  portal: [[500, 610], [478, 470], [440, 380], [420, 330]],
-  bile: [[440, 330], [410, 420], [380, 500], [372, 560], [360, 860], [330, 875]],
-  hepatic: [[470, 255], [500, 235]],
-  toKidney: [[500, 235], [500, 640], [300, 640], [220, 640], [215, 720], [300, 880], [420, 985]],
-  up: [[500, 235], [500, -60]],
+// Stations: [key, x, y, kind]. "box" = a station, "end" = where a track leaves the body. Main line runs
+// left to right at y = 0 (Small intestine -> Liver -> Heart -> Arteries -> Kidneys -> Bladder -> Urine); the
+// lungs sit above the heart, the stool branch drops down, the brain branch goes up from the arteries.
+const JY_DP_STATIONS = [["small", 0, 0, "box"], ["large", 0, 300, "box"], ["stool", 0, 560, "end"], ["liver", 420, 0, "box"], ["heart", 840, 0, "box"],
+  ["lungs", 840, -300, "box"], ["arteries", 1260, 0, "box"], ["kidney", 1640, 0, "box"], ["bladder", 2000, 0, "box"], ["urine", 2290, 0, "end"], ["brain", 1260, -420, "end"]];
+const JY_DP_ROUTES = {
+  stool: "M0 0 L0 560",
+  portal: "M0 0 L420 0",
+  heart: "M420 0 L815 0 L815 -300 L865 -300 L865 0 L1260 0",   // into the heart, up to the lungs and back, out to the arteries
+  kidney: "M1260 0 L2290 0",     // the arteries feed the kidneys and the brain side by side (shown one after the other)
+  brain: "M1260 0 L1260 -560",
 };
-const jyPts = pts => "M" + pts.map(p => p.join(" ")).join(" L");
+const JY_DP_START = [0, 0];   // the hero, in the Small intestine station, when the chapter opens
+const JY_DP = { len: {}, el: {}, dots: null };
 
 function jyPathsSvg() {
-  const M = JY_MAP, L = JOURNEY.labels.map;
-  const label = (x, y, t, anchor = "middle") => `<text x="${x}" y="${y}" text-anchor="${anchor}">${esc(t)}</text>`;
-  const gut = "M560 450 C520 500 400 520 360 560 H640 C680 560 680 620 640 620 H360 C320 620 320 680 360 680 H640 C680 680 680 740 640 740 H360 C320 740 320 800 360 800 H640 C680 800 680 860 640 860 H330";
-  return `<svg class="jy-layer" id="jy-paths" width="1000" height="1400" viewBox="0 0 1000 1400">
-    <path fill="#3a1220" d="M330 -420 L330 -120 C330 40 150 80 150 260 L160 1000 C170 1160 320 1260 500 1270 C680 1260 830 1160 840 1000 L850 260 C850 80 670 40 670 -120 L670 -420 Z"/>
+  const L = JOURNEY.labels.map;
+  // The Small intestine station holds a row of villi, so the pull-back from chapter 3 lands on familiar shapes.
+  const villi = [-90, -45, 0, 45, 90].map(x => `<path d="M${x - 16} 52 V${-10} A16 16 0 0 1 ${x + 16} ${-10} V52 Z" fill="#e27f8a"/><path d="M${x - 5} 52 V${-6} A5 5 0 0 1 ${x + 5} ${-6} V52" fill="none" stroke="#c8243f" stroke-width="3"/>`).join("");
+  const station = ([k, x, y, kind]) => kind === "box"
+    ? `<g class="jy-dp-st" id="jy-dp-s-${k}" transform="translate(${x} ${y})"><rect x="-120" y="-62" width="240" height="124" rx="22"/>${k === "small" ? `<g clip-path="url(#jy-dp-clip)">${villi}</g>` : ""}<text y="${k === "small" ? 92 : 9}" text-anchor="middle">${esc(L[k])}</text></g>`
+    : `<g class="jy-dp-st jy-dp-end" id="jy-dp-s-${k}" transform="translate(${x} ${y})"><circle r="14"/><text y="${k === "brain" ? -34 : 50}" text-anchor="middle">${esc(L[k])}</text></g>`;
+  return `<svg class="jy-head" id="jy-paths" viewBox="0 0 1000 1000">
+    <defs><clipPath id="jy-dp-clip"><rect x="-120" y="-62" width="240" height="124" rx="22"/></clipPath></defs>
+    <g class="jy-dp-tracks">${Object.values(JY_DP_ROUTES).map(d => `<path d="${d}"/>`).join("")}</g>
     <g fill="none" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M500 -420 V900 M500 640 H260 M500 640 H740" stroke="#7d1a2c" stroke-width="26"/>
-      <path id="jy-map-blood" d="M500 -420 V900 M500 640 H260 M500 640 H740" stroke="#c8243f" stroke-width="12"/>
-      <path d="M215 720 C230 850 400 900 420 985 M785 720 C770 850 600 900 480 985" stroke="#8e3550" stroke-width="9"/>
+      ${Object.entries(JY_DP_ROUTES).map(([k, d]) => `<path class="jy-dp-route" id="jy-dp-r-${k}" d="${d}" stroke="${k === "stool" || k === "kidney" ? "#f2c98a" : "#f3c3cf"}" stroke-width="10" opacity="0"/>`).join("")}
     </g>
-    <ellipse cx="215" cy="640" rx="55" ry="86" fill="#8e3550"/><ellipse cx="785" cy="640" rx="55" ry="86" fill="#8e3550"/>
-    <ellipse id="jy-map-bladder" cx="450" cy="1010" rx="62" ry="46" fill="#a8435b"/>
-    <g fill="none" stroke-linecap="round" stroke-linejoin="round">
-      <path d="${jyPts(M.colon)}" stroke="#6e2540" stroke-width="54"/>
-      <path d="${jyPts(M.colon)}" stroke="#97405a" stroke-width="40"/>
-      <path d="M600 -420 L600 230" stroke="#c95a6c" stroke-width="20"/>
-      <path d="${gut}" stroke="#c95a6c" stroke-width="34"/>
-      <path d="${gut}" stroke="#ec8f98" stroke-width="18"/>
-      <path id="jy-map-portal" d="${jyPts(M.portal)}" stroke="#9a2c56" stroke-width="14"/>
-      <path d="${jyPts(M.bile.slice(0, 4))}" stroke="#c9a03a" stroke-width="7" stroke-dasharray="2 12" opacity=".8"/>
-    </g>
-    <path fill="#c95a6c" d="M560 215 C650 195 730 245 728 330 C726 425 640 470 565 452 C520 440 522 398 562 388 C606 378 640 360 622 322 C604 284 566 292 545 262 Z"/>
-    <path id="jy-map-liver" fill="#d0607a" d="M195 250 C215 165 425 155 525 218 C548 236 528 292 472 324 C400 372 258 382 218 342 C188 312 188 280 195 250 Z"/>
-    <g class="jy-map-labels">
-      ${label(330, 238, L.liver)}${label(700, 205, L.stomach, "start")}${label(500, 905, L.small)}${label(720, 440, L.large, "start")}
-      ${label(215, 760, L.kidneys)}${label(450, 1080, L.bladder)}${label(470, 470, L.portal, "end")}${label(520, -90, L.blood, "start")}
-    </g>
-    <g class="jy-map-tally">
-      <text id="jy-tally-stool" x="590" y="1225" text-anchor="start"></text>
-      <text id="jy-tally-urine" x="525" y="1018" text-anchor="start"></text>
-      <text id="jy-tally-blood" x="520" y="-20" text-anchor="start"></text>
-    </g>
-    <g id="jy-map-dots">${Array.from({ length: 12 }, (_, i) => `<circle r="11" data-i="${i}"/>`).join("")}</g>
-    <circle id="jy-map-ring" r="20"/>
+    ${JY_DP_STATIONS.map(station).join("")}
+    <g id="jy-dp-dots">${Array.from({ length: 11 }, (_, i) => `<circle data-i="${i}" opacity="0"/>`).join("")}</g>
   </svg>
   <div class="jy-tint" id="jy-paths-tint"></div>`;
 }
 
-// Each dot's journey as legs: [beat, waypoints]. Before a leg's beat the dot waits at its start;
-// during it, it travels; after it, it waits at the end. Which dots go where comes from pathsChoreo.split.
-function jyMapDots() {
-  const C = JOURNEY.pathsChoreo, S = C.split, M = JY_MAP;
-  let r = 21; const rnd = () => (r = (r * 16807) % 2147483647) / 2147483647;
-  return Array.from({ length: 12 }, (_, i) => {
-    const start = [400 + rnd() * 200, 580 + rnd() * 260];
-    const inLiver = [300 + rnd() * 140, 255 + rnd() * 70];
-    const lag = rnd() * 0.25;   // so the dots don't move in lockstep
-    if (i < S.notAbsorbed) return { fate: "stool", lag, legs: [[C.stool, [start, [360, 860], ...M.colon]]] };
-    const toLiver = [C.liver, [start, ...M.portal, inLiver]];
-    if (i < S.notAbsorbed + S.brokenDown) return { fate: "bile", lag, legs: [toLiver, [C.bile, [inLiver, ...M.bile, ...M.colon]]] };
-    const out = [inLiver, ...M.hepatic];
-    if (i < S.notAbsorbed + S.brokenDown + S.urine) {
-      const inBladder = [425 + rnd() * 50, 995 + rnd() * 30];
-      return { fate: "urine", lag, legs: [toLiver, [C.blood, [...out, ...M.toKidney, inBladder]]] };
-    }
-    const k = i - (S.notAbsorbed + S.brokenDown + S.urine);   // 0 = the hero, highest up the vessel
-    return { fate: "blood", hero: k === 0, lag: k === 0 ? 0.1 : lag, legs: [toLiver, [C.blood, [...out, [500, -60 + k * 70]]]] };
-  });
+// Track lengths and elements, measured once when the tour starts.
+function jyPathsInit(root) {
+  Object.keys(JY_DP_ROUTES).forEach(k => { const el = root.querySelector("#jy-dp-r-" + k); JY_DP.el[k] = el; JY_DP.len[k] = el.getTotalLength(); });
+  JY_DP.dots = jyDpDots();
 }
+const jyDpAt = (k, f) => { const p = JY_DP.el[k].getPointAtLength(jyClamp(f) * JY_DP.len[k]); return [p.x, p.y]; };
 
-// Point a fraction t (0..1) of the way along a polyline, by length.
-function jyAlong(pts, t) {
-  const seg = pts.slice(1).map((p, i) => Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]));
-  let d = t * seg.reduce((a, b) => a + b, 0);
-  for (let i = 0; i < seg.length; i++) {
-    if (d <= seg[i] || i === seg.length - 1) { const f = seg[i] ? Math.min(1, d / seg[i]) : 0; return [pts[i][0] + (pts[i + 1][0] - pts[i][0]) * f, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * f]; }
-    d -= seg[i];
-  }
-}
-function jyDotAt(dot, q) {
-  let pos = dot.legs[0][1][0], done = false;
-  dot.legs.some(([[a, b], pts], li) => {
-    const w = (b - a) * 0.7, s0 = a + dot.lag * (b - a - w);   // each dot moves within its own slice of the beat
-    if (q < s0) return true;
-    const t = jyClamp((q - s0) / w);
-    pos = jyAlong(pts, jySmooth(t));
-    done = li === dot.legs.length - 1 && t >= 1;   // arrived only at the end of its last leg
+// The other molecules: each has a group, a small offset (a loose cloud that tightens into a stream on the
+// tracks) and a lag (later ones move within a later slice of each beat).
+function jyDpDots() {
+  const G = JOURNEY.pathsChoreo.groups;
+  let r = 13; const rnd = () => (r = (r * 16807) % 2147483647) / 2147483647;
+  return Array.from({ length: 11 }, (_, i) => {
+    const group = i < G.stool ? "stool" : i < G.stool + G.liver ? "liver" : i < G.stool + G.liver + G.kidney ? "kidney" : "brain";
+    const a = rnd() * Math.PI * 2, d = 30 + rnd() * 60;
+    return { group, off: [Math.cos(a) * d * 1.2, Math.sin(a) * d * 0.45], lag: 0.15 + rnd() * 0.7 };
   });
-  return { pos, done };
+}
+// The tracks a group travels, in order, each with its beat.
+function jyDpLegs(group) {
+  const C = JOURNEY.pathsChoreo;
+  if (group === "stool") return [["stool", C.stool]];
+  const legs = [["portal", C.liver]];
+  if (group === "liver") return legs;
+  legs.push(["heart", C.heart]);
+  legs.push(group === "kidney" ? ["kidney", C.kidney] : ["brain", C.brain]);
+  return legs;
+}
+function jyDpPos(group, lag, q) {
+  let pos = JY_DP_START;
+  jyDpLegs(group).some(([k, [a, b]]) => {
+    const w = (b - a) * 0.72, s0 = a + lag * (b - a - w);
+    if (q < s0) return true;
+    pos = jyDpAt(k, jySmooth(jyClamp((q - s0) / w)));
+  });
+  return pos;
 }
 
 function jyFramePaths(q, v, own) {
-  const C = JOURNEY.pathsChoreo, I = JOURNEY.intestineChoreo, S = JOURNEY.stomachChoreo, { cx, cy, H, s, rm } = v;
-  const span = (a, b) => jyClamp((q - a) / (b - a));
-  if (!JY.mapDots) JY.mapDots = jyMapDots();
-  // Dots: position, broken-down ones turn amber, tallies count the arrivals.
-  const tally = { stool: 0, urine: 0, blood: 0 };
-  let hero = [500, -60];
-  document.querySelectorAll("#jy-map-dots circle").forEach((c, i) => {
-    const d = JY.mapDots[i], { pos, done } = jyDotAt(d, q);
-    c.setAttribute("cx", pos[0].toFixed(1)); c.setAttribute("cy", pos[1].toFixed(1));
-    c.classList.toggle("amber", d.fate === "bile" && q > C.bile[0]);
-    c.classList.toggle("hero", !!d.hero);
-    if (done) tally[d.fate === "bile" ? "stool" : d.fate]++;
-    if (d.hero) hero = pos;
+  const C = JOURNEY.pathsChoreo, S = JOURNEY.stomachChoreo, { H, rm } = v;
+  const span = ([a, b]) => jyClamp((q - a) / (b - a));
+  const svg = document.getElementById("jy-paths");
+  if (!JY_DP.dots) return;
+  // Camera: centred on the hero. Starts deep in the villi of the Small intestine station, pulls back to
+  // show the line around it, and dives into the hero's vessel at the end.
+  const hero = jyDpPos("brain", 0, q);
+  const fit = Math.min(H / 1650, innerWidth / 1100);
+  const pull = jySmooth(span(C.pull)), dive = jySmooth(span(C.dive));
+  // The kidney row is long: pull back a little during its beat so it fits on screen.
+  const wide = jySmooth(span([C.kidney[0] - 0.03, C.kidney[0]])) * (1 - jySmooth(span([C.brain[0] - 0.02, C.brain[0] + 0.03])));
+  const unit = (rm ? fit : fit * Math.pow(40, 1 - pull) * Math.pow(14, dive)) * jyLerp(1, Math.min(1, innerWidth / 2300 / fit), wide);
+  jyHeadCamera(svg, hero[0], hero[1], unit);
+  // The hero is drawn by the actor; the others are dots the same size on screen.
+  const heroPx = JY.pillUnit * JY.base * S.sinkZoom * S.heroZoom * (JY_GRAINS[JY_HERO][2] - 2.8);
+  const tighten = 1 - 0.8 * jySmooth(span([C.stool[0] - 0.02, C.stool[0] + 0.04]));   // the cloud forms up before the tracks
+  svg.querySelectorAll("#jy-dp-dots circle").forEach(c => {
+    const d = JY_DP.dots[+c.dataset.i], pos = jyDpPos(d.group, d.lag, q);
+    c.setAttribute("cx", (pos[0] + d.off[0] * tighten).toFixed(1)); c.setAttribute("cy", (pos[1] + d.off[1] * tighten).toFixed(1));
+    c.setAttribute("r", (heroPx / unit).toFixed(2));
+    const exit = d.group === "stool" ? C.stool[1] : d.group === "kidney" ? C.kidney[1] : 2;   // stool and urine groups fade on arrival
+    c.setAttribute("opacity", (0.9 * pull * (1 - jySmooth(jyClamp((q - exit) / 0.05)))).toFixed(3));
+    c.classList.toggle("amber", d.group === "liver" && q > C.liver[1] - 0.02);
   });
-  const ring = document.getElementById("jy-map-ring");
-  ring.setAttribute("cx", hero[0].toFixed(1)); ring.setAttribute("cy", hero[1].toFixed(1));
-  const T = JOURNEY.labels.tally;
-  [["stool", tally.stool], ["urine", tally.urine], ["blood", tally.blood]].forEach(([k, n]) => {
-    const el = document.getElementById("jy-tally-" + k);
-    el.textContent = n ? `${n} · ${T[k]}` : "";
+  // Tracks light up behind their group, then dim.
+  const beat = { stool: C.stool, portal: C.liver, heart: C.heart, kidney: C.kidney, brain: C.brain };
+  Object.entries(beat).forEach(([k, b]) => {
+    const el = JY_DP.el[k], L = JY_DP.len[k], p = jySmooth(span(b));
+    el.style.strokeDasharray = `${L} ${L}`; el.style.strokeDashoffset = (L * (1 - p)).toFixed(1);
+    el.setAttribute("opacity", (p > 0 ? 1 - 0.7 * jySmooth(jyClamp((q - b[1]) / 0.06)) : 0).toFixed(3));
   });
-  // Liver beat: the liver and portal vein light up amber; the blood beat lights the vessels.
-  const liverOn = span(C.liver[0], C.liver[0] + 0.05) * (1 - span(C.bile[1], C.bile[1] + 0.06));
-  document.getElementById("jy-map-liver").style.fill = liverOn > 0.01 ? `color-mix(in srgb, #f0a24a ${(liverOn * 70).toFixed(0)}%, #d0607a)` : "";
-  document.getElementById("jy-map-portal").style.stroke = liverOn > 0.01 ? `color-mix(in srgb, #f0a24a ${(liverOn * 80).toFixed(0)}%, #9a2c56)` : "";
-  // Camera: start zoomed in on the small intestine, pull back to the whole body (shifted right of the
-  // caption on wide screens), then dive onto the hero's vessel at the end.
-  const narrow = innerWidth <= 640;   // phones: map uses the full width and sits above the caption
-  const fit = Math.min((narrow ? 0.62 : 0.94) * H / 1320, (narrow ? 1.05 : 0.62) * innerWidth / 1000) / s, side = innerWidth > 760 ? innerWidth * 0.14 : 0, lift = narrow ? -0.16 * H : 0;
-  const out = jySmooth(span(0, C.zoomOut)), dive = jySmooth(span(C.dive[0], C.dive[1]));
-  let wx = 500, wy = jyLerp(700, 565, out), k = jyLerp(fit * 2.5, fit, out), ox = side * out;
-  if (dive > 0) { wx = jyLerp(wx, hero[0], dive); wy = jyLerp(wy, hero[1], dive); k = fit * Math.pow(14, rm ? 0 : dive); ox = side * (1 - dive); }
-  document.getElementById("jy-paths").style.transform = `translate(${cx + ox}px, ${cy + lift * (1 - dive)}px) scale(${s * k}) translate(${-wx}px, ${-wy}px)`;
-  // Tint: amber over the liver beat, then the red flood of the dive.
-  const tint = document.getElementById("jy-paths-tint"), red = jySmooth(span(C.dive[0] + 0.03, C.dive[1] - 0.02));
-  tint.style.background = red > 0 ? "#8e1a2c" : "radial-gradient(60% 60% at 40% 30%, rgba(240,162,74,.35), rgba(240,162,74,0) 70%)";
-  tint.style.opacity = (red > 0 ? red : liverOn).toFixed(3);
+  // Station labels show only while their track is active; the station's outline lights up with them.
+  const win = { small: [C.pull[1] - 0.04, C.stool[1]], large: C.stool, stool: [C.stool[0] + 0.08, C.stool[1] + 0.03], liver: [C.liver[0], C.heart[0] + 0.02], heart: C.heart,
+    lungs: [C.heart[0] + 0.03, C.heart[1] - 0.02], arteries: [C.heart[1] - 0.03, C.dive[0]], kidney: [C.kidney[0], C.kidney[1] - 0.03], bladder: [C.kidney[0] + 0.05, C.kidney[1]], urine: [C.kidney[0] + 0.08, C.kidney[1] + 0.03], brain: [C.brain[0], C.dive[0] + 0.02] };
+  JY_DP_STATIONS.forEach(([k]) => {
+    const g = document.getElementById("jy-dp-s-" + k), [a, b] = win[k];
+    g.style.setProperty("--on", Math.min(jyClamp((q - a) / 0.03), jyClamp((b - q) / 0.03)).toFixed(3));
+  });
+  // The Liver station glows amber while the group passes through it.
+  document.getElementById("jy-dp-s-liver").style.setProperty("--amber", (jySmooth(span([C.liver[0] + 0.04, C.liver[1]])) * (1 - jySmooth(span([C.heart[0], C.heart[0] + 0.06])))).toFixed(3));
+  // Red flood as the camera dives into the vessel.
+  document.getElementById("jy-paths-tint").style.opacity = jySmooth(span([C.dive[0] + 0.03, C.dive[1] - 0.02])).toFixed(3);
   if (!own) return;
-  // The pill-actor (now the hero molecule) steps aside for the map, and takes over again in the vessel.
-  const fade = (1 - jySmooth(span(0, 0.06))) + jySmooth(span(C.dive[1] - 0.04, C.dive[1]));
-  jyActor({ rot: S.floatTilt, zoom: (rm ? 1 : S.sinkZoom) * S.heroZoom, dissolve: 1, spill: S.spill, hero: 1, others: 0, melt: 1, mols: 0, fade: Math.min(1, fade) });
+  jyActor({ rot: S.floatTilt, zoom: (rm ? 1 : S.sinkZoom) * S.heroZoom, dissolve: 1, spill: S.spill, hero: 1, others: 0, melt: 1, mols: 0 });
 }
 
-jyChapter({ key: "paths", layers: jyPathsSvg, frame: jyFramePaths, notToScale: true });
+jyChapter({ key: "paths", layers: jyPathsSvg, init: jyPathsInit, frame: jyFramePaths, notToScale: true });

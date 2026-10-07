@@ -150,7 +150,7 @@ function jyActor({ rot, zoom = 1, dissolve = 0, spill = 0, hero = 0, others = 1,
   });
   A.gKey = gKey;
   A.ring.style.opacity = hero.toFixed(3);
-  A.heroG.setAttribute("r", (JY_GRAINS[JY_HERO][2] - 3.6 * melt).toFixed(2));
+  A.heroG.setAttribute("r", (JY_GRAINS[JY_HERO][2] - 2.8 * melt).toFixed(2));
   A.ring.setAttribute("r", (10 - 4.5 * melt).toFixed(2));
   if (melt !== A.melt) A.mols.forEach((m, i) => {
     if (melt > 0.001) m.setAttribute("transform", `translate(${(JY_MOLS[i][0] * melt).toFixed(2)} ${(JY_MOLS[i][1] * melt).toFixed(2)})`); else m.removeAttribute("transform");

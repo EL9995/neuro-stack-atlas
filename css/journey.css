@@ -22,10 +22,10 @@ html:has(body.is-journey)::-webkit-scrollbar { display: none; }
 
 .jy-start .jy-edge { stroke: #7fe6ff; stroke-opacity: .85; }
 .jy-start .jy-label { color: #fff; }
-.jy-start { filter: drop-shadow(0 0 10px rgba(127, 230, 255, .28)) drop-shadow(0 0 40px rgba(79, 125, 255, .22)); }
+.jy-start { filter: drop-shadow(0 0 18px rgba(127, 230, 255, .3)); }   /* one shadow: the granules inside move every frame, and each extra shadow is repainted with them */
 .jy-g { opacity: .8; animation: jy-drift 4.5s ease-in-out infinite alternate; animation-delay: calc(var(--d) * -1); transform-box: fill-box; transform-origin: center; }
 .jy-free .jy-g { animation: none; }   /* once the shell is gone, granules move by their transform attribute */
-.jy-hero { opacity: 1; fill: #e9fbff; filter: drop-shadow(0 0 4px #7fe6ff); }
+.jy-hero { opacity: 1; fill: #7fe6ff; filter: drop-shadow(0 0 5px rgba(127, 230, 255, .85)); }   /* the hero is cyan from the first screen on */
 
 .jy-skip .jy-edge { stroke: #3a4a73; stroke-opacity: .9; }
 .jy-skip .jy-seam { stroke: #3a4a73; stroke-opacity: .6; }
@@ -50,11 +50,12 @@ html:has(body.is-journey)::-webkit-scrollbar { display: none; }
 .jy-ghost { display: block; flex: none; }
 /* The Start pill becomes the "actor": fixed at the centre for the whole tour. jyActor() in js/journey.js sets
    --rot, --zoom and --dx/--dy (the shift that keeps the hero granule centred once the shell is gone). */
-.jy-pill.jy-actor { position: fixed; left: 50%; top: 50%; z-index: 3; cursor: default; animation: none; translate: none;
+.jy-pill.jy-actor { position: fixed; left: 50%; top: 50%; z-index: 3; cursor: default; animation: none; translate: none; will-change: transform;   /* its own layer: moving it doesn't repaint its glow (measured) */
+ 
   transform: translate(-50%, -50%) translate(var(--dx, 0px), var(--dy, 0px)) rotate(var(--rot, -28deg)) scale(var(--zoom, .72));
   transition: transform var(--fly, 1s) cubic-bezier(.65, 0, .35, 1); }
 .jy-mols { fill: #e9fbff; opacity: 0; }
-.jy-ring { fill: none; stroke: #7fe6ff; stroke-width: 1.6; opacity: 0; filter: drop-shadow(0 0 3px #7fe6ff); }
+.jy-ring { display: none; }   /* replaced by the hero's own colour */
 .jy-actor.flown { transition: none; }   /* after the flight the pill follows the scroll exactly; a transition here made it lag and stutter */
 .jy-actor .jy-label { opacity: 0; transition: opacity .35s; }
 
@@ -72,15 +73,18 @@ html:has(body.is-journey)::-webkit-scrollbar { display: none; }
 #jy-ch-intestine { background: #d5852f; }
 #jy-ch-paths { background: #2a0c16; }
 .jy-tint { position: absolute; inset: 0; pointer-events: none; opacity: 0; }
-.jy-map-labels text { font-family: var(--f-mono); font-size: 27px; letter-spacing: .1em; text-transform: uppercase; fill: rgba(255, 226, 220, .55); }
-.jy-map-tally text { font-family: var(--f-display); font-size: 40px; font-weight: 500; fill: #fff; }
-#jy-map-dots circle { fill: #ffe9c9; filter: drop-shadow(0 0 5px rgba(255, 233, 201, .8)); transition: fill .4s; }
-#jy-map-dots circle.amber { fill: #f0a24a; }
-#jy-map-dots circle.hero { fill: #e9fbff; }
-#jy-map-ring { fill: none; stroke: #7fe6ff; stroke-width: 4; filter: drop-shadow(0 0 4px #7fe6ff); }
+/* Chapter 4 assembly line: tracks always faintly visible, stations light up (--on, 0..1) while active. */
+.jy-dp-tracks path { fill: none; stroke: #4a1d2c; stroke-width: 10; stroke-linecap: round; stroke-linejoin: round; }
+.jy-dp-st rect { fill: #24101a; stroke: color-mix(in srgb, #f3c3cf calc(var(--on, 0) * 100%), #5a2a3c); stroke-width: 3;
+  fill: color-mix(in srgb, #f0a24a calc(var(--amber, 0) * 55%), #24101a); }
+.jy-dp-end circle { fill: #24101a; stroke: color-mix(in srgb, #f3c3cf calc(var(--on, 0) * 100%), #5a2a3c); stroke-width: 3; }
+.jy-dp-st text { font-family: var(--f-mono); font-size: 24px; letter-spacing: .12em; text-transform: uppercase; fill: #ffe2dc; opacity: var(--on, 0); }
+#jy-dp-dots circle { fill: #ffe9c9; transition: fill .4s; }
+#jy-dp-dots circle.amber { fill: #f0a24a; }
+#jy-paths-tint { background: #8e1a2c; }
 /* The head is redrawn through its viewBox (sharp at any zoom), so it fills the screen and is never scaled as a picture. */
 .jy-head { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; }
-.jy-layer { position: absolute; left: 0; top: 0; overflow: visible; transform-origin: 0 0; will-change: transform; }
+.jy-layer { position: absolute; left: 0; top: 0; overflow: visible; transform-origin: 0 0; }   /* no will-change: something inside each scene moves every frame, so a cached picture of the whole layer only adds repaint cost (measured) */
 #jy-tube { opacity: 0; }
 /* Stomach fluid drawn again in front of the pill (half-submerged look). */
 .jy-front { position: absolute; inset: 0; z-index: 4; overflow: hidden; pointer-events: none; opacity: 0; }

@@ -52,19 +52,19 @@ const JOURNEY = {
     { at: 0.9,  kicker: "03 / Small intestine", title: "Next: different paths.", body: "Not everything you swallow ends up where you'd hope." },                                                               // DRAFT
   ],
   paths: [
-    { at: 0,    kicker: "04 / Different paths", title: "One dose. Different paths.", body: "Follow these 12 dots. Each one stands for a share of what you swallowed." },                                     // DRAFT
-    { at: 0.15, kicker: "04 / Different paths", title: "Some is never absorbed.",    body: "It carries on through the large intestine and leaves in stool." },                                                // DRAFT  claim: textbook physiology
-    { at: 0.33, kicker: "04 / Different paths", title: "First stop: the liver.",     body: "Blood from the gut goes straight to the liver. This is where your body breaks down and clears what you take. It's why more isn't free: overload it and it struggles to keep up." },   // DRAFT  claim: first-pass (portal vein); wording from Eric's brief
-    { at: 0.52, kicker: "04 / Different paths", title: "Broken down.",               body: "The liver changes some of it into other compounds and sends them out in bile." },                                 // DRAFT  claim: textbook physiology
-    { at: 0.66, kicker: "04 / Different paths", title: "Filtered out.",              body: "Your kidneys filter your blood around the clock. Some of the supplement leaves in urine." },                       // DRAFT  claim: textbook physiology
-    { at: 0.8,  kicker: "04 / Different paths", title: "What's left.",               body: "Only part of a dose stays in circulation, and the brain still sits behind a barrier. More in your mouth doesn't always mean more in your head.",
-      note: "Illustration only. The split is different for every supplement, dose and person." },                                                                                                          // DRAFT
-    { at: 0.94, kicker: "04 / Different paths", title: "Next: the bloodstream.",     body: "Our molecule is one of the ones still circulating." },                                                            // DRAFT
+    { at: 0,    kicker: "04 / Different paths", title: "One dose. Different paths.", body: "Each dot stands for a share of what you swallowed. Watch where they go." },                       // DRAFT
+    { at: 0.13, kicker: "04 / Different paths", title: "Some is never absorbed.",    body: "It carries on through the large intestine and leaves in stool." },                                   // DRAFT  source: NIDDK digestive system
+    { at: 0.33, kicker: "04 / Different paths", title: "First stop: the liver.",     body: "Blood from the gut goes straight to the liver, which processes some of what passes through. It's why more isn't free: overload it and it struggles to keep up." },   // DRAFT  source: MedlinePlus portal circulation; "more isn't free" from Eric's brief
+    { at: 0.47, kicker: "04 / Different paths", title: "Through the heart and lungs.", body: "What the liver lets through goes to the heart, out to the lungs and back, then gets pumped around the body." },   // DRAFT  source: NHLBI blood flow
+    { at: 0.63, kicker: "04 / Different paths", title: "Filtered out.",              body: "Your kidneys filter your blood around the clock. Some of the supplement leaves in urine, sometimes long after it has done its job.",
+      note: "In reality the arteries feed the kidneys and the brain at the same time, lap after lap. We show them one after the other." },   // DRAFT  source: NIDDK kidneys
+    { at: 0.79, kicker: "04 / Different paths", title: "What's left.",               body: "Only part of a dose stays in circulation, and the brain still sits behind a barrier. More in your mouth doesn't always mean more in your head.",
+      note: "Illustration only. The split is different for every supplement, dose and person." },                                                                                                    // DRAFT
+    { at: 0.92, kicker: "04 / Different paths", title: "Next: the bloodstream.",     body: "Our molecule heads for the brain's blood vessels. Being there isn't the same as getting in." },   // DRAFT
   ],
   labels: {                                                   // DRAFT
     esophagus: "Esophagus",
-    map: { liver: "Liver", stomach: "Stomach", small: "Small intestine", large: "Large intestine", kidneys: "Kidneys", bladder: "Bladder", portal: "Portal vein", blood: "To the heart and body" },
-    tally: { stool: "stool", urine: "urine", blood: "still circulating" },
+    map: { small: "Small intestine", arteries: "Arteries", large: "Large intestine", stool: "Stool", liver: "Liver", heart: "Heart", lungs: "Lungs", kidney: "Kidneys", bladder: "Bladder", urine: "Urine", brain: "Toward the brain" },
   },
   notToScale: "Not to scale",                                 // DRAFT  shown in the small intestine and on the map
 
@@ -109,12 +109,13 @@ const JOURNEY = {
     zoomCell: 2.4,       // camera zoom while crossing the lining
   },
   pathsChoreo: {
-    screens: 6,
-    // The 12-dot split (illustration only): 3 never absorbed -> stool; 9 to the liver, of which 2 are
-    // broken down -> bile -> stool; 7 into the blood, of which 3 are filtered by the kidneys -> urine;
-    // 4 stay in circulation (one of them is the hero).
-    split: { notAbsorbed: 3, brokenDown: 2, urine: 3 },
-    // Beats: zoom out, not absorbed, to the liver, broken down, kidneys, what's left, dive into the blood.
-    zoomOut: 0.12, stool: [0.15, 0.32], liver: [0.33, 0.5], bile: [0.52, 0.64], blood: [0.66, 0.8], dive: [0.88, 1],
+    screens: 7,
+    // Groups of the 11 dots around the hero (illustration only, no numbers shown): never absorbed -> stool;
+    // stay in the liver (processed); kidney -> urine; the rest travel on with the hero toward the brain.
+    groups: { stool: 3, liver: 2, kidney: 3 },
+    // Beats (0 to 1 of the chapter), each [start, end]: pull back from the capillary to the whole body; stool
+    // group; everyone else to the liver; on through heart and lungs; kidney group; the hero's group heads up
+    // toward the brain; dive into the vessel.
+    pull: [0, 0.12], stool: [0.13, 0.3], liver: [0.33, 0.45], heart: [0.47, 0.6], kidney: [0.63, 0.77], brain: [0.8, 0.93], dive: [0.88, 1],
   },
 };
