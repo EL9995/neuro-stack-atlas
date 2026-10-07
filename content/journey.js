@@ -69,15 +69,35 @@ const JOURNEY = {
     { at: 0.55, kicker: "05 / Bloodstream", title: "Arrival is not access.",    body: "The brain's tiniest blood vessels are so narrow that red cells pass in single file. Being here still isn't the same as getting in." },   // DRAFT  claim: capillary ~5-10 um, red cells ~7.5 um, single file (textbook)
     { at: 0.82, kicker: "05 / Bloodstream", title: "What gets through?",        body: "Between the blood and the brain sits a wall of tightly sealed cells: the blood-brain barrier." },   // DRAFT  claim: textbook
   ],
+  barrier: [
+    { at: 0,    kicker: "06 / Blood-brain barrier", title: "Never far from blood.",     body: "In the brain, the finest blood vessels, the capillaries, wind between the brain cells, so almost every cell sits close to one." },   // DRAFT  source: Tsai 2009 (neurons ~15 um from a microvessel, in mice)
+    { at: 0.1,  kicker: "06 / Blood-brain barrier", title: "A hungry organ.",           body: "Your brain is about 2% of your body weight but uses about 20% of its energy, so it gets a rich blood supply." },   // DRAFT  source: Raichle & Gusnard 2002
+    { at: 0.3,  kicker: "06 / Blood-brain barrier", title: "A sealed wall.",             body: "Here, the cells of the vessel wall are stitched together by tight junctions, so nothing slips between them. In most of the body, capillary walls are leakier.",
+      note: "This wall of sealed cells is the blood-brain barrier." },                                                                                                       // DRAFT  source: Abbott 2010
+    { at: 0.4,  kicker: "06 / Blood-brain barrier", title: "Most things stay out.",      body: "Large or water-loving molecules can't get through. Some that do get into the wall are pumped straight back into the blood.",
+      note: "By one estimate, more than 98% of small-molecule drugs can't cross." },                                                                                         // DRAFT  source: Abbott 2010 (efflux pumps); Pardridge 2005 (98%)
+    { at: 0.5,  kicker: "06 / Blood-brain barrier", title: "Small and fat-soluble? Straight through.", body: "A few small, fat-soluble molecules, like caffeine and alcohol, pass through the cells' membranes on their own." },   // DRAFT  source: Abbott 2010 (lipid-soluble diffusion); examples textbook
+    { at: 0.59, kicker: "06 / Blood-brain barrier", title: "Others need a door.",        body: "Carrier proteins in the wall are built for particular molecules. A carrier grabs one, flips, and lets it go on the other side.",
+      note: "Many supplements cross this way. Others use other routes, and some barely cross at all." },                                                                     // DRAFT  source: Abbott 2010 (carrier-mediated transport)
+    { at: 0.68, kicker: "06 / Blood-brain barrier", title: "Wait your turn.",            body: "Doors are shared. LAT1, the door for large amino acids like tyrosine and tryptophan, also carries the same amino acids from a protein meal, so they compete." },   // DRAFT  source: Kageyama 2000; Matsuo 2000 (as in the Simulator)
+    { at: 0.8,  kicker: "06 / Blood-brain barrier", title: "In one side, out the other.", body: "Through a door on the blood side, across the cell, out a door on the brain side. Our molecule is in." },   // DRAFT  claim: LAT1 sits on both sides of the wall cells (Matsuo 2000 / textbook)
+    { at: 0.93, kicker: "06 / Blood-brain barrier", title: "Next: the synapse.",         body: "Serotonin and dopamine can't cross this wall, so the brain makes its own, from building blocks that come in through doors like this one." },   // DRAFT  claim: textbook (why L-DOPA, not dopamine, is the Parkinson's drug); tyrosine/tryptophan precursors
+  ],
   labels: {                                                   // DRAFT
     esophagus: "Esophagus",
     map: { small: "Small intestine", arteries: "Arteries", large: "Large intestine", stool: "Stool", liver: "Liver", heart: "Heart", lungs: "Lungs", kidney: "Kidneys", bladder: "Bladder", urine: "Urine", brain: "Toward the brain" },
+    barrier: { blood: "Blood", cell: "Wall cell", brain: "Brain", tj: "Tight junction", door: "Door (LAT1)", pump: "Pump" },
   },
   notToScale: "Not to scale",                                 // DRAFT  shown in the small intestine and on the map
 
   // Sources for the captions above (not shown on the page yet).
   sources: [
     "Tuleu C et al. A scintigraphic investigation of the disintegration behaviour of capsules in fasting subjects. Eur J Pharm Sci 2007;30:251-5. doi:10.1016/j.ejps.2006.11.008 (capsules reach the stomach in seconds; gelatin shells open in 3-13 min, HPMC in 6-11 min, fasted, with 180 ml water)",
+    "Raichle ME, Gusnard DA. Appraising the brain's energy budget. PNAS 2002;99:10237-9. doi:10.1073/pnas.172399499 (brain ~2% of body mass, ~20% of energy use)",
+    "Tsai PS et al. Correlations of neuronal and microvascular densities in murine cortex. J Neurosci 2009;29:14553-70. doi:10.1523/JNEUROSCI.3287-09.2009 (neurons on average ~15 um from the nearest microvessel, in mice)",
+    "Abbott NJ et al. Structure and function of the blood-brain barrier. Neurobiol Dis 2010;37:13-25. doi:10.1016/j.nbd.2009.07.030 (tight junctions, lipid-soluble diffusion, carriers, efflux pumps)",
+    "Pardridge WM. The blood-brain barrier: bottleneck in brain drug development. NeuroRx 2005;2:3-14. doi:10.1602/neurorx.2.1.3 (>98% of small-molecule drugs excluded)",
+    "Kageyama T et al. Brain Research 2000. doi:10.1016/s0006-8993(00)02758-x; Matsuo H et al. NeuroReport 2000. doi:10.1097/00001756-200011090-00021 (LAT1, shared by large neutral amino acids and L-DOPA)",
   ],
 
   // CHOREOGRAPHY KNOBS (numbers, not wording). Tune and refresh.
@@ -121,6 +141,22 @@ const JOURNEY = {
     approach: [0.5, 0.8],  // the vessel narrows to a brain capillary; brain blue appears beyond the wall
     boundary: [0.8, 1],    // close in on the wall
     flow: 2.2,             // how fast the red cells drift past (screens per chapter)
+  },
+  barrierChoreo: {
+    screens: 11,           // the showpiece: the longest chapter
+    // Beats (0 to 1 of the chapter), each [start, end]: zoom out through brain tissue to the whole brain;
+    // dive back in; cross-fade to the wall in cross-section; tight junctions; turned away and pumped out;
+    // small fat-soluble ones pass straight through; the door; the queue; the hero crosses; into the brain.
+    pull: [0, 0.16], push: [0.18, 0.27], toWall: [0.25, 0.29], wall: [0.3, 0.4], away: [0.4, 0.5], through: [0.5, 0.59],
+    door: [0.59, 0.68], queue: [0.68, 0.8], cross: [0.8, 0.92], brain: [0.92, 1],
+    closeZoom: 9,          // capillary web: zoom at the start (matches chapter 5's close-up)
+    netZoom: 0.9,          // brain tissue in view (neurons and capillaries)
+    wholeZoom: 0.014,      // the whole brain in view (tissue zoom; the brain is drawn at this x brainRatio)
+    brainRatio: 55,        // brain units per tissue unit: how big a patch of brain the close-up shows
+    wallZoom: 1.4,         // wall: zoom for the overview beats
+    queueZoom: 1.8,        // zoom while the hero queues at the door
+    crossZoom: 2.2,        // zoom while it crosses
+    brainZoom: 1.3,        // zoom once it's in the brain
   },
   pathsChoreo: {
     screens: 7,

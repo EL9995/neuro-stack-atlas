@@ -72,6 +72,7 @@ html:has(body.is-journey)::-webkit-scrollbar { display: none; }
 #jy-ch-stomach { background: #2e0b18; }
 #jy-ch-intestine { background: #d5852f; }
 #jy-ch-blood { background: #8e1a2c; }
+#jy-ch-barrier { background: #121a44; }
 #jy-ch-paths { background: #2a0c16; }
 .jy-tint { position: absolute; inset: 0; pointer-events: none; opacity: 0; }
 /* Chapter 4 assembly line: tracks always faintly visible, stations light up (--on, 0..1) while active. */
@@ -154,3 +155,12 @@ html:has(body.is-journey)::-webkit-scrollbar { display: none; }
   .jy-rise, .jy-pill.jy-actor { transition: none; }
   .jy-pill:not(.jy-actor):hover { transform: none; }
 }
+
+/* Chapter 6, Blood-brain barrier (js/journey-barrier.js) */
+.jy-bb-mem { fill: none; stroke-width: 7; }
+.jy-bb-tj { fill: none; stroke: #ffe3a6; stroke-width: 4; stroke-linecap: round; opacity: var(--tj, .25); }
+.jy-bb-door rect { fill: #1c2a58; stroke: #5f78b8; stroke-width: 2.5; }
+.jy-bb-door.on rect { stroke: #7fe6ff; }
+.jy-bb-pump rect { fill: #4a3214; stroke: #f2b84b; }
+.jy-bb-labels text { font-family: var(--f-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; fill: #ffe9e4; paint-order: stroke; stroke: rgba(20, 8, 20, .55); stroke-width: 3px; }
+

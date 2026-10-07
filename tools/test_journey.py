@@ -1,5 +1,5 @@
 """Journey staging page (#journey): the two-capsule first screen and the tour chapters (Swallow, Stomach,
-Small intestine, Different paths, Bloodstream).
+Small intestine, Different paths, Bloodstream, Blood-brain barrier).
 Usage: python3 tools/test_journey.py [base-url]      (default http://localhost:8010)
 """
 import json, os, subprocess, sys, tempfile, time, urllib.request
@@ -158,6 +158,32 @@ try:
     check("red cells drift past; no brain blue yet", ev("document.querySelectorAll('.jy-bl-cell').length") == 18 and float(ev("document.getElementById('jy-bl-brain').getAttribute('opacity')")) == 0)
     at("blood", 0.95)
     check("in the capillary: single file, brain blue beyond the wall", ev("[...document.querySelectorAll('.jy-bl-cell')].filter(g => +g.getAttribute('opacity') > 0.5).length") <= 5 and float(ev("document.getElementById('jy-bl-brain').getAttribute('opacity')")) > 0.9)
+
+    print("Chapter 6, Blood-brain barrier:")
+    caps = titles("barrier", (0.05, 0.13, 0.35, 0.45, 0.54, 0.63, 0.74, 0.86, 0.97))
+    check("chapter 6 captions change in order", caps == ev("JOURNEY.barrier.map(c => c.title)"), caps)
+    for qq in (0.05, 0.16, 0.35, 0.6, 0.75, 0.84, 0.95):
+        at("barrier", qq); hc = ev(hero)
+        if not (abs(hc[0]) <= 3 and abs(hc[1]) <= 3): break
+    check("the hero stays centred through the barrier", abs(hc[0]) <= 3 and abs(hc[1]) <= 3, [qq, hc])
+    at("barrier", 0.06)
+    check("opens on brain tissue (capillaries and neurons), wall not yet shown", float(ev("document.getElementById('jy-bb-net').getAttribute('opacity')")) > 0.95 and float(ev("document.getElementById('jy-bb-wall').getAttribute('opacity')")) < 0.05)
+    at("barrier", 0.16)
+    check("pulls back to the whole brain, with a ring on the hero's spot", float(ev("document.getElementById('jy-bb-whole').getAttribute('opacity')")) > 0.95 and float(ev("document.getElementById('jy-bb-mark').getAttribute('opacity')")) > 0.9)
+    at("barrier", 0.35)
+    check("wall view: tight junctions glow, labels show", float(ev("getComputedStyle(document.getElementById('jy-bb-wall')).getPropertyValue('--tj')")) > 0.9 and float(ev("document.getElementById('jy-bb-t-tj').getAttribute('opacity')")) > 0.9)
+    hy = lambda: ev("+document.getElementById('jy-bb-wall').getAttribute('transform').match(/translate\\(([-\\d.]+) ([-\\d.]+)\\)$/)[2]")
+    check("hero is on the blood side before crossing", -hy() < 0)
+    lobe = "+document.querySelector('#jy-bb-d1 rect').getAttribute('transform').match(/rotate\\(([-\\d.]+)/)[1]"
+    at("barrier", 0.75); rest = ev(lobe)
+    at("barrier", ev("jyBbPlan(JOURNEY.barrierChoreo).door1[3] + 0.019")); flip = ev(lobe)
+    check("the blood-side door rocks over while the hero is in it", rest < 0 and flip > 0, [rest, flip])
+    at("barrier", ev("jyBbPlan(JOURNEY.barrierChoreo).tops[3] + 0.045"))
+    check("the hero is inside the wall cell mid-crossing", 0 < -hy() < 140, -hy())
+    at("barrier", 0.35); red = ev("document.getElementById('jy-bb-lumen').getAttribute('fill')")
+    at("barrier", 0.97)
+    check("on the brain side; red has resolved to blue", -hy() > 140 and ev("document.getElementById('jy-bb-lumen').getAttribute('fill')") == ev("JY_BB_TONES.lumen[1]") and red == ev("JY_BB_TONES.lumen[0]"), [-hy(), red])
+    check("chapter 6 dot is current", ev("[...document.querySelectorAll('.jy-rail li')].findIndex(l => l.hasAttribute('aria-current'))") == 5)
 
     at("swallow", 0.5)
     check("scrolling back up rebuilds the capsule", ev("+document.querySelector('.jy-actor .jy-shell').style.opacity") == 1 and ev("document.querySelectorAll('.jy-actor .jy-g[transform]').length") == 0 and ev(centre) == [0, 0])
