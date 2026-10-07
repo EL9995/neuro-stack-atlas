@@ -1,0 +1,120 @@
+"""Journey staging page (#journey): the two-capsule first screen, chapter 1 (Swallow) and chapter 2 (Stomach).
+Usage: python3 tools/test_journey.py [base-url]      (default http://localhost:8010)
+"""
+import json, os, subprocess, sys, tempfile, time, urllib.request
+HERE = os.path.dirname(os.path.abspath(__file__))
+exec(open(os.path.join(HERE, "shoot.py")).read().replace('if __name__ == "__main__":', "if False:"))
+BASE = sys.argv[1].rstrip("/") if len(sys.argv) > 1 else "http://localhost:8010"
+prof = tempfile.mkdtemp()
+proc = subprocess.Popen([CHROME, "--headless=new", f"--remote-debugging-port={PORT}", f"--user-data-dir={prof}", "--hide-scrollbars", "about:blank"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+fails = []
+try:
+    for _ in range(80):
+        try: tabs = json.load(urllib.request.urlopen(f"http://127.0.0.1:{PORT}/json")); break
+        except Exception: time.sleep(.5)
+    c = CDP([t for t in tabs if t["type"] == "page"][0]["webSocketDebuggerUrl"])
+    c.call("Page.enable"); c.call("Runtime.enable"); c.call("Network.enable"); c.call("Network.setCacheDisabled", cacheDisabled=True)
+    def size(w, h, mobile=False): c.call("Emulation.setDeviceMetricsOverride", width=w, height=h, deviceScaleFactor=1, mobile=mobile)
+    def ev(e):
+        r = c.call("Runtime.evaluate", expression=e, awaitPromise=True, returnByValue=True)
+        if "exceptionDetails" in r: print("  JS error:", r["exceptionDetails"].get("exception", {}).get("description", "")[:200])
+        return r["result"].get("value")
+    def check(name, ok, detail=""):
+        print(f"  {'PASS' if ok else 'FAIL'}  {name}{(' (' + str(detail) + ')') if detail else ''}")
+        if not ok: fails.append(name)
+    def open_journey():
+        c.call("Page.navigate", url=f"{BASE}/#journey"); time.sleep(1.5)
+        ev("window.__e = []; addEventListener('error', e => __e.push(e.message))")
+
+    size(1280, 800)
+    print("First screen:")
+    open_journey()
+    check("two capsules, Start and Skip", ev("[...document.querySelectorAll('.jy-pill')].map(b => b.dataset.journey).join()") == "start,skip")
+    check("labels come from content/journey.js", ev("document.querySelector('.jy-start .jy-label').textContent === JOURNEY.pills.start && document.querySelector('.jy-skip .jy-label').textContent === JOURNEY.pills.skip"))
+    check("pills are real buttons with a spoken hint", ev("[...document.querySelectorAll('.jy-pill')].every(b => b.tagName === 'BUTTON' && document.getElementById(b.getAttribute('aria-describedby')))"))
+    check("top bar and footer are hidden", ev("getComputedStyle(document.querySelector('.chrome')).display === 'none' && getComputedStyle(document.querySelector('footer')).display === 'none'"))
+    check("background is black", ev("getComputedStyle(document.body).backgroundColor") == "rgb(0, 0, 0)")
+    check("disclaimer is a visible line, not a gate", ev("(() => { const r = document.querySelector('.jy-note').getBoundingClientRect(); return r.height > 0 && r.bottom <= innerHeight })()"))
+    check("pills side by side on desktop", ev("(() => { const [a, b] = [...document.querySelectorAll('.jy-pill')].map(x => x.getBoundingClientRect()); return Math.abs(a.top - b.top) < 20 && b.left > a.right })()"))
+
+    print("Routing:")
+    ev("document.querySelector('[data-journey=skip]').click()"); time.sleep(.5)
+    check("Skip Journey opens the Stack builder", ev("location.hash") == "#stack" and ev("!!document.querySelector('.builder, #view .bstep, #view [class*=builder]')"))
+    check("leaving restores the top bar", ev("getComputedStyle(document.querySelector('.chrome')).display") != "none" and not ev("document.body.classList.contains('is-journey')"))
+    open_journey()
+    ev("document.querySelector('[data-journey=note]').click()"); time.sleep(.8)
+    check("Read more goes to the home page notice", ev("location.hash") in ("", "#") and ev("!!document.getElementById('notice')"))
+    check("current Explore home page is unchanged", ev("!!document.querySelector('.tc') && document.querySelectorAll('#view > section').length") == 5)
+
+    print("Start Journey (chapter 1, Swallow):")
+    open_journey()
+    ev("document.querySelector('[data-journey=start]').click()"); time.sleep(.3)
+    check("Skip pill and note fade away", ev("getComputedStyle(document.querySelector('.jy-skip')).pointerEvents") == "none")
+    time.sleep(2.2)
+    centre = "(() => { const r = document.querySelector('.jy-actor').getBoundingClientRect(); return [Math.round(r.left + r.width / 2 - innerWidth / 2), Math.round(r.top + r.height / 2 - innerHeight / 2)] })()"
+    check("pill flies to the centre of the screen", ev(centre) == [0, 0], ev(centre))
+    check("pill loses its label (blank puppet)", ev("getComputedStyle(document.querySelector('.jy-actor .jy-label')).opacity") == "0")
+    check("page now scrolls", ev("document.documentElement.scrollHeight > innerHeight * 3"))
+    check("mouth is drawn, first caption shows", ev("getComputedStyle(document.querySelector('.jy-world')).opacity") == "1" and ev("document.querySelector('.jy-t').textContent") == ev("JOURNEY.swallow[0].title"))
+    check("skip link and chapter dots are visible", ev("getComputedStyle(document.querySelector('.jy-hud')).visibility") == "visible" and ev("document.querySelectorAll('.jy-rail li').length") == ev("JOURNEY.chapters.length"))
+    def at(key, q): ev(f"jyGoto('{key}', {q})"); time.sleep(.6)
+    def titles(key, qs):
+        out = []
+        for q in qs: at(key, q); out.append(ev("document.querySelector('.jy-t').textContent"))
+        return out
+    caps = titles("swallow", (0.05, 0.3, 0.6, 0.95))
+    check("chapter 1 captions change in order as you scroll", caps == ev("JOURNEY.swallow.map(c => c.title)"), caps)
+    at("swallow", 0.6)
+    check("pill stays centred while scrolling", ev(centre) == [0, 0], ev(centre))
+    check("esophagus is drawn, mouth has faded", ev("+getComputedStyle(document.getElementById('jy-tube')).opacity") == 1 and ev("+getComputedStyle(document.getElementById('jy-mouth')).opacity") == 0)
+    check("Esophagus label shows mid-way", ev("document.getElementById('jy-call').classList.contains('on')"))
+    rot = lambda: float(ev("document.querySelector('.jy-actor').style.getPropertyValue('--rot')").replace("deg", ""))
+    check("pill has turned lengthwise", abs(rot() - ev("JOURNEY.swallowChoreo.tubeTilt")) < 0.01, rot())
+    check("each drawing is its own small SVG", ev("[...document.querySelectorAll('.jy svg')].every(s => s.querySelectorAll('*').length < 90)"), ev("[...document.querySelectorAll('.jy svg')].map(s => s.querySelectorAll('*').length)"))
+
+    print("Chapter 2, Stomach:")
+    at("stomach", 0.3)
+    check("stomach scene takes over; chapter 1 is hidden underneath", ev("getComputedStyle(document.getElementById('jy-ch-stomach')).visibility") == "visible" and ev("getComputedStyle(document.getElementById('jy-ch-swallow')).visibility") == "hidden")
+    check("second chapter dot is current, first is done", ev("[...document.querySelectorAll('.jy-rail li')].map(l => l.hasAttribute('aria-current') ? 'now' : l.classList.contains('done') ? 'done' : '-').slice(0, 3).join()") == "done,now,-")
+    check("fluid in front makes the pill look half-submerged", ev("+getComputedStyle(document.querySelector('.jy-front')).opacity") > 0.3)
+    check("ripples spread from the pill", ev("[...document.querySelectorAll('#jy-ripples ellipse')].some(e => +e.getAttribute('rx') > 60 && +e.style.opacity > 0)"))
+    caps = titles("stomach", (0.05, 0.3, 0.65, 0.85, 0.97))
+    check("chapter 2 captions change in order as you scroll", caps == ev("JOURNEY.stomach.map(c => c.title)"), caps)
+    check("the coating note shows under 'The shell gives way'", ev("(jyGoto('stomach', .65), new Promise(r => setTimeout(() => r(document.querySelector('.jy-fine').textContent), 500)))") == ev("JOURNEY.stomach[2].note"))
+    at("stomach", 1)
+    check("the shell has dissolved", ev("+document.querySelector('.jy-actor .jy-shell').style.opacity") == 0 and ev("+document.querySelector('.jy-actor .jy-edge').style.opacity") == 0)
+    hero = "(() => { const r = document.querySelector('.jy-actor .jy-hero').getBoundingClientRect(); return [Math.round(r.left + r.width / 2 - innerWidth / 2), Math.round(r.top + r.height / 2 - innerHeight / 2)] })()"
+    hc = ev(hero)
+    check("the hero granule is now centred on screen", abs(hc[0]) <= 3 and abs(hc[1]) <= 3, hc)
+    check("the hero ring is showing", ev("+document.querySelector('.jy-actor .jy-ring').style.opacity") == 1)
+    spread = ev("(() => { const h = document.querySelector('.jy-actor .jy-hero').getBoundingClientRect(); return [...document.querySelectorAll('.jy-actor .jy-g:not(.jy-hero)')].map(g => { const r = g.getBoundingClientRect(); return Math.hypot(r.x - h.x, r.y - h.y) }) })()")
+    check("the other granules form a cloud around it, on screen", min(spread) > 20 and max(spread) < 420, [round(min(spread)), round(max(spread))])
+    check("the hero is bigger than at the start (camera zoomed in)", ev("document.querySelector('.jy-actor .jy-hero').getBoundingClientRect().width") > 25)
+    at("swallow", 0.5)
+    check("scrolling back up rebuilds the capsule", ev("+document.querySelector('.jy-actor .jy-shell').style.opacity") == 1 and ev("document.querySelectorAll('.jy-actor .jy-g[transform]').length") == 0 and ev(centre) == [0, 0])
+    ev("document.querySelector('.jy-skiptour').click()"); time.sleep(.5)
+    check("Skip journey link opens the Stack builder mid-tour", ev("location.hash") == "#stack" and ev("scrollY") == 0)
+    open_journey()
+    check("coming back starts fresh at the two pills", ev("document.querySelectorAll('.jy-pill:not(.jy-actor)').length") == 2 and ev("document.documentElement.scrollHeight <= innerHeight + 2"))
+
+    print("Phone width:")
+    size(375, 812, True); open_journey()
+    check("pills stack vertically", ev("(() => { const [a, b] = [...document.querySelectorAll('.jy-pill')].map(x => x.getBoundingClientRect()); return b.top > a.bottom })()"))
+    check("no sideways scroll", ev("document.documentElement.scrollWidth <= innerWidth"))
+    size(1280, 800)
+
+    print("Reduced motion:")
+    c.call("Emulation.setEmulatedMedia", features=[{"name": "prefers-reduced-motion", "value": "reduce"}])
+    open_journey()
+    check("no float or entrance animation", ev("[...document.querySelectorAll('.jy-pill')].every(b => getComputedStyle(b).animationName === 'none')"))
+    ev("document.querySelector('[data-journey=start]').click()"); time.sleep(.3)
+    check("Start jumps straight to the scene, no flight", ev("document.getElementById('jy').classList.contains('jy-inscene')"))
+    ev("scrollTo(0, .1 * (document.documentElement.scrollHeight - innerHeight))"); time.sleep(.4)
+    check("no zoom: the mouth cross-fades instead", ev("Math.abs(+document.getElementById('jy-mouth').style.transform.match(/scale\\(([\\d.]+)\\)/)[1] - Math.min(1.3, Math.max(.7, innerHeight / 820))) < 1e-6"))
+    c.call("Emulation.setEmulatedMedia", features=[])
+
+    check("no page errors", ev("__e.length") == 0, ev("__e"))
+finally:
+    proc.terminate()
+print(f"\n{'All passed' if not fails else str(len(fails)) + ' failed: ' + ', '.join(fails)}")
+sys.exit(1 if fails else 0)
