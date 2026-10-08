@@ -30,69 +30,70 @@ const JOURNEY = {
 
   // Captions, one list per chapter, in the space beside the pill. "at" = how far through the
   // chapter's scroll (0 to 1) the caption appears. "note" (optional) is a smaller line underneath.
+  // "src" (optional) = ids from `cite` below, shown faintly in the bottom-left corner.
   swallow: [
     { at: 0,    kicker: "01 / Swallow", title: "It starts with a swallow.", body: "One capsule. Inside, tiny granules: the supplement itself." },                              // DRAFT
-    { at: 0.3,  kicker: "01 / Swallow", title: "Into the esophagus.",       body: "A muscular tube about 25 cm long that runs from your throat to your stomach." },          // DRAFT  claim: adult esophagus ~25 cm
-    { at: 0.55, kicker: "01 / Swallow", title: "Squeezed, not dropped.",    body: "Waves of muscle, called peristalsis, push it down. It works even when you're lying down.",
+    { src: ["openstax"], at: 0.3,  kicker: "01 / Swallow", title: "Into the esophagus.",       body: "A muscular tube about 25 cm long that runs from your throat to your stomach." },          // DRAFT  claim: adult esophagus ~25 cm
+    { src: ["openstax", "kikendall"], at: 0.55, kicker: "01 / Swallow", title: "Squeezed, not dropped.",    body: "Waves of muscle, called peristalsis, push it down. It works even when you're lying down.",
       note: "Still, take capsules with a full glass of water and stay upright: one that sticks on the way down can irritate the esophagus." },   // DRAFT  source: Kikendall 1999 (pill esophagitis: upright, plenty of fluid). claim: peristalsis works without gravity
     { at: 0.85, kicker: "01 / Swallow", title: "Next: the stomach.",        body: "Where the capsule's shell starts to dissolve." },                                          // DRAFT
   ],
   stomach: [
-    { at: 0,    kicker: "02 / Stomach", title: "Into the stomach.",    body: "It gets here within seconds of swallowing." },                                                                  // DRAFT  source: Tuleu 2007
-    { at: 0.25, kicker: "02 / Stomach", title: "Contact.",             body: "Acid, water and constant churning get to work on the shell, usually gelatin or a plant cellulose called HPMC." },   // DRAFT  source: Tuleu 2007 (both shell types)
-    { at: 0.55, kicker: "02 / Stomach", title: "The shell gives way.", body: "On an empty stomach, capsule shells usually break open within about 15 minutes; with food it can take longer. Then the granules spill out.",
+    { src: ["tuleu"], at: 0,    kicker: "02 / Stomach", title: "Into the stomach.",    body: "It gets here within seconds of swallowing." },                                                                  // DRAFT  source: Tuleu 2007
+    { src: ["tuleu"], at: 0.25, kicker: "02 / Stomach", title: "Contact.",             body: "Acid, water and constant churning get to work on the shell, usually gelatin or a plant cellulose called HPMC." },   // DRAFT  source: Tuleu 2007 (both shell types)
+    { src: ["tuleu", "vardakou"], at: 0.55, kicker: "02 / Stomach", title: "The shell gives way.", body: "On an empty stomach, capsule shells usually break open within about 15 minutes; with food it can take longer. Then the granules spill out.",
       note: "Some capsules have an acid-resistant coating, so they open later, in the intestine." },                                                                                              // DRAFT  source: Tuleu 2007 (gelatin 3-13 min, HPMC 6-11 min, fasted); Vardakou 2011 (later with food)
     { at: 0.78, kicker: "02 / Stomach", title: "Meet your granule.",   body: "From here, we follow just one. Each granule is a packed clump of the supplement, still far too big to enter your blood." },   // DRAFT
-    { at: 0.93, kicker: "02 / Stomach", title: "Next: the small intestine.", body: "The stomach lets it's contents out a little at a time, through a muscle valve called the pylorus. Very little is absorbed in the stomach itself." },   // DRAFT  claim: textbook physiology
+    { src: ["openstax"], at: 0.93, kicker: "02 / Stomach", title: "Next: the small intestine.", body: "The stomach lets it's contents out a little at a time, through a muscle valve called the pylorus. Very little is absorbed in the stomach itself." },   // DRAFT  claim: textbook physiology
   ],
   intestine: [
-    { at: 0,    kicker: "03 / Small intestine", title: "The Pylorus ", body: "A ring of muscle at the stomach's exit that opens briefly to let fluid and small particles through to the small intestine." },   // DRAFT  claim: textbook physiology
-    { at: 0.38, kicker: "03 / Small intestine", title: "A way through.",       body: "The small intestine is lined with tiny finger-like folds called villi. This is where most absorption happens." },   // DRAFT  claim: textbook physiology
-    { at: 0.46, kicker: "03 / Small intestine", title: "Down to molecules.",   body: "The granule dissolves. Only single molecules are small enough to be absorbed, so from here we follow one." },        // DRAFT
-    { at: 0.62, kicker: "03 / Small intestine", title: "Some continue. Some cross.", body: "Most molecules pass through the cells of the lining into tiny blood vessels. Some slip between the cells, and fats take a side route through the lymph. Whatever isn't absorbed moves on." },  // DRAFT  claim: textbook physiology
+    { src: ["openstax"], at: 0,    kicker: "03 / Small intestine", title: "The Pylorus ", body: "A ring of muscle at the stomach's exit that opens briefly to let fluid and small particles through to the small intestine." },   // DRAFT  claim: textbook physiology
+    { src: ["openstax"], at: 0.38, kicker: "03 / Small intestine", title: "A way through.",       body: "The small intestine is lined with tiny finger-like folds called villi. This is where most absorption happens." },   // DRAFT  claim: textbook physiology
+    { src: ["openstax"], at: 0.46, kicker: "03 / Small intestine", title: "Down to molecules.",   body: "The granule dissolves. Only single molecules are small enough to be absorbed, so from here we follow one." },        // DRAFT
+    { src: ["openstax"], at: 0.62, kicker: "03 / Small intestine", title: "Some continue. Some cross.", body: "Most molecules pass through the cells of the lining into tiny blood vessels. Some slip between the cells, and fats take a side route through the lymph. Whatever isn't absorbed moves on." },  // DRAFT  claim: textbook physiology
     { at: 0.9,  kicker: "03 / Small intestine", title: "Next: different paths.", body: "Not everything you swallow ends up where you'd hope." },                                                               // DRAFT
   ],
   paths: [
     { at: 0,    kicker: "04 / Different paths", title: "One dose. Different paths.", body: "Each dot stands for a share of what you swallowed. Watch where they go." },                       // DRAFT
-    { at: 0.121, kicker: "04 / Different paths", title: "Some is never absorbed.",    body: "It carries on through the large intestine and leaves in stool." },                                   // DRAFT  source: NIDDK digestive system
-    { at: 0.308, kicker: "04 / Different paths", title: "First stop: the liver.",     body: "Blood from the gut goes straight to the liver, which breaks down part of what passes through before it reaches the rest of the body. For some supplements that's a big cut, so a bigger dose doesn't always mean a bigger effect." },   // DRAFT  source: MedlinePlus portal circulation (first-pass metabolism); wording from the doctor review 2026-10-08
-    { at: 0.439, kicker: "04 / Different paths", title: "Through the heart and lungs.", body: "What the liver lets through goes to the heart, out to the lungs and back, then gets pumped around the body." },   // DRAFT  source: NHLBI blood flow
-    { at: 0.655, kicker: "04 / Different paths", title: "Filtered out.",              body: "Your kidneys filter your blood around the clock. Some of the supplement leaves in urine, sometimes long after it has done its job.",
+    { src: ["niddk"], at: 0.121, kicker: "04 / Different paths", title: "Some is never absorbed.",    body: "It carries on through the large intestine and leaves in stool." },                                   // DRAFT  source: NIDDK digestive system
+    { src: ["pond"], at: 0.308, kicker: "04 / Different paths", title: "First stop: the liver.",     body: "Blood from the gut goes straight to the liver, which breaks down part of what passes through before it reaches the rest of the body. For some supplements that's a big cut, so a bigger dose doesn't always mean a bigger effect." },   // DRAFT  source: MedlinePlus portal circulation (first-pass metabolism); wording from the doctor review 2026-10-08
+    { src: ["openstax"], at: 0.439, kicker: "04 / Different paths", title: "Through the heart and lungs.", body: "What the liver lets through goes to the heart, out to the lungs and back, then gets pumped around the body." },   // DRAFT  source: NHLBI blood flow
+    { src: ["openstax"], at: 0.655, kicker: "04 / Different paths", title: "Filtered out.",              body: "Your kidneys filter your blood around the clock. Some of the supplement leaves in urine, sometimes long after it has done its job.",
       note: "In reality the arteries feed the kidneys and the brain at the same time, lap after lap. We show them one after the other." },   // DRAFT  source: NIDDK kidneys
     { at: 0.804, kicker: "04 / Different paths", title: "What's left.",               body: "Only part of a dose stays in circulation, and the brain still sits behind a barrier. More in your mouth doesn't always mean more in your head.",
       note: "Illustration only. The split is different for every supplement, dose and person." },                                                                                                    // DRAFT
     { at: 0.925, kicker: "04 / Different paths", title: "Next: the bloodstream.",     body: "Our molecule heads for the brain's blood vessels. Being there isn't the same as getting in." },   // DRAFT
   ],
   blood: [
-    { at: 0,    kicker: "05 / Bloodstream", title: "Carried by the current.",   body: "Like most supplements, our molecule rides in plasma, the liquid part of the blood. The red cells around it are busy carrying oxygen." },   // DRAFT  claim: textbook physiology
-    { at: 0.24, kicker: "05 / Bloodstream", title: "A tiny traveller. A vast network.", body: "About 5 litres of blood go round your body roughly once a minute, so one dose spreads out fast.",
+    { src: ["openstax"], at: 0,    kicker: "05 / Bloodstream", title: "Carried by the current.",   body: "Like most supplements, our molecule rides in plasma, the liquid part of the blood. The red cells around it are busy carrying oxygen." },   // DRAFT  claim: textbook physiology
+    { src: ["openstax"], at: 0.24, kicker: "05 / Bloodstream", title: "A tiny traveller. A vast network.", body: "About 5 litres of blood go round your body roughly once a minute, so one dose spreads out fast.",
       note: "A red blood cell is thousands of times bigger than a molecule like ours." },                                                                                        // DRAFT  claim: adult blood volume ~5 L, cardiac output ~5 L/min (textbook; NHLBI blood flow)
-    { at: 0.55, kicker: "05 / Bloodstream", title: "Arrival is not access.",    body: "The brain's tiniest blood vessels are so narrow that red cells pass in single file. Being here still isn't the same as getting in." },   // DRAFT  claim: capillary ~5-10 um, red cells ~7.5 um, single file (textbook)
-    { at: 0.82, kicker: "05 / Bloodstream", title: "What gets through?",        body: "Between the blood and the brain sits a wall of tightly sealed cells: the blood-brain barrier." },   // DRAFT  claim: textbook
+    { src: ["openstax"], at: 0.55, kicker: "05 / Bloodstream", title: "Arrival is not access.",    body: "The brain's tiniest blood vessels are so narrow that red cells pass in single file. Being here still isn't the same as getting in." },   // DRAFT  claim: capillary ~5-10 um, red cells ~7.5 um, single file (textbook)
+    { src: ["abbott"], at: 0.82, kicker: "05 / Bloodstream", title: "What gets through?",        body: "Between the blood and the brain sits a wall of tightly sealed cells: the blood-brain barrier." },   // DRAFT  claim: textbook
   ],
   barrier: [
-    { at: 0,    kicker: "06 / Blood-brain barrier", title: "Never far from blood.",     body: "In the brain, the finest blood vessels, the capillaries, wind between the brain cells, so almost every cell sits close to one." },   // DRAFT  source: Tsai 2009 (neurons ~15 um from a microvessel, in mice)
-    { at: 0.123,  kicker: "06 / Blood-brain barrier", title: "A hungry organ.",           body: "Your brain is about 2% of your body weight but uses about 20% of its energy, so it gets a rich blood supply." },   // DRAFT  source: Raichle & Gusnard 2002
-    { at: 0.33,  kicker: "06 / Blood-brain barrier", title: "A sealed wall.",             body: "Here, the cells of the vessel wall are stitched together by tight junctions, so nothing slips between them. In most of the body, capillary walls are leakier.",
+    { src: ["tsai"], at: 0,    kicker: "06 / Blood-brain barrier", title: "Never far from blood.",     body: "In the brain, the finest blood vessels, the capillaries, wind between the brain cells, so almost every cell sits close to one." },   // DRAFT  source: Tsai 2009 (neurons ~15 um from a microvessel, in mice)
+    { src: ["raichle"], at: 0.123,  kicker: "06 / Blood-brain barrier", title: "A hungry organ.",           body: "Your brain is about 2% of your body weight but uses about 20% of its energy, so it gets a rich blood supply." },   // DRAFT  source: Raichle & Gusnard 2002
+    { src: ["abbott"], at: 0.33,  kicker: "06 / Blood-brain barrier", title: "A sealed wall.",             body: "Here, the cells of the vessel wall are stitched together by tight junctions, so nothing slips between them. In most of the body, capillary walls are leakier.",
       note: "This wall of sealed cells is the blood-brain barrier." },                                                                                                       // DRAFT  source: Abbott 2010
-    { at: 0.426,  kicker: "06 / Blood-brain barrier", title: "Most things stay out.",      body: "Large or water-loving molecules can't get through. Some that do get into the wall are pumped straight back into the blood.",
+    { src: ["abbott", "pardridge"], at: 0.426,  kicker: "06 / Blood-brain barrier", title: "Most things stay out.",      body: "Large or water-loving molecules can't get through. Some that do get into the wall are pumped straight back into the blood.",
       note: "By one estimate, more than 98% of small-molecule drugs can't cross." },                                                                                         // DRAFT  source: Abbott 2010 (efflux pumps); Pardridge 2005 (98%)
-    { at: 0.522,  kicker: "06 / Blood-brain barrier", title: "Small and fat-soluble? Straight through.", body: "A few small, fat-soluble molecules, like caffeine and alcohol, pass through the cells' membranes on their own." },   // DRAFT  source: Abbott 2010 (lipid-soluble diffusion); examples textbook
-    { at: 0.608, kicker: "06 / Blood-brain barrier", title: "Others need a door.",        body: "Carrier proteins in the wall are built for particular molecules. A carrier grabs one, flips, and lets it go on the other side.",
+    { src: ["abbott"], at: 0.522,  kicker: "06 / Blood-brain barrier", title: "Small and fat-soluble? Straight through.", body: "A few small, fat-soluble molecules, like caffeine and alcohol, pass through the cells' membranes on their own." },   // DRAFT  source: Abbott 2010 (lipid-soluble diffusion); examples textbook
+    { src: ["abbott"], at: 0.608, kicker: "06 / Blood-brain barrier", title: "Others need a door.",        body: "Carrier proteins in the wall are built for particular molecules. A carrier grabs one, flips, and lets it go on the other side.",
       note: "Many supplements cross this way. Others use other routes, and some barely cross at all." },                                                                     // DRAFT  source: Abbott 2010 (carrier-mediated transport)
-    { at: 0.694, kicker: "06 / Blood-brain barrier", title: "Wait your turn.",            body: "Doors are shared. LAT1, the door for large amino acids like tyrosine and tryptophan, also carries the same amino acids from a protein meal, so they compete." },   // DRAFT  source: Kageyama 2000; Matsuo 2000 (as in the Simulator)
-    { at: 0.809,  kicker: "06 / Blood-brain barrier", title: "In one side, out the other.", body: "Through a door on the blood side, across the cell, out a door on the brain side. Our molecule is in." },   // DRAFT  claim: LAT1 sits on both sides of the wall cells (Matsuo 2000 / textbook)
-    { at: 0.933, kicker: "06 / Blood-brain barrier", title: "Next: the synapse.",         body: "Serotonin and dopamine can't cross this wall, so the brain makes its own, from building blocks that come in through doors like this one." },   // DRAFT  claim: textbook (why L-DOPA, not dopamine, is the Parkinson's drug); tyrosine/tryptophan precursors
+    { src: ["kageyama", "matsuo"], at: 0.694, kicker: "06 / Blood-brain barrier", title: "Wait your turn.",            body: "Doors are shared. LAT1, the door for large amino acids like tyrosine and tryptophan, also carries the same amino acids from a protein meal, so they compete." },   // DRAFT  source: Kageyama 2000; Matsuo 2000 (as in the Simulator)
+    { src: ["matsuo"], at: 0.809,  kicker: "06 / Blood-brain barrier", title: "In one side, out the other.", body: "Through a door on the blood side, across the cell, out a door on the brain side. Our molecule is in." },   // DRAFT  claim: LAT1 sits on both sides of the wall cells (Matsuo 2000 / textbook)
+    { src: ["hardebo"], at: 0.933, kicker: "06 / Blood-brain barrier", title: "Next: the synapse.",         body: "Serotonin and dopamine can't cross this wall, so the brain makes its own, from building blocks that come in through doors like this one." },   // DRAFT  claim: textbook (why L-DOPA, not dopamine, is the Parkinson's drug); tyrosine/tryptophan precursors
   ],
   synapse: [
-    { at: 0,     kicker: "07 / Synapse", title: "Into a neuron.",        body: "Brain cells take up building blocks like ours from the fluid around them, through carriers in their outer membrane." },   // DRAFT  claim: textbook (neuronal amino acid uptake)
-    { at: 0.096, kicker: "07 / Synapse", title: "On the assembly line.", body: "Inside, enzymes turn our molecule, a precursor, into a neurotransmitter, one step at a time.",
+    { src: ["openstax"], at: 0,     kicker: "07 / Synapse", title: "Into a neuron.",        body: "Brain cells take up building blocks like ours from the fluid around them, through carriers in their outer membrane." },   // DRAFT  claim: textbook (neuronal amino acid uptake)
+    { src: ["daubner"], at: 0.096, kicker: "07 / Synapse", title: "On the assembly line.", body: "Inside, enzymes turn our molecule, a precursor, into a neurotransmitter, one step at a time.",
       note: "Each enzyme needs helpers called cofactors, often vitamins or minerals. The slowest step sets the pace, so more precursor doesn't always mean more neurotransmitter, and evidence for loading up on precursors in healthy people is limited and mixed." },   // DRAFT  source: Daubner 2011 (rate-limiting step); Atlas pathway data (content/neurotransmitters.js: precursors, enzymes, cofactors)
-    { at: 0.264, kicker: "07 / Synapse", title: "Packed and waiting.",   body: "The new neurotransmitter is pumped into a vesicle, a tiny bubble near the end of the neuron, along with many others." },   // DRAFT  claim: textbook (vesicular monoamine transporter)
-    { at: 0.336, kicker: "07 / Synapse", title: "A spark arrives.",      body: "An electrical signal races along the neuron's outer membrane, down the axon and around its end. When it arrives, vesicles fuse with the membrane and spill their contents." },   // DRAFT  claim: textbook
-    { at: 0.432, kicker: "07 / Synapse", title: "Across the gap.",       body: "The messengers drift across the synaptic cleft, a gap tens of nanometers wide, and fit into receptors on the next neuron." },   // DRAFT  claim: textbook (same wording as the home page scene)
-    { at: 0.56,  kicker: "07 / Synapse", title: "Message delivered.",    body: "Enough filled receptors change what the next neuron does: fire, or hold back. Electrical, then chemical, then electrical again." },   // DRAFT  claim: textbook
-    { at: 0.63,  kicker: "07 / Synapse", title: "Passing it on.",        body: "The next neuron turns the message back into electricity, and now we follow the signal. Behind us, the messengers let go and are cleared away, many pulled back in to be reused." },   // DRAFT  source: Torres 2003 (reuptake); textbook (signal to the cell body, then a new spike down the axon)
+    { src: ["openstax"], at: 0.264, kicker: "07 / Synapse", title: "Packed and waiting.",   body: "The new neurotransmitter is pumped into a vesicle, a tiny bubble near the end of the neuron, along with many others." },   // DRAFT  claim: textbook (vesicular monoamine transporter)
+    { src: ["openstax"], at: 0.336, kicker: "07 / Synapse", title: "A spark arrives.",      body: "An electrical signal races along the neuron's outer membrane, down the axon and around its end. When it arrives, vesicles fuse with the membrane and spill their contents." },   // DRAFT  claim: textbook
+    { src: ["openstax"], at: 0.432, kicker: "07 / Synapse", title: "Across the gap.",       body: "The messengers drift across the synaptic cleft, a gap tens of nanometers wide, and fit into receptors on the next neuron." },   // DRAFT  claim: textbook (same wording as the home page scene)
+    { src: ["openstax"], at: 0.56,  kicker: "07 / Synapse", title: "Message delivered.",    body: "Enough filled receptors change what the next neuron does: fire, or hold back. Electrical, then chemical, then electrical again." },   // DRAFT  claim: textbook
+    { src: ["torres", "openstax"], at: 0.63,  kicker: "07 / Synapse", title: "Passing it on.",        body: "The next neuron turns the message back into electricity, and now we follow the signal. Behind us, the messengers let go and are cleared away, many pulled back in to be reused." },   // DRAFT  source: Torres 2003 (reuptake); textbook (signal to the cell body, then a new spike down the axon)
     { at: 0.77,  kicker: "07 / Synapse", title: "From a swallow to a signal.", body: "That's the trip one molecule can take, and why each step, from your gut to this gap, shapes what a supplement can do." },   // DRAFT
     { at: 0.87,  kicker: "07 / Synapse", title: "Your turn.",            body: "Every supplement in the Atlas takes some version of this trip. See what each neurotransmitter does, or build a stack and check it for known interactions.",
       note: "No warning doesn't mean it's safe for you. For learning, not medical advice." },   // DRAFT
@@ -108,19 +109,27 @@ const JOURNEY = {
   cta: { explore: "Meet your neurotransmitters", stack: "Build a stack", replay: "Start over" },   // DRAFT
   notToScale: "Not to scale",                                 // DRAFT  shown in the small intestine and on the map
 
-  // Sources for the captions above (not shown on the page yet).
-  sources: [
-    "Tuleu C et al. A scintigraphic investigation of the disintegration behaviour of capsules in fasting subjects. Eur J Pharm Sci 2007;30:251-5. doi:10.1016/j.ejps.2006.11.008 (capsules reach the stomach in seconds; gelatin shells open in 3-13 min, HPMC in 6-11 min, fasted, with 180 ml water)",
-    "Raichle ME, Gusnard DA. Appraising the brain's energy budget. PNAS 2002;99:10237-9. doi:10.1073/pnas.172399499 (brain ~2% of body mass, ~20% of energy use)",
-    "Tsai PS et al. Correlations of neuronal and microvascular densities in murine cortex. J Neurosci 2009;29:14553-70. doi:10.1523/JNEUROSCI.3287-09.2009 (neurons on average ~15 um from the nearest microvessel, in mice)",
-    "Abbott NJ et al. Structure and function of the blood-brain barrier. Neurobiol Dis 2010;37:13-25. doi:10.1016/j.nbd.2009.07.030 (tight junctions, lipid-soluble diffusion, carriers, efflux pumps)",
-    "Pardridge WM. The blood-brain barrier: bottleneck in brain drug development. NeuroRx 2005;2:3-14. doi:10.1602/neurorx.2.1.3 (>98% of small-molecule drugs excluded)",
-    "Kageyama T et al. Brain Research 2000. doi:10.1016/s0006-8993(00)02758-x; Matsuo H et al. NeuroReport 2000. doi:10.1097/00001756-200011090-00021 (LAT1, shared by large neutral amino acids and L-DOPA)",
-    "Kikendall JW. Pill esophagitis. J Clin Gastroenterol 1999;28:298-305. doi:10.1097/00004836-199906000-00004 (take pills upright with plenty of fluid)",
-    "Vardakou M et al. Predicting the human in vivo performance of different oral capsule shell types using a novel in vitro dynamic gastric model. Int J Pharm 2011;419:192-9. doi:10.1016/j.ijpharm.2011.07.046 (capsule opening delayed in the fed state)",
-    "Daubner SC et al. Tyrosine hydroxylase and regulation of dopamine synthesis. Arch Biochem Biophys 2011;508:1-12. doi:10.1016/j.abb.2010.12.017 (rate-limiting step; tyrosine to DOPA)",
-    "Torres GE et al. Plasma membrane monoamine transporters: structure, regulation and function. Nat Rev Neurosci 2003;4:13-25. doi:10.1038/nrn1008 (reuptake clears dopamine, serotonin and norepinephrine)",
-  ],
+  // Sources, shown faintly in the bottom-left corner under the captions that use them (each caption's
+  // `src` lists the ids). short = what's shown; url = where it links; note = what it backs (not shown).
+  sourceLabel: "Source:",                                     // DRAFT  shown before the citations
+  cite: {
+    openstax:   { short: "OpenStax, Anatomy & Physiology 2e", url: "https://openstax.org/books/anatomy-and-physiology-2e/pages/1-introduction", note: "textbook physiology: esophagus, peristalsis, stomach, villi, blood, capillaries, synapses" },
+    kikendall:  { short: "Kikendall, J Clin Gastroenterol 1999", url: "https://doi.org/10.1097/00004836-199906000-00004", note: "pill esophagitis: take pills upright with plenty of fluid" },
+    tuleu:      { short: "Tuleu et al., Eur J Pharm Sci 2007", url: "https://doi.org/10.1016/j.ejps.2006.11.008", note: "capsules reach the stomach in seconds; gelatin opens in 3-13 min, HPMC 6-11 min, fasted" },
+    vardakou:   { short: "Vardakou et al., Int J Pharm 2011", url: "https://doi.org/10.1016/j.ijpharm.2011.07.046", note: "capsule opening delayed in the fed state" },
+    niddk:      { short: "NIDDK, Your Digestive System", url: "https://www.niddk.nih.gov/health-information/digestive-diseases/digestive-system-how-it-works", note: "what isn't absorbed leaves in stool" },
+    pond:       { short: "Pond & Tozer, Clin Pharmacokinet 1984", url: "https://doi.org/10.2165/00003088-198409010-00001", note: "first-pass metabolism in the liver" },
+    raichle:    { short: "Raichle & Gusnard, PNAS 2002", url: "https://doi.org/10.1073/pnas.172399499", note: "brain ~2% of body mass, ~20% of energy use" },
+    tsai:       { short: "Tsai et al., J Neurosci 2009", url: "https://doi.org/10.1523/JNEUROSCI.3287-09.2009", note: "neurons ~15 um from the nearest microvessel (mice)" },
+    abbott:     { short: "Abbott et al., Neurobiol Dis 2010", url: "https://doi.org/10.1016/j.nbd.2009.07.030", note: "tight junctions, lipid-soluble diffusion, carriers, efflux pumps" },
+    pardridge:  { short: "Pardridge, NeuroRx 2005", url: "https://doi.org/10.1602/neurorx.2.1.3", note: ">98% of small-molecule drugs excluded" },
+    kageyama:   { short: "Kageyama et al., Brain Res 2000", url: "https://doi.org/10.1016/s0006-8993(00)02758-x", note: "LAT1 carries L-DOPA; other large neutral amino acids compete" },
+    matsuo:     { short: "Matsuo et al., NeuroReport 2000", url: "https://doi.org/10.1097/00001756-200011090-00021", note: "LAT1 in brain capillaries carries aromatic and branched-chain amino acids" },
+    hardebo:    { short: "Hardebo & Owman, Ann Neurol 1980", url: "https://doi.org/10.1002/ana.410080102", note: "monoamines are kept out of the brain; their precursors L-DOPA and 5-HTP cross" },
+    daubner:    { short: "Daubner et al., Arch Biochem Biophys 2011", url: "https://doi.org/10.1016/j.abb.2010.12.017", note: "tyrosine hydroxylase is the rate-limiting step" },
+    torres:     { short: "Torres et al., Nat Rev Neurosci 2003", url: "https://doi.org/10.1038/nrn1008", note: "reuptake transporters clear dopamine, serotonin, norepinephrine" },
+  },
+
 
   // CHOREOGRAPHY KNOBS (numbers, not wording). Tune and refresh.
   choreo: {

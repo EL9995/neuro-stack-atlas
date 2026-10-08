@@ -101,6 +101,7 @@ function viewJourney() {
         <div class="jy-cta" id="jy-cta"><button class="jy-cta-go" type="button" data-journey="explore">${esc(JOURNEY.cta.explore)}</button><button class="jy-cta-alt" type="button" data-journey="skip">${esc(JOURNEY.cta.stack)}</button><button class="jy-cta-again" type="button" data-journey="replay">${esc(JOURNEY.cta.replay)}</button></div></div>
       <p class="jy-callout" id="jy-call"><i></i>${esc(JOURNEY.labels.esophagus)}</p>
       <p class="jy-scale">${esc(JOURNEY.notToScale)}</p>
+      <p class="jy-src" id="jy-src"></p>
       <p class="jy-cue">${esc(JOURNEY.scrollCue)}<span aria-hidden="true">&darr;</span></p>
     </div>
     <p class="jy-note">${esc(JOURNEY.disclaimer)} <a href="#" data-journey="note">${esc(JOURNEY.disclaimerLink)}</a></p>
@@ -301,6 +302,9 @@ function jyCaption(key, i, animate) {
     box.querySelector(".jy-t").textContent = c.title;
     box.querySelector(".jy-b").textContent = c.body;
     box.querySelector(".jy-fine").textContent = c.note || "";
+    // The caption's sources, faint in the bottom-left corner (JOURNEY.cite; science captions only).
+    const src = (c.src || []).map(id => JOURNEY.cite[id]).filter(Boolean);
+    document.getElementById("jy-src").innerHTML = src.length ? `${esc(JOURNEY.sourceLabel)} ${src.map(x => `<a href="${x.url}" target="_blank" rel="noopener">${esc(x.short)}</a>`).join(" · ")}` : "";
     box.classList.remove("swap");
   };
   if (!animate) { fill(); return; }

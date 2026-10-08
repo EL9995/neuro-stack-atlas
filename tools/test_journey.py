@@ -75,6 +75,14 @@ try:
     check("pill has turned lengthwise", abs(rot() - ev("JOURNEY.swallowChoreo.tubeTilt")) < 0.01, rot())
     check("each drawing is its own small SVG", ev("[...document.querySelectorAll('.jy svg')].every(s => s.querySelectorAll('*').length < 300)"), ev("[...document.querySelectorAll('.jy svg')].map(s => s.querySelectorAll('*').length)"))
 
+    print("Sources:")
+    check("every caption's source ids exist in JOURNEY.cite", ev("Object.keys(JOURNEY).filter(k => Array.isArray(JOURNEY[k]) && JOURNEY[k][0] && JOURNEY[k][0].kicker).every(k => JOURNEY[k].every(c => (c.src || []).every(id => JOURNEY.cite[id] && JOURNEY.cite[id].url.startsWith('https://'))))"))
+    at("swallow", 0.4)
+    check("a science caption shows its source, faint, bottom-left, as a link", ev("document.querySelector('#jy-src a') && document.querySelector('#jy-src a').href") == ev("JOURNEY.cite.openstax.url") and ev("(() => { const r = document.getElementById('jy-src').getBoundingClientRect(); return r.left < innerWidth / 3 && r.bottom > innerHeight - 60 })()") and ev("parseFloat(getComputedStyle(document.getElementById('jy-src')).color.split(',')[3])") < 0.6)
+    check("source links open in a new tab", ev("[...document.querySelectorAll('#jy-src a')].every(a => a.target === '_blank' && a.rel.includes('noopener'))"))
+    at("swallow", 0.05)
+    check("captions without science claims show no source line", ev("document.getElementById('jy-src').textContent") == "")
+
     print("Chapter 2, Stomach:")
     at("stomach", 0.3)
     check("stomach scene takes over; chapter 1 is hidden underneath", ev("getComputedStyle(document.getElementById('jy-ch-stomach')).visibility") == "visible" and ev("getComputedStyle(document.getElementById('jy-ch-swallow')).visibility") == "hidden")
