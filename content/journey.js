@@ -53,14 +53,14 @@ const JOURNEY = {
   ],
   paths: [
     { at: 0,    kicker: "04 / Different paths", title: "One dose. Different paths.", body: "Each dot stands for a share of what you swallowed. Watch where they go." },                       // DRAFT
-    { at: 0.13, kicker: "04 / Different paths", title: "Some is never absorbed.",    body: "It carries on through the large intestine and leaves in stool." },                                   // DRAFT  source: NIDDK digestive system
-    { at: 0.33, kicker: "04 / Different paths", title: "First stop: the liver.",     body: "Blood from the gut goes straight to the liver, which processes some of what passes through. It's why more isn't free: overload it and it struggles to keep up." },   // DRAFT  source: MedlinePlus portal circulation; "more isn't free" from Eric's brief
-    { at: 0.47, kicker: "04 / Different paths", title: "Through the heart and lungs.", body: "What the liver lets through goes to the heart, out to the lungs and back, then gets pumped around the body." },   // DRAFT  source: NHLBI blood flow
-    { at: 0.63, kicker: "04 / Different paths", title: "Filtered out.",              body: "Your kidneys filter your blood around the clock. Some of the supplement leaves in urine, sometimes long after it has done its job.",
+    { at: 0.121, kicker: "04 / Different paths", title: "Some is never absorbed.",    body: "It carries on through the large intestine and leaves in stool." },                                   // DRAFT  source: NIDDK digestive system
+    { at: 0.308, kicker: "04 / Different paths", title: "First stop: the liver.",     body: "Blood from the gut goes straight to the liver, which processes some of what passes through. It's why more isn't free: overload it and it struggles to keep up." },   // DRAFT  source: MedlinePlus portal circulation; "more isn't free" from Eric's brief
+    { at: 0.439, kicker: "04 / Different paths", title: "Through the heart and lungs.", body: "What the liver lets through goes to the heart, out to the lungs and back, then gets pumped around the body." },   // DRAFT  source: NHLBI blood flow
+    { at: 0.655, kicker: "04 / Different paths", title: "Filtered out.",              body: "Your kidneys filter your blood around the clock. Some of the supplement leaves in urine, sometimes long after it has done its job.",
       note: "In reality the arteries feed the kidneys and the brain at the same time, lap after lap. We show them one after the other." },   // DRAFT  source: NIDDK kidneys
-    { at: 0.79, kicker: "04 / Different paths", title: "What's left.",               body: "Only part of a dose stays in circulation, and the brain still sits behind a barrier. More in your mouth doesn't always mean more in your head.",
+    { at: 0.804, kicker: "04 / Different paths", title: "What's left.",               body: "Only part of a dose stays in circulation, and the brain still sits behind a barrier. More in your mouth doesn't always mean more in your head.",
       note: "Illustration only. The split is different for every supplement, dose and person." },                                                                                                    // DRAFT
-    { at: 0.92, kicker: "04 / Different paths", title: "Next: the bloodstream.",     body: "Our molecule heads for the brain's blood vessels. Being there isn't the same as getting in." },   // DRAFT
+    { at: 0.925, kicker: "04 / Different paths", title: "Next: the bloodstream.",     body: "Our molecule heads for the brain's blood vessels. Being there isn't the same as getting in." },   // DRAFT
   ],
   blood: [
     { at: 0,    kicker: "05 / Bloodstream", title: "Carried by the current.",   body: "Our molecule rides in plasma, the liquid part of the blood. The red cells around it carry oxygen, not supplements." },   // DRAFT  claim: textbook physiology
@@ -71,23 +71,39 @@ const JOURNEY = {
   ],
   barrier: [
     { at: 0,    kicker: "06 / Blood-brain barrier", title: "Never far from blood.",     body: "In the brain, the finest blood vessels, the capillaries, wind between the brain cells, so almost every cell sits close to one." },   // DRAFT  source: Tsai 2009 (neurons ~15 um from a microvessel, in mice)
-    { at: 0.1,  kicker: "06 / Blood-brain barrier", title: "A hungry organ.",           body: "Your brain is about 2% of your body weight but uses about 20% of its energy, so it gets a rich blood supply." },   // DRAFT  source: Raichle & Gusnard 2002
-    { at: 0.3,  kicker: "06 / Blood-brain barrier", title: "A sealed wall.",             body: "Here, the cells of the vessel wall are stitched together by tight junctions, so nothing slips between them. In most of the body, capillary walls are leakier.",
+    { at: 0.123,  kicker: "06 / Blood-brain barrier", title: "A hungry organ.",           body: "Your brain is about 2% of your body weight but uses about 20% of its energy, so it gets a rich blood supply." },   // DRAFT  source: Raichle & Gusnard 2002
+    { at: 0.33,  kicker: "06 / Blood-brain barrier", title: "A sealed wall.",             body: "Here, the cells of the vessel wall are stitched together by tight junctions, so nothing slips between them. In most of the body, capillary walls are leakier.",
       note: "This wall of sealed cells is the blood-brain barrier." },                                                                                                       // DRAFT  source: Abbott 2010
-    { at: 0.4,  kicker: "06 / Blood-brain barrier", title: "Most things stay out.",      body: "Large or water-loving molecules can't get through. Some that do get into the wall are pumped straight back into the blood.",
+    { at: 0.426,  kicker: "06 / Blood-brain barrier", title: "Most things stay out.",      body: "Large or water-loving molecules can't get through. Some that do get into the wall are pumped straight back into the blood.",
       note: "By one estimate, more than 98% of small-molecule drugs can't cross." },                                                                                         // DRAFT  source: Abbott 2010 (efflux pumps); Pardridge 2005 (98%)
-    { at: 0.5,  kicker: "06 / Blood-brain barrier", title: "Small and fat-soluble? Straight through.", body: "A few small, fat-soluble molecules, like caffeine and alcohol, pass through the cells' membranes on their own." },   // DRAFT  source: Abbott 2010 (lipid-soluble diffusion); examples textbook
-    { at: 0.59, kicker: "06 / Blood-brain barrier", title: "Others need a door.",        body: "Carrier proteins in the wall are built for particular molecules. A carrier grabs one, flips, and lets it go on the other side.",
+    { at: 0.522,  kicker: "06 / Blood-brain barrier", title: "Small and fat-soluble? Straight through.", body: "A few small, fat-soluble molecules, like caffeine and alcohol, pass through the cells' membranes on their own." },   // DRAFT  source: Abbott 2010 (lipid-soluble diffusion); examples textbook
+    { at: 0.608, kicker: "06 / Blood-brain barrier", title: "Others need a door.",        body: "Carrier proteins in the wall are built for particular molecules. A carrier grabs one, flips, and lets it go on the other side.",
       note: "Many supplements cross this way. Others use other routes, and some barely cross at all." },                                                                     // DRAFT  source: Abbott 2010 (carrier-mediated transport)
-    { at: 0.68, kicker: "06 / Blood-brain barrier", title: "Wait your turn.",            body: "Doors are shared. LAT1, the door for large amino acids like tyrosine and tryptophan, also carries the same amino acids from a protein meal, so they compete." },   // DRAFT  source: Kageyama 2000; Matsuo 2000 (as in the Simulator)
-    { at: 0.8,  kicker: "06 / Blood-brain barrier", title: "In one side, out the other.", body: "Through a door on the blood side, across the cell, out a door on the brain side. Our molecule is in." },   // DRAFT  claim: LAT1 sits on both sides of the wall cells (Matsuo 2000 / textbook)
-    { at: 0.93, kicker: "06 / Blood-brain barrier", title: "Next: the synapse.",         body: "Serotonin and dopamine can't cross this wall, so the brain makes its own, from building blocks that come in through doors like this one." },   // DRAFT  claim: textbook (why L-DOPA, not dopamine, is the Parkinson's drug); tyrosine/tryptophan precursors
+    { at: 0.694, kicker: "06 / Blood-brain barrier", title: "Wait your turn.",            body: "Doors are shared. LAT1, the door for large amino acids like tyrosine and tryptophan, also carries the same amino acids from a protein meal, so they compete." },   // DRAFT  source: Kageyama 2000; Matsuo 2000 (as in the Simulator)
+    { at: 0.809,  kicker: "06 / Blood-brain barrier", title: "In one side, out the other.", body: "Through a door on the blood side, across the cell, out a door on the brain side. Our molecule is in." },   // DRAFT  claim: LAT1 sits on both sides of the wall cells (Matsuo 2000 / textbook)
+    { at: 0.933, kicker: "06 / Blood-brain barrier", title: "Next: the synapse.",         body: "Serotonin and dopamine can't cross this wall, so the brain makes its own, from building blocks that come in through doors like this one." },   // DRAFT  claim: textbook (why L-DOPA, not dopamine, is the Parkinson's drug); tyrosine/tryptophan precursors
+  ],
+  synapse: [
+    { at: 0,     kicker: "07 / Synapse", title: "Into a neuron.",        body: "Brain cells take up building blocks like ours from the fluid around them, through carriers in their outer membrane." },   // DRAFT  claim: textbook (neuronal amino acid uptake)
+    { at: 0.096, kicker: "07 / Synapse", title: "On the assembly line.", body: "Inside, enzymes turn our molecule, a precursor, into a neurotransmitter, one step at a time.",
+      note: "Each enzyme needs helpers called cofactors, often vitamins or minerals. The slowest step sets the pace, so more precursor doesn't always mean more neurotransmitter." },   // DRAFT  source: Daubner 2011 (rate-limiting step); Atlas pathway data (content/neurotransmitters.js: precursors, enzymes, cofactors)
+    { at: 0.264, kicker: "07 / Synapse", title: "Packed and waiting.",   body: "The new neurotransmitter is pumped into a vesicle, a tiny bubble near the end of the neuron, along with many others." },   // DRAFT  claim: textbook (vesicular monoamine transporter)
+    { at: 0.336, kicker: "07 / Synapse", title: "A spark arrives.",      body: "An electrical signal races along the neuron's outer membrane, down the axon and around its end. When it arrives, vesicles fuse with the membrane and spill their contents." },   // DRAFT  claim: textbook
+    { at: 0.432, kicker: "07 / Synapse", title: "Across the gap.",       body: "The messengers drift across the synaptic cleft, a gap tens of nanometers wide, and fit into receptors on the next neuron." },   // DRAFT  claim: textbook (same wording as the home page scene)
+    { at: 0.56,  kicker: "07 / Synapse", title: "Message delivered.",    body: "Enough filled receptors change what the next neuron does: fire, or hold back. Electrical, then chemical, then electrical again." },   // DRAFT  claim: textbook
+    { at: 0.63,  kicker: "07 / Synapse", title: "Passing it on.",        body: "The next neuron turns the message back into electricity, and now we follow the signal. Behind us, the messengers let go and are cleared away, many pulled back in to be reused." },   // DRAFT  source: Torres 2003 (reuptake); textbook (signal to the cell body, then a new spike down the axon)
+    { at: 0.77,  kicker: "07 / Synapse", title: "From a swallow to a signal.", body: "That's the trip one molecule can take, and why each step, from your gut to this gap, shapes what a supplement can do." },   // DRAFT
+    { at: 0.87,  kicker: "07 / Synapse", title: "Your turn.",            body: "Every supplement in the Atlas takes some version of this trip. See what each neurotransmitter does, or build a stack and check it for clashes." },   // DRAFT
+
   ],
   labels: {                                                   // DRAFT
     esophagus: "Esophagus",
     map: { small: "Small intestine", arteries: "Arteries", large: "Large intestine", stool: "Stool", liver: "Liver", heart: "Heart", lungs: "Lungs", kidney: "Kidneys", bladder: "Bladder", urine: "Urine", brain: "Toward the brain" },
     barrier: { blood: "Blood", cell: "Wall cell", brain: "Brain", tj: "Tight junction", door: "Door (LAT1)", pump: "Pump" },
+    synapse: { neuron: "Neuron", enzymes: "Enzymes", vesicle: "Vesicle", cleft: "Synaptic cleft", receptors: "Receptors", next: "Next neuron", body: "Cell body", axon: "Axon", cofactor: "Cofactor", precursor: "Precursor", made: "Neurotransmitter" },
   },
+  // The end of the journey (shown under the last caption).
+  cta: { explore: "Meet your neurotransmitters", stack: "Build a stack", replay: "Start over" },   // DRAFT
   notToScale: "Not to scale",                                 // DRAFT  shown in the small intestine and on the map
 
   // Sources for the captions above (not shown on the page yet).
@@ -98,6 +114,8 @@ const JOURNEY = {
     "Abbott NJ et al. Structure and function of the blood-brain barrier. Neurobiol Dis 2010;37:13-25. doi:10.1016/j.nbd.2009.07.030 (tight junctions, lipid-soluble diffusion, carriers, efflux pumps)",
     "Pardridge WM. The blood-brain barrier: bottleneck in brain drug development. NeuroRx 2005;2:3-14. doi:10.1602/neurorx.2.1.3 (>98% of small-molecule drugs excluded)",
     "Kageyama T et al. Brain Research 2000. doi:10.1016/s0006-8993(00)02758-x; Matsuo H et al. NeuroReport 2000. doi:10.1097/00001756-200011090-00021 (LAT1, shared by large neutral amino acids and L-DOPA)",
+    "Daubner SC et al. Tyrosine hydroxylase and regulation of dopamine synthesis. Arch Biochem Biophys 2011;508:1-12. doi:10.1016/j.abb.2010.12.017 (rate-limiting step; tyrosine to DOPA)",
+    "Torres GE et al. Plasma membrane monoamine transporters: structure, regulation and function. Nat Rev Neurosci 2003;4:13-25. doi:10.1038/nrn1008 (reuptake clears dopamine, serotonin and norepinephrine)",
   ],
 
   // CHOREOGRAPHY KNOBS (numbers, not wording). Tune and refresh.
@@ -143,12 +161,12 @@ const JOURNEY = {
     flow: 2.2,             // how fast the red cells drift past (screens per chapter)
   },
   barrierChoreo: {
-    screens: 11,           // the showpiece: the longest chapter
+    screens: 11.5,         // the showpiece: the longest chapter (the zoom out was slowed ~20% for Eric)
     // Beats (0 to 1 of the chapter), each [start, end]: zoom out through brain tissue to the whole brain;
     // dive back in; cross-fade to the wall in cross-section; tight junctions; turned away and pumped out;
     // small fat-soluble ones pass straight through; the door; the queue; the hero crosses; into the brain.
-    pull: [0, 0.16], push: [0.18, 0.27], toWall: [0.25, 0.29], wall: [0.3, 0.4], away: [0.4, 0.5], through: [0.5, 0.59],
-    door: [0.59, 0.68], queue: [0.68, 0.8], cross: [0.8, 0.92], brain: [0.92, 1],
+    pull: [0.000, 0.197], push: [0.216, 0.302], toWall: [0.283, 0.321], wall: [0.330, 0.426], away: [0.426, 0.522], through: [0.522, 0.608],
+    door: [0.608, 0.694], queue: [0.694, 0.809], cross: [0.809, 0.923], brain: [0.923, 1.000],
     closeZoom: 9,          // capillary web: zoom at the start (matches chapter 5's close-up)
     netZoom: 0.9,          // brain tissue in view (neurons and capillaries)
     wholeZoom: 0.014,      // the whole brain in view (tissue zoom; the brain is drawn at this x brainRatio)
@@ -158,14 +176,31 @@ const JOURNEY = {
     crossZoom: 2.2,        // zoom while it crosses
     brainZoom: 1.3,        // zoom once it's in the brain
   },
+  synapseChoreo: {
+    screens: 12.5,
+    tunedAt: 10,           // the in-beat timings were tuned at 10 screens; they keep their length in screens (js/journey-synapse.js jySyO)
+    // Beats (0 to 1 of the chapter), each [start, end]: taken up into the neuron; the two enzymes; packed
+    // into a vesicle; the spark (the vesicle rides to the membrane while it runs); the vesicle fuses; the
+    // next neuron's receptors fill (the new signal builds there); the camera hands over from the molecule to
+    // the signal; through the cell body, slowly, with the clearing in view behind; part way down the axon;
+    // the signal launches off along it as the calls to action appear.
+    enter: [0, 0.08], assemble: [0.096, 0.256], pack: [0.256, 0.336], spark: [0.336, 0.424], release: [0.424, 0.48],
+    fire: [0.56, 0.62], pass: [0.62, 0.65], soma: [0.65, 0.76], axon: [0.76, 0.86], launch: [0.86, 0.9], cta: 0.89,
+    axonRide: 1000,        // how far down the axon the camera rides with the signal (world units) before it launches
+    launchTo: 2600,        // how far the signal shoots on when it launches (off screen)
+    endRise: 320,          // world units the camera eases down during the launch, so the axon sits above the last caption
+    rimAxon: 0.27,         // share of the spark beat spent on the axon (matches the path lengths, so the speed is even); the rest goes around the terminal to the vesicle
+    vesTravel: 0.08,       // how long the vesicle takes to reach the membrane once the spark starts (it docks while the signal is on the rim)
+    zooms: { enter: 1.4, assemble: 1.9, pack: 1.7, spark: 0.85, converge: 1.1, release: 1.5, cross: 2.0, fire: 0.9, pass: 0.9, soma: 0.75, axon: 0.75, launch: 0.75 },   // camera zoom per beat
+  },
   pathsChoreo: {
-    screens: 7,
+    screens: 7.5,        // the liver -> heart -> lungs beat was stretched (Eric: too quick to follow)
     // Groups of the 11 dots around the hero (illustration only, no numbers shown): never absorbed -> stool;
     // stay in the liver (processed); kidney -> urine; the rest travel on with the hero toward the brain.
     groups: { stool: 3, liver: 2, kidney: 3 },
     // Beats (0 to 1 of the chapter), each [start, end]: pull back from the capillary to the whole body; stool
     // group; everyone else to the liver; on through heart and lungs; kidney group; the hero's group heads up
     // toward the brain; dive into the vessel.
-    pull: [0, 0.12], stool: [0.13, 0.3], liver: [0.33, 0.45], heart: [0.47, 0.6], kidney: [0.63, 0.77], brain: [0.8, 0.93], dive: [0.88, 1],
+    pull: [0.000, 0.112], stool: [0.121, 0.280], liver: [0.308, 0.420], heart: [0.439, 0.627], kidney: [0.655, 0.785], brain: [0.813, 0.935], dive: [0.888, 1.000],
   },
 };

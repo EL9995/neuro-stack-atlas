@@ -97,7 +97,8 @@ function viewJourney() {
     <div class="jy-hud">
       <button class="jy-skiptour" type="button" data-journey="skip">${esc(JOURNEY.skipTour)} <span aria-hidden="true">&rarr;</span></button>
       <ol class="jy-rail" aria-label="Chapters">${JOURNEY.chapters.map(c => `<li title="${esc(c)}"><span class="sr">${esc(c)}</span></li>`).join("")}</ol>
-      <div class="jy-caption" id="jy-caption" aria-live="polite"><p class="jy-kick"></p><h2 class="jy-t"></h2><p class="jy-b"></p><p class="jy-fine"></p></div>
+      <div class="jy-caption" id="jy-caption" aria-live="polite"><p class="jy-kick"></p><h2 class="jy-t"></h2><p class="jy-b"></p><p class="jy-fine"></p>
+        <div class="jy-cta" id="jy-cta"><button class="jy-cta-go" type="button" data-journey="explore">${esc(JOURNEY.cta.explore)}</button><button class="jy-cta-alt" type="button" data-journey="skip">${esc(JOURNEY.cta.stack)}</button><button class="jy-cta-again" type="button" data-journey="replay">${esc(JOURNEY.cta.replay)}</button></div></div>
       <p class="jy-callout" id="jy-call"><i></i>${esc(JOURNEY.labels.esophagus)}</p>
       <p class="jy-scale">${esc(JOURNEY.notToScale)}</p>
       <p class="jy-cue">${esc(JOURNEY.scrollCue)}<span aria-hidden="true">&darr;</span></p>
@@ -172,7 +173,7 @@ const jyLerp = (a, b, t) => a + (b - a) * t;
 //   jyChapter({ key, layers, front?, init?, frame })
 // key: names its wording list (JOURNEY[key]) and knobs (JOURNEY[key + "Choreo"], which needs `screens`).
 // layers(): the HTML for its world layer. front(): optional layer drawn in front of the pill.
-// notToScale: true shows the "Not to scale" note. capRight(q): optional, true puts the caption on the
+// notToScale: true shows the "Not to scale" note. done(q): optional, true shows the calls to action (the end). capRight(q): optional, true puts the caption on the
 // right on wide screens (when the scene's empty space is there). init(root): optional, runs when the tour starts. frame(q, v, own): q = 0..1 through the chapter,
 // v = viewport numbers, own = true when this chapter is the one on screen (it then also drives the pill
 // with jyActor(), and its front layer).
@@ -287,6 +288,8 @@ function jyFrame() {
   root.style.setProperty("--chap", q.toFixed(3));
   root.classList.toggle("jy-noscale", !!ch.notToScale);
   root.classList.toggle("jy-capright", !!(ch.capRight && ch.capRight(q)));
+  const done = !!(ch.done && ch.done(q));
+  if (done !== root.classList.contains("jy-done")) { root.classList.toggle("jy-done", done); root.querySelectorAll(".jy-cta button").forEach(b => b.tabIndex = done ? 0 : -1); }
   root.classList.toggle("jy-moved", at > 0.1);
 }
 
@@ -312,4 +315,6 @@ document.addEventListener("click", e => {
   if (k === "skip") go("stack");
   else if (k === "note") { go(""); document.getElementById("notice")?.scrollIntoView(); }
   else if (k === "start") jyStart();
+  else if (k === "explore") go("");
+  else if (k === "replay") scrollTo({ top: 0, behavior: jyReduced() ? "auto" : "smooth" });
 });

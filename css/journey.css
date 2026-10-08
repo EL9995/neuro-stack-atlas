@@ -73,6 +73,7 @@ html:has(body.is-journey)::-webkit-scrollbar { display: none; }
 #jy-ch-intestine { background: #d5852f; }
 #jy-ch-blood { background: #8e1a2c; }
 #jy-ch-barrier { background: #121a44; }
+#jy-ch-synapse { background: #0e1438; }
 #jy-ch-paths { background: #2a0c16; }
 .jy-tint { position: absolute; inset: 0; pointer-events: none; opacity: 0; }
 /* Chapter 4 assembly line: tracks always faintly visible, stations light up (--on, 0..1) while active. */
@@ -163,4 +164,30 @@ html:has(body.is-journey)::-webkit-scrollbar { display: none; }
 .jy-bb-door.on rect { stroke: #7fe6ff; }
 .jy-bb-pump rect { fill: #4a3214; stroke: #f2b84b; }
 .jy-bb-labels text { font-family: var(--f-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; fill: #ffe9e4; paint-order: stroke; stroke: rgba(20, 8, 20, .55); stroke-width: 3px; }
+
+/* Chapter 7, Synapse (js/journey-synapse.js) */
+.jy-sy-cell { fill: #1a2858; stroke: #4c6aa8; stroke-width: 6; }
+.jy-sy-enz { fill: #24346a; stroke: #c9d4ea; stroke-width: 3; }
+.jy-sy-eglow { fill: #7fe6ff; }
+.jy-sy-chip rect { fill: rgba(127, 230, 255, .14); stroke: #7fe6ff; stroke-width: 2; }
+.jy-sy-chip text { fill: #e9fbff; font-family: var(--f-mono); font-size: 13px; }
+.jy-sy-ves, .jy-sy-ves circle { fill: rgba(255, 179, 64, .1); stroke: #ffb340; stroke-width: 2.5; }
+.jy-sy-msg circle { fill: #ffb340; }
+.jy-sy-rec { fill: none; stroke: #8ea2ee; stroke-width: 5; stroke-linecap: round; }
+.jy-sy-rglow { fill: #7fe6ff; }
+.jy-sy-rimw { stroke: #7fe6ff; stroke-width: 22; stroke-opacity: .18; }
+.jy-sy-rimt { stroke: #7fe6ff; stroke-width: 7; stroke-opacity: .8; }
+.jy-sy-rimh { stroke: #e9fbff; stroke-width: 12; }
+
+/* The end of the journey: calls to action under the last caption (shown with .jy-done). */
+.jy-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 20px; opacity: 0; visibility: hidden; transform: translateY(8px); transition: opacity .4s, transform .4s, visibility 0s .4s; }
+.jy-done .jy-cta { opacity: 1; visibility: visible; transform: none; transition: opacity .4s, transform .4s; pointer-events: auto; }
+.jy-cta button { all: unset; box-sizing: border-box; cursor: pointer; font-family: var(--f-display); font-size: .98rem; border-radius: 999px; padding: 11px 20px; transition: background .2s, border-color .2s, color .2s; }
+.jy-cta .jy-cta-go { background: #7fe6ff; color: #071026; font-weight: 600; }
+.jy-cta .jy-cta-go:hover { background: #b6f1ff; }
+.jy-cta .jy-cta-alt { border: 1.5px solid rgba(127, 230, 255, .7); color: #e9fbff; }
+.jy-cta .jy-cta-alt:hover { border-color: #7fe6ff; background: rgba(127, 230, 255, .1); }
+.jy-cta .jy-cta-again { padding: 11px 6px; color: rgba(233, 251, 255, .7); text-decoration: underline; text-underline-offset: 3px; }
+.jy-cta .jy-cta-again:hover { color: #fff; }
+.jy-cta button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 
