@@ -26,8 +26,13 @@ const GAMES = { which: lsGet("nsa-game", "sequence"), loading: null };
 const gameDefs = () => ({
   sequence: { st: SEQ, text: GAMES_TEXT, render: seqRender, stop: seqStop, key: seqKey },
   reaction: { st: RT, text: RT_TEXT, render: rtRender, stop: rtStop, key: rtKey },
-  timing: { st: SS, text: SS_TEXT, render: ssRender, stop: ssStop, key: ssKey }
+  timing: { st: SS, text: SS_TEXT, render: ssRender, stop: ssStop, key: ssKey },
+  // Not a game: no runs of its own (noSave), no keys.
+  compare: { st: CMP, text: CMP_TEXT, render: cmpRender, stop: () => {}, key: () => {}, noSave: true }
 });
+const gamesPlayable = () => Object.entries(gameDefs()).filter(([, g]) => !g.noSave);
+// A game's own runs, without the Compare sample data.
+const realRuns = st => (st.runs || []).filter(r => !r.sample);
 const gameDef = () => gameDefs()[GAMES.which] || gameDefs().sequence;
 function gamesStop() { Object.values(gameDefs()).forEach(g => g.stop()); }
 const gamesIdle = () => Object.values(gameDefs()).every(g => g.st.phase === "ready");
@@ -77,12 +82,12 @@ function seqLevelAt(k) {
 function gamesLoad() {
   // Deferred a tick: on a direct visit to #games the page renders before boot starts Persist.
   if (!GAMES.loading) GAMES.loading = Promise.resolve().then(() => Persist.load("games")).then(d => {
-    Object.entries(gameDefs()).forEach(([id, g]) => { g.st.runs = d && Array.isArray(d[id]) ? d[id] : []; });
+    gamesPlayable().forEach(([id, g]) => { g.st.runs = d && Array.isArray(d[id]) ? d[id] : []; });
   });
   return GAMES.loading;
 }
 function gamesSave() {
-  Persist.save("games", () => Object.entries(gameDefs()).reduce((d, [id, g]) => { d[id] = g.st.runs || []; return d; }, { v: 1 }));
+  Persist.save("games", () => gamesPlayable().reduce((d, [id, g]) => { d[id] = g.st.runs || []; return d; }, { v: 1 }));
 }
 
 // "Playing on": no stack, or one of the stacks. Remembered across games.
@@ -102,7 +107,7 @@ function gameCtxRecord() {
 }
 const gameWhen = r => new Date(r.at).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 const gameStat = (label, val, sub) => `<div class="seq-stat"><span class="hint">${esc(label)}</span><b>${val}</b>${sub ? `<span class="hint">${esc(sub)}</span>` : ""}</div>`;
-const seqBest = () => (SEQ.runs || []).reduce((b, r) => (!b || r.score > b.score ? r : b), null);
+const seqBest = () => realRuns(SEQ).reduce((b, r) => (!b || r.score > b.score ? r : b), null);
 
 function seqArrow(dir, cls) {
   return `<span class="seq-arrow seq-${dir}${cls ? " " + cls : ""}" aria-label="${dir}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 21 12.5h-5.5V21h-7v-8.5H3z"/></svg></span>`;
@@ -112,7 +117,7 @@ function viewGames() {
   const T = GAMES_TEXT, G = gameDef().text;
   return `<div class="games">
     <div class="game-pick" role="tablist">${Object.entries(GAMES_PICK).map(([id, name]) =>
-      `<button class="game-tab" role="tab" aria-selected="${id === GAMES.which}" data-act="game-pick" data-game="${id}">${esc(name)}</button>`).join("")}</div>
+      `<button class="game-tab${id === "compare" ? " cmp-tab" : ""}" role="tab" aria-selected="${id === GAMES.which}" data-act="game-pick" data-game="${id}">${esc(name)}</button>`).join("")}</div>
     <div class="page-head">
       <span class="eyebrow">${esc(T.eyebrow)}</span>
       <h1>${esc(G.title)}</h1>
@@ -267,7 +272,7 @@ function seqResults(run) {
   const top = Math.max(...avgs.map(a => a[1]), 0.001);
   const pct = run.finished ? Math.round(100 * run.clean / run.finished) : 0;
   const when = gameWhen, stat = gameStat;
-  const recent = (SEQ.runs || []).slice(-SEQ_CONFIG.recentRuns).reverse();
+  const recent = realRuns(SEQ).slice(-SEQ_CONFIG.recentRuns).reverse();
   return `<div class="seq-card seq-results">
     <div class="seq-res-head"><h2>${esc(R.title)}</h2>${run.newBest && SEQ.runs.length > 1 ? `<span class="seq-best">${esc(R.newBest)}</span>` : ""}</div>
     <div class="seq-stats">

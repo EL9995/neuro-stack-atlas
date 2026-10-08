@@ -1,4 +1,4 @@
-"""Games page: Sequence, Reaction and Threshold (scope: docs/games/*.md).
+"""Games page: Sequence, Reaction, Threshold and Compare (scope: docs/games/*.md).
 Usage: python3 tools/test_games.py [base-url]      (default http://localhost:8010)
 """
 import json, os, subprocess, sys, tempfile, time, urllib.request
@@ -182,6 +182,45 @@ try:
     time.sleep(1)
     check("saved under timing with the other games", len(ev("JSON.parse(localStorage.getItem('nsa-games')).timing")) == 1)
     check("level colours run cold to hot", ev("[gameHeat(0), gameHeat(1)].join()") == "color-mix(in oklch decreasing hue, var(--heat-0) 100%, var(--heat-1)),color-mix(in oklch decreasing hue, var(--heat-2) 0%, var(--heat-3))")
+    check("no page errors", not ev("window.__e || []"), ev("window.__e"))
+
+    print("Compare:")
+    ev("localStorage.clear(); location.reload()"); time.sleep(1)
+    for _ in range(50):  # wait for the reloaded page and its saved games to be ready
+        if ev("document.readyState === 'complete' && typeof cmpGame === 'function' && Array.isArray(SEQ.runs)"): break
+        time.sleep(.2)
+    ev("window.__e = []; addEventListener('error', e => __e.push(e.message))")
+    ev("document.querySelector('[data-game=compare]').click()"); time.sleep(.3)
+    check("Compare tab shows, with no stack runs yet", ev("document.querySelector('h1').textContent") == "Compare" and "No runs on a stack yet" in ev("document.getElementById('game-stage').textContent"))
+    # Hand-made runs: day i, no stack or "A"
+    ev("""window.mk = (game, vals, stack, from) => vals.map((v, i) => ({ game, at: new Date(Date.UTC(2026, 8, from + i)).toISOString(), stack: stack ? { id: stack, name: 'Stack ' + stack } : null,
+      score: v, median: v, error: v }))""")
+    ev("SEQ.runs = mk('sequence', [50, 60, 70], null, 1).concat(mk('sequence', [100, 102, 98, 101, 99], null, 4), mk('sequence', [110, 112, 108, 111, 109], 'A', 9))")
+    c1 = ev("(() => { const c = cmpGame('sequence', 'A'); return { b: c.b, level: c.level, better: c.better, practice: c.practice } })()")
+    check("the first 3 runs of a game are warm-up and left out", c1["b"] == [100, 102, 98, 101, 99], c1)
+    check("a big gap in the better direction is a clear difference", c1["level"] == "clear" and c1["better"] is True, c1)
+    check("stack runs all after the no-stack runs: practice warning", c1["practice"] is True, c1)
+    ev("RT.runs = mk('reaction', [1, 1, 1], null, 1).concat(mk('reaction', [240, 250, 245, 255, 248], null, 4), mk('reaction', [262, 270, 268, 265, 271], 'A', 4))")
+    c2 = ev("(() => { const c = cmpGame('reaction', 'A'); return { level: c.level, better: c.better, practice: c.practice } })()")
+    check("slower reaction on the stack reads as worse (lower is better)", c2["better"] is False and c2["level"] == "clear" and c2["practice"] is False, c2)
+    ev("SS.runs = mk('timing', [1, 1, 1], null, 1).concat(mk('timing', [40, 30, 45, 35, 38], null, 4), mk('timing', [39, 41, 33, 44], 'A', 4))")
+    c3 = ev("(() => { const c = cmpGame('timing', 'A'); return { need: c.need, needOn: c.needOn, level: c.level } })()")
+    check("fewer than 5 runs on a side asks for more", c3["need"] == 0 and c3["needOn"] == 1 and c3.get("level") is None, c3)
+    ev("SS.runs.push(...mk('timing', [37], 'A', 20))")
+    check("a gap inside the normal swing says so", ev("cmpGame('timing', 'A').level") == "none")
+    ev("gamesSave(); cmpRender()"); time.sleep(.2)
+    text = ev("document.getElementById('game-stage').textContent")
+    check("three game cards with dots and verdicts", ev("document.querySelectorAll('.cmp-game').length") == 3 and ev("document.querySelectorAll('.cmp-dot').length") == 30, ev("document.querySelectorAll('.cmp-dot').length"))
+    check("verdicts describe, never claim a cause", "clearly better" in text and "clearly worse" in text and not any(w in text.lower() for w in ["because", "caused", "improves your", "boosts"]), text[:300])
+    ev("SEQ.runs = []; RT.runs = []; SS.runs = []; gamesSave(); cmpRender()")
+    ev("document.querySelector('[data-act=cmp-sample]').click()"); time.sleep(.5)
+    check("sample runs fill every game (8 no stack, 8 on Sample stack)", ev("[SEQ.runs.length, RT.runs.length, SS.runs.length].join()") == "16,16,16" and ev("cmpGame('reaction', 'sample').b.length") == 8)
+    check("sample demo is mixed: Sequence clear, Reaction no difference, Threshold small", ev("['sequence','reaction','timing'].map(g => cmpGame(g, 'sample').level).join()") == "clear,none,small")
+    check("sample data is labelled and shows verdicts", ev("!!document.querySelector('.cmp-badge')") and ev("document.querySelectorAll('.cmp-game[data-level=need]').length") == 0)
+    check("sample runs never count as a personal best", ev("seqBest()") is None and ev("rtBest()") is None and ev("ssBest()") is None)
+    ev("document.querySelector('[data-act=cmp-unsample]').click()"); time.sleep(1)
+    check("Remove sample runs clears them and only them", ev("[SEQ.runs.length, RT.runs.length, SS.runs.length].join()") == "0,0,0" and len(ev("JSON.parse(localStorage.getItem('nsa-games')).sequence")) == 0)
+    check("Compare isn't saved as a game", "compare" not in ev("JSON.parse(localStorage.getItem('nsa-games'))"))
     check("no page errors", not ev("window.__e || []"), ev("window.__e"))
 finally:
     proc.kill()

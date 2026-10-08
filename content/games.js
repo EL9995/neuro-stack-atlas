@@ -77,7 +77,7 @@ const GAMES_TEXT = {
 // ---------------------------------------------------------------------------
 const RT_CONFIG = { trials: 10, waitMin: 1500, waitMax: 4000, tooFast: 100, slow: 500, pause: 900, recentRuns: 5 };
 
-const GAMES_PICK = { sequence: "Sequence", reaction: "Reaction", timing: "Threshold" };
+const GAMES_PICK = { sequence: "Sequence", reaction: "Reaction", timing: "Threshold", compare: "Compare" };
 
 const RT_TEXT = {
   title: "Reaction",
@@ -172,5 +172,53 @@ const SS_TEXT = {
     head: ["#", "Level", "Zone", "Target", "You", "Off", "Points"],
     personalBest: "Personal best",
     recentPeak: "level {n}"
+  }
+};
+
+// ---------------------------------------------------------------------------
+// COMPARE: your runs with no stack vs on one stack, game by game. DRAFT (October 2026).
+// Describes differences only, never what caused them (same rule as Tracker insights).
+//   "warmup": each game's first runs are left out (scores climb fast while you learn a game).
+//   "minRuns": runs needed on each side (no stack, and the stack) before showing a verdict.
+//   "small"/"clear": how big the gap is compared with your normal run-to-run swing
+//     (the gap divided by the typical spread of your scores). Below "small" = within your normal swing.
+//   "sampleSeed": picks the made-up demo runs; 6 gives a mixed picture (one clear, one small, one no difference).
+//   "practice": if this share of the stack runs came after your last no-stack run, warn that
+//     practice alone could explain an improvement.
+// ---------------------------------------------------------------------------
+const CMP_CONFIG = { warmup: 3, minRuns: 5, small: 0.5, clear: 0.8, practice: 0.8, sampleRuns: 8, sampleSeed: 6 };
+
+const CMP_TEXT = {
+  title: "Compare",
+  lede: "Your scores with no stack next to your scores on a stack, game by game. It shows differences, not causes.",
+  stackLabel: "Compare no stack with",
+  noStacks: "No runs on a stack yet. Pick a stack under “Playing on” before a game, then come back.",
+  noStack: "No stack",
+  metric: {
+    sequence: { name: "Score", unit: "arrows", better: "higher" },
+    reaction: { name: "Median reaction time", unit: "ms", better: "lower" },
+    timing: { name: "Average miss", unit: "ms", better: "lower" }
+  },
+  runs: "{n} runs",
+  avg: "avg {v}",
+  betterArrow: { higher: "better →", lower: "← better" },
+  warmup: "Your first {n} runs of each game aren't counted: scores climb fast while you learn a game.",
+  need: "Not enough runs yet: play {base} more with no stack and {stack} more on “{name}”.",
+  needOne: "Not enough runs yet: play {n} more {side}.",
+  sideBase: "with no stack", sideStack: "on “{name}”",
+  verdict: {
+    none: "On “{name}” your {metric} was about the same as with no stack ({a} vs {b} {unit}). The gap is within your normal run-to-run swing.",
+    small: "On “{name}” your {metric} was a little {dir} ({a} vs {b} {unit}). That's about the size of your normal swing, so it could be chance. Keep collecting.",
+    clear: "On “{name}” your {metric} was clearly {dir} ({a} vs {b} {unit}). The gap is bigger than your normal run-to-run swing."
+  },
+  dir: { better: "better", worse: "worse" },
+  practice: "Most of these stack runs came after your no-stack runs. Scores improve with practice alone, so try alternating days.",
+  caveat: "This compares your own scores. It can't tell you why they changed: sleep, caffeine, time of day, mood and practice all move these numbers.",
+  sample: {
+    load: "Load sample runs",
+    loadHint: "Fills every game with made-up runs (8 with no stack, 8 on “Sample stack”) so you can see how Compare works.",
+    remove: "Remove sample runs",
+    badge: "Includes sample data",
+    stackName: "Sample stack"
   }
 };

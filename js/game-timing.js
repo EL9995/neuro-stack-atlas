@@ -18,7 +18,7 @@
 const SS = { phase: "ready", k: 0, step: 0, streak: 0, perfectRun: 0, tries: [], cur: null, state: "idle", t0: 0, frame: 16.7, prevFrame: 0, bestStreak: 0, barW: 0, timers: [], raf: 0, runs: null };
 
 const ssSteps = () => SS_CONFIG.ladder.steps;
-const ssBest = () => (SS.runs || []).reduce((b, r) => (!b || r.points > b.points ? r : b), null);
+const ssBest = () => realRuns(SS).reduce((b, r) => (!b || r.points > b.points ? r : b), null);
 const ssMean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
 const ssFmt = ms => Math.round(ms).toLocaleString();
 
@@ -205,7 +205,7 @@ function ssFinish() {
 function ssResults(run) {
   const R = SS_TEXT.results, G = GAMES_TEXT, T = SS_TEXT, best = ssBest(), max = ssSteps();
   const biasSub = Math.abs(run.bias) < 5 ? R.biasNone : run.bias < 0 ? R.biasEarly : R.biasLate;
-  const recent = (SS.runs || []).slice(-SS_CONFIG.recentRuns).reverse();
+  const recent = realRuns(SS).slice(-SS_CONFIG.recentRuns).reverse();
   const c = run.closest;
   const gradeOf = (lv, good, err) => err == null ? "none" : ssScore(err, { good, perfect: good * SS_CONFIG.perfect, step: lv - 1 }).grade;
   return `<div class="seq-card seq-results">

@@ -12,7 +12,7 @@ const RT = { phase: "ready", pad: "idle", trials: [], early: 0, t0: 0, timers: [
 
 const rtMedian = a => { const s = [...a].sort((x, y) => x - y), m = s.length >> 1; return s.length ? (s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2) : 0; };
 const rtSd = a => { if (a.length < 2) return 0; const m = a.reduce((x, y) => x + y, 0) / a.length; return Math.sqrt(a.reduce((x, y) => x + (y - m) ** 2, 0) / (a.length - 1)); };
-const rtBest = () => (RT.runs || []).reduce((b, r) => (!b || r.median < b.median ? r : b), null);
+const rtBest = () => realRuns(RT).reduce((b, r) => (!b || r.median < b.median ? r : b), null);
 
 function rtRender() {
   const box = document.getElementById("game-stage");
@@ -116,7 +116,7 @@ function rtFinish() {
 function rtResults(run) {
   const R = RT_TEXT.results, G = GAMES_TEXT, best = rtBest(), C = RT_CONFIG;
   const top = Math.max(...run.trials, C.slow);
-  const recent = (RT.runs || []).slice(-C.recentRuns).reverse();
+  const recent = realRuns(RT).slice(-C.recentRuns).reverse();
   return `<div class="seq-card seq-results">
     <div class="seq-res-head"><h2>${esc(G.results.title)}</h2>${run.newBest && RT.runs.length > 1 ? `<span class="seq-best">${esc(G.results.newBest)}</span>` : ""}</div>
     <div class="seq-stats">

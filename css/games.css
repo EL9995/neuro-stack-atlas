@@ -156,3 +156,26 @@ kbd { font-family: var(--f-mono); font-size: 0.78rem; padding: 0 5px; border: 1p
 @keyframes ss-elite { to { box-shadow: 0 0 22px 6px var(--heat-3); } }
 .ss-elite-sum { font-weight: 600; color: var(--heat-3); }
 .ss-col.elite::after { content: ""; position: absolute; left: 50%; top: -6px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--heat-3); }
+
+/* Compare: one card per game, a strip plot (no stack vs the stack), and a plain-language verdict */
+.game-tab.cmp-tab { margin-left: 6px; border-left: 1px solid var(--line); border-radius: 0 999px 999px 0; }
+.cmp-badge { padding: 2px 10px; border-radius: 999px; border: 1px dashed var(--sev-moderate); color: var(--sev-moderate); font-size: 0.82rem; }
+.cmp-game { display: grid; gap: 10px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); }
+.cmp-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.cmp-head h3 { font-size: 1.1rem; }
+.cmp-plot { display: grid; gap: 6px; }
+.cmp-row { display: grid; grid-template-columns: 150px 1fr; gap: 12px; align-items: center; }
+.cmp-label { display: grid; font-size: 0.9rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.cmp-label .hint { font-weight: 400; font-size: 0.78rem; }
+.cmp-track { position: relative; height: 26px; border-radius: 6px; background: var(--soft); }
+.cmp-dot { position: absolute; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: var(--muted); opacity: .55; }
+.cmp-row.on .cmp-dot { background: var(--accent); opacity: .7; }
+.cmp-mean { position: absolute; top: 2px; bottom: 2px; width: 3px; margin-left: -1.5px; border-radius: 2px; background: var(--ink); }
+.cmp-axis { display: flex; justify-content: space-between; margin-left: 162px; font-family: var(--f-mono); font-size: 0.75rem; color: var(--muted); }
+.cmp-verdict { font-size: 0.95rem; }
+.cmp-game[data-level="clear"][data-better="true"] .cmp-verdict { color: var(--sev-good); font-weight: 600; }
+.cmp-game[data-level="clear"][data-better="false"] .cmp-verdict { color: var(--sev-major); font-weight: 600; }
+.cmp-game[data-level="need"] .cmp-verdict { color: var(--muted); }
+.cmp-warn { font-size: 0.88rem; color: var(--sev-moderate); }
+.cmp-caveat { font-size: 0.88rem; color: var(--muted); padding: 8px 12px; border-left: 3px solid var(--line); }
+@media (max-width: 560px) { .cmp-row { grid-template-columns: 1fr; gap: 4px; } .cmp-axis { margin-left: 0; } }
