@@ -4,3 +4,6 @@ screenshots/
 .claude/
 .DS_Store
 __pycache__/
+
+# private notes, kept locally
+HANDOFF.md

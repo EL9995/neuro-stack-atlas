@@ -114,6 +114,11 @@ def main():
         go("stack"); shot("stack-builder.jpg")
         go(""); ev("localStorage.clear()"); ev(SEED); go("track", 2.5)
         ev("document.getElementById('t-insights').scrollIntoView({block:'center'})"); time.sleep(.4); shot("tracker.jpg")
+        go("sim", 3); shot("simulator.jpg")
+        # Games: the Compare tab with the made-up sample runs loaded
+        click = "[...document.querySelectorAll('button,a,[role=tab]')].find(e => e.textContent.trim() === %s).click()"
+        go("games"); ev(click % json.dumps("Compare")); time.sleep(.5)
+        ev(click % json.dumps("Load sample runs")); time.sleep(1); shot("games-compare.jpg")
 
         # GIF: the dopamine assembly line from the full pipeline to the end map
         go("dopamine"); c.call("Emulation.setEmulatedMedia", features=[{"name": "prefers-color-scheme", "value": "dark"}])
