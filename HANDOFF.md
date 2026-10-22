@@ -21,12 +21,12 @@ For a new Claude instance picking this up. Read this first, then `README.md` and
 ## Publishing
 - Commits are authored `Eric <337937552+EL9995@users.noreply.github.com>` (already set in the repo's git config). End commit messages with the Co-Authored-By line from your system instructions.
 - **Eric pushes from GitHub Desktop ("Push origin").** The command-line git here has no GitHub credentials, so don't try to push.
-- GitHub Pages runs from a **GitHub Actions workflow** (`.github/workflows/pages.yml`) that publishes only the site files (index.html, favicon.svg, og-image.png, css/, js/, content/, food/). `baseline/`, `tools/`, `docs/` and `*.md` are not served. Pages Source must stay set to "GitHub Actions".
+- GitHub Pages runs from a **GitHub Actions workflow** (`.github/workflows/pages.yml`) that publishes only the site files (index.html, favicon.svg, og-image.png, css/, js/, content/). `baseline/`, `tools/`, `docs/` and `*.md` are not served. Pages Source must stay set to "GitHub Actions".
 - GitHub Pages caches files for 10 minutes; tell Eric to hard-refresh (Cmd+Shift+R) or use a private window. *Offered, not yet built:* version-stamping asset URLs at deploy time so reviews always see fresh files.
 
 ## Current state (as of 2026-10-05, evening)
 - Committed and pushed by Eric: "Stack builder safety review, compact steps, and a first Simulator page". The team's medications / side effects / expand-all round is committed on top (see git log); Eric pushes from GitHub Desktop.
-- **Uncommitted files from the Supplement Transparency instance live in this folder:** `demo/`, `pilot/`, `tools/pilot_magnesium.py`. Don't commit, move or delete them; ask Eric. Food instance owns `food/`.
+- **Uncommitted files from the Supplement Transparency instance live in this folder:** `demo/`, `pilot/`, `tools/pilot_magnesium.py`. Don't commit, move or delete them; ask Eric.
 - Team review page for legal/ethics (extreme doses, approval flow): `docs/stack-builder-review.html` (also published as a private claude.ai artifact).
 - **Known failing test on purpose:** `tools/test_checker.py` "stimulant + breakdown-slowing herb" (caffeine + hordenine only reaches "to review"; the team hasn't decided whether it should pause the stack).
 
